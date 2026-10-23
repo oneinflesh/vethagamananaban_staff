@@ -15,6 +15,7 @@ import {
 } from './courseApi'
 import { DataTable, Column } from './dataTable'
 import { resizeColumns } from './resizeColumns'
+import { printCoordinatorLabels } from './addressLabels'
 
 export default function CoordinatorDetails({
   coordinatorKey,
@@ -107,6 +108,13 @@ export default function CoordinatorDetails({
         </Button>
         <h1>{coordinator?.name || 'Coordinator'}</h1>
         <span>{coordinator?.member_count ?? 0} people</span>
+        <Button
+          variant="outline"
+          disabled={!coordinator}
+          onClick={() => coordinator && printCoordinatorLabels([coordinator])}
+        >
+          Print address
+        </Button>
       </div>
       {error && <p className="course-error">{error}</p>}
       {coordinator && (

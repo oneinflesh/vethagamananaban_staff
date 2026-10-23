@@ -7,6 +7,7 @@ import { getCoordinators, type Coordinator } from './courseApi'
 import { DataTable, Column } from './dataTable'
 import { resizeColumns } from './resizeColumns'
 import { fieldOptions, statusLabel } from './tableFilters'
+import { printCoordinatorLabels, type PaperSize } from './addressLabels'
 
 export default function CoordinatorList({
   country,
@@ -28,6 +29,7 @@ export default function CoordinatorList({
   const [statusFilter, setStatusFilter] = useState('')
   const [stateFilter, setStateFilter] = useState('')
   const [districtFilter, setDistrictFilter] = useState('')
+  const [paper, setPaper] = useState<PaperSize>('A3')
   const table = useRef<DataTableRef>(null)
   const { loading, leaving, start, finish } = useSmoothLoading()
   useEffect(() => {
@@ -73,6 +75,20 @@ export default function CoordinatorList({
         <Button onClick={onCreate}>Create coordinator</Button>
       </div>
       <div className="course-list-actions">
+        <Button
+          variant="outline"
+          disabled={!filtered.length}
+          onClick={() => printCoordinatorLabels(filtered, paper)}
+        >
+          Print coordinator addresses
+        </Button>
+        <label className="course-list-filter">
+          Paper
+          <select value={paper} onChange={(event) => setPaper(event.target.value as PaperSize)}>
+            <option value="A3">A3</option>
+            <option value="A4">A4</option>
+          </select>
+        </label>
         <Button
           variant="outline"
           onClick={() => {

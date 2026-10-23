@@ -1,20 +1,19 @@
-import type { Candidate } from './courseApi'
+import type { Candidate, Coordinator } from './courseApi'
 
 export type PaperSize = 'A3' | 'A4'
 
 function labelLines(candidate: Candidate): string[] {
-  const delivery = candidate.postal_delivery
   return [
     candidate.bbs_identifier,
-    delivery?.recipient_name ?? candidate.full_name,
-    delivery?.line1 ?? candidate.address_line1,
-    delivery?.line2 ?? candidate.address_line2,
-    delivery?.landmark ?? candidate.address_line3,
-    delivery?.city ?? candidate.district,
-    [delivery?.state ?? candidate.state, delivery?.postal_code ?? candidate.postal_code]
-      .filter(Boolean)
-      .join(' - '),
-    delivery?.phone ?? candidate.phone
+    candidate.coordinator
+      ? `${candidate.full_name} c/o ${candidate.coordinator.name}`
+      : candidate.full_name,
+    candidate.address_line1 || candidate.address,
+    candidate.address_line2,
+    candidate.address_line3,
+    candidate.district,
+    [candidate.state, candidate.postal_code].filter(Boolean).join(' - '),
+    candidate.phone
   ].filter(Boolean)
 }
 
@@ -23,7 +22,8 @@ function printSheets(
   title: string,
   paper: PaperSize,
   columns: number,
-  rows: number
+  rows: number,
+  nameIndex: number
 ): void {
   const popup = window.open('', '_blank')
   if (!popup) throw new Error('Allow the print window to open, then try again.')
@@ -38,7 +38,8 @@ function printSheets(
     section:last-child { break-after: auto; }
     article { padding: 2mm; border: 0.3mm solid #bbb; overflow: hidden; break-inside: avoid; font-size: ${paper === 'A4' ? '8pt' : '9pt'}; line-height: 1.25; overflow-wrap: anywhere; }
     p { margin: 0; }
-    p:first-child, p:nth-child(2) { font-weight: 700; }
+    p:first-child { font-weight: 700; }
+    p.address-name { font-size: ${paper === 'A4' ? '12pt' : '14pt'}; font-weight: 700; line-height: 1.15; margin-bottom: 1mm; }
     @media screen { body { padding: 5mm; background: #ddd; } section { background: white; width: ${paper === 'A3' ? '287mm' : '200mm'}; margin: 0 auto 5mm; } }
   `
   page.head.append(style)
@@ -50,8 +51,9 @@ function printSheets(
       main.append(sheet)
     }
     const label = page.createElement('article')
-    address.forEach((line) => {
+    address.forEach((line, lineIndex) => {
       const paragraph = page.createElement('p')
+      if (lineIndex === nameIndex) paragraph.className = 'address-name'
       paragraph.textContent = line
       label.append(paragraph)
     })
@@ -72,7 +74,29 @@ export function printAddressLabels(
     newRegistrations ? 'New registration address labels' : 'Offline candidate address labels',
     paper,
     paper === 'A3' ? 5 : 3,
-    paper === 'A3' ? 8 : 7
+    paper === 'A3' ? 8 : 7,
+    1
+  )
+}
+
+export function printCoordinatorLabels(coordinators: Coordinator[], paper: PaperSize = 'A3'): void {
+  printSheets(
+    coordinators.map((coordinator) =>
+      [
+        coordinator.name,
+        coordinator.address_line1,
+        coordinator.address_line2,
+        coordinator.address_line3,
+        coordinator.district,
+        [coordinator.state, coordinator.postal_code].filter(Boolean).join(' - '),
+        coordinator.phone
+      ].filter(Boolean)
+    ),
+    'Coordinator address labels',
+    paper,
+    paper === 'A3' ? 5 : 3,
+    paper === 'A3' ? 8 : 7,
+    0
   )
 }
 
@@ -92,17 +116,18 @@ export function exportAddressCsv(candidates: Candidate[]): void {
   const csv = [
     columns.map(quote).join(','),
     ...candidates.map((candidate) => {
-      const address = candidate.postal_delivery
       return [
         candidate.bbs_identifier,
-        address?.recipient_name ?? candidate.full_name,
-        address?.line1 ?? candidate.address_line1,
-        address?.line2 ?? candidate.address_line2,
-        address?.landmark ?? candidate.address_line3,
-        address?.city ?? candidate.district,
-        address?.state ?? candidate.state,
-        address?.postal_code ?? candidate.postal_code,
-        address?.phone ?? candidate.phone
+        candidate.coordinator
+          ? `${candidate.full_name} c/o ${candidate.coordinator.name}`
+          : candidate.full_name,
+        candidate.address_line1 || candidate.address,
+        candidate.address_line2,
+        candidate.address_line3,
+        candidate.district,
+        candidate.state,
+        candidate.postal_code,
+        candidate.phone
       ]
         .map(quote)
         .join(',')
