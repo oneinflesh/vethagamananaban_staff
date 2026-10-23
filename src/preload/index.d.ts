@@ -7,6 +7,7 @@ declare global {
       ping(): Promise<boolean>
       login(username: string, password: string, remember: boolean): Promise<unknown>
       restoreSession(): Promise<unknown>
+      todayEnrolment(date: string): Promise<unknown>
     }
   }
 }

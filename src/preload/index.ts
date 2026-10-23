@@ -8,7 +8,8 @@ const api = {
   ping: (): Promise<boolean> => ipcRenderer.invoke('office:ping'),
   login: (username: string, password: string, remember: boolean) =>
     ipcRenderer.invoke('office:login', username, password, remember),
-  restoreSession: () => ipcRenderer.invoke('office:restore-session')
+  restoreSession: () => ipcRenderer.invoke('office:restore-session'),
+  todayEnrolment: (date: string) => ipcRenderer.invoke('office:today-enrolment', date)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

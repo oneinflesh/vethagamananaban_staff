@@ -1,0 +1,142 @@
+.dashboard-page {
+  overflow: hidden;
+  padding: clamp(24px, 4vw, 56px);
+  background: #faf8f5;
+}
+
+.dashboard-welcome {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 30px;
+}
+
+.dashboard-welcome__accent {
+  width: 6px;
+  height: 50px;
+  flex: none;
+  border-radius: 999px;
+  background: linear-gradient(#f9a34a, #d65b1a);
+}
+
+.dashboard-welcome h1 {
+  margin: 0;
+  font-family: 'Anek Tamil', 'Nirmala UI', sans-serif;
+  font-size: clamp(1.6rem, 2.8vw, 2.6rem);
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.025em;
+  color: #35261f;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(14px, 2vw, 26px);
+}
+
+.dashboard-card {
+  min-height: 225px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px;
+  border: 1px solid #eee4d9;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 12px 36px rgb(91 54 23 / 5%);
+}
+
+.dashboard-card--enrolment {
+  background: linear-gradient(145deg, #fff8ee, #fff);
+}
+
+.dashboard-card--date {
+  background: linear-gradient(145deg, #fff, #fff8ef);
+}
+
+.dashboard-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.dashboard-card__icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 14px;
+  background: #ffead3;
+  color: #b4561d;
+}
+
+.dashboard-card__eyebrow {
+  color: #a07d65;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.dashboard-card__label {
+  margin: 0 0 7px;
+  color: #775d4e;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dashboard-card__number {
+  color: #34231a;
+  font-size: clamp(2.4rem, 3.6vw, 3.5rem);
+  font-weight: 650;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-card__error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #a34024;
+  font-size: 13px;
+}
+
+.dashboard-date {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dashboard-date__day {
+  color: #a94e1b;
+  font-size: clamp(3rem, 4.3vw, 4.5rem);
+  font-weight: 700;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-date__details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: #755849;
+  font-size: 14px;
+}
+
+.dashboard-date__details strong {
+  color: #35261f;
+  font-size: 17px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid {
+    gap: 12px;
+  }
+  .dashboard-card {
+    padding: 16px;
+    min-height: 190px;
+  }
+  .dashboard-date {
+    gap: 9px;
+  }
+}
