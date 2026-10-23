@@ -1,4 +1,4 @@
-import BlurText from './BlurText'
+import BlurText from '../visuals/BlurText'
 
 export default function FullScreenLoader(): React.JSX.Element {
   return (

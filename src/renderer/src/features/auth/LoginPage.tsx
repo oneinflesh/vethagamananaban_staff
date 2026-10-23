@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useNotifications } from '../notifications/Notifications'
-import Aurora from './Aurora'
+import Aurora from '../visuals/Aurora'
 import FullScreenLoader from './FullScreenLoader'
 import { login, type Staff } from './auth'
 
@@ -35,7 +35,7 @@ export default function LoginPage({
     <main className="login-page">
       <div className="login-aurora" aria-hidden="true">
         <Aurora
-          colorStops={['#c7d2fe', '#e0e7ff', '#dbeafe']}
+          colorStops={['#5b6ee1', '#8b5cf6', '#2f80ed']}
           lightMode
           mouseInteraction={false}
           speed={0.35}
@@ -49,7 +49,6 @@ export default function LoginPage({
           <CardTitle className="login-greeting" lang="ta">
             வணக்கம் வேதாகம நண்பன்
           </CardTitle>
-          <CardDescription>Use your existing staff credentials.</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="grid gap-4" onSubmit={submit}>

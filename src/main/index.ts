@@ -23,6 +23,15 @@ function createWindow(): void {
     mainWindow.show()
   })
 
+  if (is.dev) {
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+      if (input.type === 'keyDown' && input.key === 'F12') {
+        event.preventDefault()
+        mainWindow.webContents.toggleDevTools()
+      }
+    })
+  }
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -38,11 +47,11 @@ function createWindow(): void {
 app.whenReady().then(() => {
   ipcMain.handle('office:ping', async () => {
     try {
-      const response = await fetch('https://api.bible2bible.com/api/v1/auth/staff/login/', {
-        method: 'OPTIONS',
+      await fetch('https://api.bible2bible.com/api/v1/auth/staff/login/', {
+        method: 'GET',
         signal: AbortSignal.timeout(5000)
       })
-      return response.ok
+      return true
     } catch {
       return false
     }
