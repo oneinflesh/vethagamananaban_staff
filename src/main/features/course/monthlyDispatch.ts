@@ -20,7 +20,7 @@ export const getMonthlySummary = (examKey: string, country: string): Promise<unk
 
 export const getMonthlyAllocations = (examKey: string, country: string): Promise<unknown[]> =>
   readAll(
-    `staff/course-allocations/?exam=${encodeURIComponent(examKey)}&mode=OFFLINE&active=true&country=${encodeURIComponent(country)}`
+    `staff/course-allocations/?exam=${encodeURIComponent(examKey)}&mode=OFFLINE&active=true&initial_dispatch=completed&country=${encodeURIComponent(country)}`
   )
 
 export const openMonthlyDispatch = (examKey: string, country: string): Promise<unknown> =>
