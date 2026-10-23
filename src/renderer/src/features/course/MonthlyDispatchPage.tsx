@@ -42,7 +42,7 @@ export default function MonthlyDispatchPage({
   const [allocations, setAllocations] = useState<MonthlyAllocation[]>([])
   const [view, setView] = useState<DispatchView>('dispatch')
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('PROCESSING')
   const [stateFilter, setStateFilter] = useState('')
   const [districtFilter, setDistrictFilter] = useState('')
   const [retry, setRetry] = useState(0)
@@ -322,11 +322,14 @@ export default function MonthlyDispatchPage({
               onChange={(event) => setStatusFilter(event.target.value)}
             >
               <option value="">All statuses</option>
-              {statuses.map((status) => (
-                <option key={status} value={status}>
-                  {status.replaceAll('_', ' ')}
-                </option>
-              ))}
+              <option value="PROCESSING">Processing</option>
+              {statuses
+                .filter((status) => status !== 'PROCESSING')
+                .map((status) => (
+                  <option key={status} value={status}>
+                    {status.replaceAll('_', ' ')}
+                  </option>
+                ))}
             </select>
           </label>
           <label className="course-list-filter course-list-filter--compact">
