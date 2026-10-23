@@ -23,11 +23,6 @@ export const getMonthlyAllocations = (examKey: string, country: string): Promise
     `staff/course-allocations/?exam=${encodeURIComponent(examKey)}&mode=OFFLINE&active=true&country=${encodeURIComponent(country)}`
   )
 
-export const getMonthlyAddresses = (courseKey: string, country: string): Promise<unknown> =>
-  authorizedGet(
-    `staff/courses/${encodeURIComponent(courseKey)}/active-postal-addresses/?country=${encodeURIComponent(country)}`
-  )
-
 export const openMonthlyDispatch = (examKey: string, country: string): Promise<unknown> =>
   authorizedRequest(
     `staff/course-exams/${encodeURIComponent(examKey)}/prepare-dispatch/?country=${encodeURIComponent(country)}`,

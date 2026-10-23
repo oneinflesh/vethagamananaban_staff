@@ -8,7 +8,6 @@ import MonthlyDispatchTable, { type DispatchRow, type DispatchView } from './Mon
 import {
   candidateAction,
   getInitialDispatch,
-  getMonthlyAddresses,
   getMonthlyAllocations,
   getMonthlySummary,
   getRegistrationOptions,
@@ -16,12 +15,10 @@ import {
   shipMonthlyAllocation,
   type ExamInfo,
   type MonthlyAllocation,
-  type MonthlyAddressReport,
   type MonthlySummary,
   type MonthlyStudent,
   type RegistrationOptions
 } from './courseApi'
-import { exportMonthlyAddressCsv, printMonthlyAddressLabels, type PaperSize } from './addressLabels'
 
 function monthLabel(exam: ExamInfo): string {
   if (!exam.scheduled_month) return `${exam.sequence}. ${exam.catalog_book_name || exam.title}`
@@ -42,14 +39,19 @@ export default function MonthlyDispatchPage({
   const [examKey, setExamKey] = useState('')
   const [summary, setSummary] = useState<MonthlySummary | null>(null)
   const [allocations, setAllocations] = useState<MonthlyAllocation[]>([])
-  const [addresses, setAddresses] = useState<MonthlyAddressReport | null>(null)
   const [view, setView] = useState<DispatchView>('dispatch')
-  const [paper, setPaper] = useState<PaperSize>('A3')
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
   const [retry, setRetry] = useState(0)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  const [menu, setMenu] = useState<{ row: DispatchRow; x: number; y: number } | null>(null)
+  const [menu, setMenu] = useState<{
+    row: DispatchRow | null
+    enrollmentKey: string
+    bbsNumber: string
+    x: number
+    y: number
+  } | null>(null)
   const [shipping, setShipping] = useState<DispatchRow | null>(null)
   const [tracking, setTracking] = useState('')
   const notify = useNotifications()
@@ -85,16 +87,11 @@ export default function MonthlyDispatchPage({
     if (!examKey || !options) return
     let active = true
     start()
-    Promise.all([
-      getMonthlySummary(examKey, country),
-      getMonthlyAllocations(examKey, country),
-      getMonthlyAddresses(options.course.course_key, country)
-    ])
-      .then(([nextSummary, nextAllocations, nextAddresses]) => {
+    Promise.all([getMonthlySummary(examKey, country), getMonthlyAllocations(examKey, country)])
+      .then(([nextSummary, nextAllocations]) => {
         if (!active) return
         setSummary(nextSummary)
         setAllocations(nextAllocations)
-        setAddresses(nextAddresses)
         setError('')
       })
       .catch((cause) => {
@@ -133,6 +130,11 @@ export default function MonthlyDispatchPage({
       }))
     return [...funded, ...existing]
   }, [allocations, summary, exam])
+  const statuses = useMemo(() => [...new Set(rows.map((row) => row.status))].sort(), [rows])
+  const visibleRows = useMemo(
+    () => rows.filter((row) => !statusFilter || row.status === statusFilter),
+    [rows, statusFilter]
+  )
 
   const unpaid: MonthlyStudent[] =
     view === 'previous' ? (summary?.previous_exam_unpaid ?? []) : (summary?.all_unpaid ?? [])
@@ -155,21 +157,6 @@ export default function MonthlyDispatchPage({
       notify.error(cause instanceof Error ? cause.message : 'Could not open month')
     } finally {
       setBusy(false)
-    }
-  }
-
-  function addressAction(action: 'print' | 'csv'): void {
-    try {
-      if (!addresses?.addresses.length)
-        throw new Error('No active offline addresses are available.')
-      if (action === 'csv') exportMonthlyAddressCsv(addresses.addresses)
-      else printMonthlyAddressLabels(addresses.addresses, paper)
-      if (addresses.missing_address_count)
-        notify.error(
-          `${addresses.missing_address_count} active candidate(s) have no mailing address and were skipped.`
-        )
-    } catch (cause) {
-      notify.error(cause instanceof Error ? cause.message : 'Could not generate addresses')
     }
   }
 
@@ -214,16 +201,47 @@ export default function MonthlyDispatchPage({
   }
 
   function openMenu(event: MouseEvent<HTMLDivElement>): void {
-    if (view !== 'dispatch') return
     const rowElement = (event.target as HTMLElement).closest('tr')
-    const row = rows.find((item) => item.allocation_key === rowElement?.id)
-    if (!row) return
+    const row =
+      view === 'dispatch'
+        ? (visibleRows.find((item) => item.allocation_key === rowElement?.id) ?? null)
+        : null
+    const student =
+      view === 'dispatch' ? row : unpaid.find((item) => item.enrollment_key === rowElement?.id)
+    if (!student) return
     event.preventDefault()
     setMenu({
       row,
+      enrollmentKey: student.enrollment_key,
+      bbsNumber: student.bbs_number,
       x: Math.min(event.clientX, window.innerWidth - 220),
-      y: Math.min(event.clientY, window.innerHeight - 100)
+      y: Math.max(8, Math.min(event.clientY, window.innerHeight - 250))
     })
+  }
+
+  async function changeCandidateStatus(
+    enrollmentKey: string,
+    bbsNumber: string,
+    status: 'SUSPENDED' | 'DROPOUT'
+  ): Promise<void> {
+    const label = status === 'DROPOUT' ? 'dropout' : 'discontinued'
+    setMenu(null)
+    if (
+      !window.confirm(
+        `Mark ${bbsNumber} as ${label}? The candidate will leave this active dispatch list.`
+      )
+    )
+      return
+    setBusy(true)
+    try {
+      await candidateAction('update-status', enrollmentKey, { status })
+      notify.success(`${bbsNumber} marked ${label}`)
+      refresh()
+    } catch (cause) {
+      notify.error(cause instanceof Error ? cause.message : 'Could not change candidate status')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -235,6 +253,21 @@ export default function MonthlyDispatchPage({
         <h1>Monthly book dispatch</h1>
         <span>{country}</span>
       </div>
+      {view === 'dispatch' && (
+        <div className="course-list-actions course-list-actions--dispatch-filter">
+          <label className="course-list-filter">
+            Book status
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <option value="">All statuses</option>
+              {statuses.map((status) => (
+                <option key={status} value={status}>
+                  {status.replaceAll('_', ' ')}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
       <div className="course-list-actions">
         <label className="course-list-filter">
           Book / month
@@ -276,29 +309,6 @@ export default function MonthlyDispatchPage({
         >
           Previous exam complete, unpaid ({summary?.previous_exam_unpaid_count ?? 0})
         </Button>
-      </div>
-      <div className="course-list-actions">
-        <label className="course-list-filter">
-          Address paper
-          <select value={paper} onChange={(event) => setPaper(event.target.value as PaperSize)}>
-            <option value="A3">A3 — 40 labels</option>
-            <option value="A4">A4 — 20 labels</option>
-          </select>
-        </label>
-        <Button
-          variant="outline"
-          disabled={busy || !addresses?.addresses.length}
-          onClick={() => addressAction('print')}
-        >
-          Print / save address PDF
-        </Button>
-        <Button
-          variant="outline"
-          disabled={busy || !addresses?.addresses.length}
-          onClick={() => addressAction('csv')}
-        >
-          Export address CSV
-        </Button>
         <label className="course-list-search">
           Search
           <input
@@ -321,7 +331,7 @@ export default function MonthlyDispatchPage({
       )}
       {error && <div className="course-error">{error}</div>}
       <MonthlyDispatchTable
-        rows={rows}
+        rows={visibleRows}
         unpaid={unpaid}
         view={view}
         search={search}
@@ -334,7 +344,25 @@ export default function MonthlyDispatchPage({
           style={{ left: menu.x, top: menu.y }}
           onClick={(event) => event.stopPropagation()}
         >
-          {(menu.row.kind === 'funded' || menu.row.status === 'PROCESSING') && (
+          <button
+            onClick={() => {
+              onCandidate(menu.enrollmentKey)
+              setMenu(null)
+            }}
+          >
+            View candidate
+          </button>
+          {menu.row?.status === 'READY' && (
+            <button
+              onClick={() => {
+                setMenu(null)
+                void openMonth()
+              }}
+            >
+              Open month to prepare book
+            </button>
+          )}
+          {menu.row && (menu.row.kind === 'funded' || menu.row.status === 'PROCESSING') && (
             <button
               onClick={() => {
                 setShipping(menu.row)
@@ -346,11 +374,17 @@ export default function MonthlyDispatchPage({
           )}
           <button
             onClick={() => {
-              onCandidate(menu.row.enrollment_key)
-              setMenu(null)
+              void changeCandidateStatus(menu.enrollmentKey, menu.bbsNumber, 'SUSPENDED')
             }}
           >
-            View candidate
+            Discontinue candidate
+          </button>
+          <button
+            onClick={() => {
+              void changeCandidateStatus(menu.enrollmentKey, menu.bbsNumber, 'DROPOUT')
+            }}
+          >
+            Dropout candidate
           </button>
         </div>
       )}

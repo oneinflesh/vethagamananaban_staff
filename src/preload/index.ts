@@ -42,8 +42,6 @@ const api = {
     ipcRenderer.invoke('course:monthly-summary', examKey, country),
   courseMonthlyAllocations: (examKey: string, country: string) =>
     ipcRenderer.invoke('course:monthly-allocations', examKey, country),
-  courseMonthlyAddresses: (courseKey: string, country: string) =>
-    ipcRenderer.invoke('course:monthly-addresses', courseKey, country),
   courseMonthlyOpen: (examKey: string, country: string) =>
     ipcRenderer.invoke('course:monthly-open', examKey, country),
   courseMonthlyShip: (allocationKey: string, addressKey: string, trackingNumber: string) =>

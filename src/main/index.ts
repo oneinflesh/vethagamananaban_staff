@@ -24,7 +24,6 @@ import {
 import {
   getMonthlySummary,
   getMonthlyAllocations,
-  getMonthlyAddresses,
   openMonthlyDispatch,
   shipMonthlyAllocation
 } from './features/course/monthlyDispatch'
@@ -127,9 +126,6 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('course:monthly-allocations', (_event, examKey, country) =>
     getMonthlyAllocations(examKey, country)
-  )
-  ipcMain.handle('course:monthly-addresses', (_event, courseKey, country) =>
-    getMonthlyAddresses(courseKey, country)
   )
   ipcMain.handle('course:monthly-open', (_event, examKey, country) =>
     openMonthlyDispatch(examKey, country)

@@ -176,25 +176,6 @@ export type MonthlyAllocation = {
     postal_code?: string
   } | null
 }
-export type MonthlyAddress = {
-  enrollment_key: string
-  bbs_number: string
-  name: string
-  phone: string
-  line1: string
-  line2: string
-  landmark: string
-  district: string
-  state: string
-  country: string
-  postal_code: string
-}
-export type MonthlyAddressReport = {
-  active_count: number
-  missing_address_count: number
-  addresses: MonthlyAddress[]
-}
-
 export const getCandidates = (
   country: string,
   page: number,
@@ -242,10 +223,6 @@ export const getMonthlyAllocations = (
   examKey: string,
   country: string
 ): Promise<MonthlyAllocation[]> => window.office.courseMonthlyAllocations(examKey, country)
-export const getMonthlyAddresses = (
-  courseKey: string,
-  country: string
-): Promise<MonthlyAddressReport> => window.office.courseMonthlyAddresses(courseKey, country)
 export const openMonthlyDispatch = (
   examKey: string,
   country: string

@@ -95,6 +95,7 @@ export default function MonthlyDispatchTable({
             info: true,
             autoWidth: false,
             order: [],
+            rowId: 'enrollment_key',
             layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' }
           }}
         >

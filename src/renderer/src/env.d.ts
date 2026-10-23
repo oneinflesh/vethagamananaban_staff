@@ -77,10 +77,6 @@ interface Window {
       examKey: string,
       country: string
     ): Promise<import('./features/course/courseApi').MonthlyAllocation[]>
-    courseMonthlyAddresses(
-      courseKey: string,
-      country: string
-    ): Promise<import('./features/course/courseApi').MonthlyAddressReport>
     courseMonthlyOpen(examKey: string, country: string): Promise<{ processing: number }>
     courseMonthlyShip(
       allocationKey: string,
