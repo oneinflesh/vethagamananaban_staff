@@ -145,9 +145,8 @@ export const getAllCandidates = (
   country: string,
   mode = '',
   status = '',
-  pending = false,
-  date = ''
-): Promise<Candidate[]> => window.office.courseAllCandidates(country, mode, status, pending, date)
+  pending = false
+): Promise<Candidate[]> => window.office.courseAllCandidates(country, mode, status, pending)
 export const getCoordinators = (
   country: string
 ): Promise<{ count: number; results: Coordinator[] }> => window.office.courseCoordinators(country)

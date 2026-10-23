@@ -119,6 +119,35 @@
 .course-toolbar {
   flex-wrap: wrap;
 }
+.course-list-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.course-list-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  color: #694a36;
+  font-size: 13px;
+}
+.course-list-search input {
+  width: 220px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #ded1c4;
+  border-radius: 7px;
+  background: #fff;
+  color: #34261e;
+}
+@media (max-width: 900px) {
+  .course-list-search {
+    margin-left: 0;
+  }
+}
 .course-toolbar form {
   display: flex;
   gap: 8px;
@@ -251,15 +280,6 @@
 .course-context-menu--actions button:hover {
   background: #fff0dd;
 }
-.course-date-filter {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-  color: #755d4e;
-  font-size: 12px;
-}
-.course-date-filter input,
 .course-dialog select,
 .manual-registration-layout select,
 .course-marks-editor input {

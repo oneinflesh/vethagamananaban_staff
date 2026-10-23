@@ -31,8 +31,7 @@ interface Window {
       country: string,
       mode: string,
       status: string,
-      pending: boolean,
-      date: string
+      pending: boolean
     ): Promise<import('./features/course/courseApi').Candidate[]>
     courseCoordinators(
       country: string

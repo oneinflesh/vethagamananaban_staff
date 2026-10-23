@@ -38,7 +38,7 @@ export default function CandidateList({
   const [data, setData] = useState<Candidate[] | null>(null)
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
-  const [date, setDate] = useState('')
+  const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
   const [visibleKeys, setVisibleKeys] = useState<string[]>([])
   const [shipping, setShipping] = useState(false)
@@ -64,7 +64,7 @@ export default function CandidateList({
 
   useEffect(() => {
     let active = true
-    getAllCandidates(country, mode, status, newOffline, date)
+    getAllCandidates(country, mode, status, newOffline)
       .then((records) => {
         if (active) {
           setData(records)
@@ -80,7 +80,7 @@ export default function CandidateList({
     return () => {
       active = false
     }
-  }, [country, mode, status, newOffline, date, retry, finish])
+  }, [country, mode, status, newOffline, retry, finish])
 
   function refresh(): void {
     setData(null)
@@ -185,21 +185,14 @@ export default function CandidateList({
         <span>
           {country} · {data?.length ?? 0} candidates
         </span>
-        {newOffline && (
-          <label className="course-date-filter">
-            Registration date
-            <input
-              type="date"
-              value={date}
-              onChange={(event) => {
-                start()
-                setData(null)
-                setSelected(new Set())
-                setDate(event.target.value)
-              }}
-            />
-          </label>
-        )}
+      </div>
+      {newOffline && (
+        <p className="course-selection-note">
+          {selected.size} selected for printing or export. Select candidates across pages; only
+          selected candidates appear in the output.
+        </p>
+      )}
+      <div className="course-list-actions">
         {newOffline && (
           <Button variant="outline" onClick={visibleSelection} disabled={!visibleKeys.length}>
             {visibleKeys.length && visibleKeys.every((key) => selected.has(key))
@@ -237,6 +230,19 @@ export default function CandidateList({
         <Button variant="outline" onClick={refresh}>
           Refresh
         </Button>
+        <label className="course-list-search">
+          <span>Search</span>
+          <input
+            type="search"
+            value={search}
+            placeholder="Search candidates"
+            onChange={(event) => {
+              const value = event.target.value
+              setSearch(value)
+              table.current?.dt()?.search(value).draw()
+            }}
+          />
+        </label>
       </div>
       {error && (
         <div className="course-error">
@@ -245,12 +251,6 @@ export default function CandidateList({
             Retry
           </Button>
         </div>
-      )}
-      {newOffline && (
-        <p className="course-selection-note">
-          {selected.size} selected for printing or export. Select candidates across pages; only
-          selected candidates appear in the output.
-        </p>
       )}
       <div
         ref={tableWrap}
@@ -281,7 +281,7 @@ export default function CandidateList({
             },
             layout: {
               topStart: null,
-              topEnd: 'search',
+              topEnd: null,
               bottomStart: 'info',
               bottomEnd: 'paging'
             }
@@ -334,6 +334,17 @@ export default function CandidateList({
             }
           </Column>
           {newOffline && <Column title="Initial parcel" data="initial_dispatch_status" />}
+          {newOffline && (
+            <Column title="Registration date" data="registered_at">
+              {(_value, _type, row: Candidate) =>
+                row.registered_at
+                  ? new Date(row.registered_at).toLocaleDateString('en-GB', {
+                      timeZone: 'Asia/Kolkata'
+                    })
+                  : '—'
+              }
+            </Column>
+          )}
         </DataTable>
       </div>
       {menu && (

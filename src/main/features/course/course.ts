@@ -47,8 +47,7 @@ export async function getAllCandidates(
   country: string,
   mode: string,
   status: string,
-  initialDispatch = false,
-  registrationDate = ''
+  initialDispatch = false
 ): Promise<unknown[]> {
   const results: unknown[] = []
   let page = 1
@@ -62,7 +61,6 @@ export async function getAllCandidates(
     if (mode) params.set('mode', mode)
     if (status) params.set('status', status)
     if (initialDispatch) params.set('initial_dispatch', 'pending')
-    if (registrationDate) params.set('registration_date', registrationDate)
     const response = await authorizedGet<{ count: number; results: unknown[] }>(
       `staff/course-enrollments/?${params}`
     )

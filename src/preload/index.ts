@@ -16,13 +16,8 @@ const api = {
     ipcRenderer.invoke('course:candidates', country, page, mode, status, search),
   courseCandidateCounts: (country: string) =>
     ipcRenderer.invoke('course:candidate-counts', country),
-  courseAllCandidates: (
-    country: string,
-    mode: string,
-    status: string,
-    pending: boolean,
-    date: string
-  ) => ipcRenderer.invoke('course:all-candidates', country, mode, status, pending, date),
+  courseAllCandidates: (country: string, mode: string, status: string, pending: boolean) =>
+    ipcRenderer.invoke('course:all-candidates', country, mode, status, pending),
   courseCoordinators: (country: string) => ipcRenderer.invoke('course:coordinators', country),
   courseCoordinatorCount: (country: string) =>
     ipcRenderer.invoke('course:coordinator-count', country),

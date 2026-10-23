@@ -91,8 +91,8 @@ app.whenReady().then(() => {
     getCandidates(country, page, mode, status, search)
   )
   ipcMain.handle('course:candidate-counts', (_event, country) => getCandidateCounts(country))
-  ipcMain.handle('course:all-candidates', (_event, country, mode, status, pending, date) =>
-    getAllCandidates(country, mode, status, pending, date)
+  ipcMain.handle('course:all-candidates', (_event, country, mode, status, pending) =>
+    getAllCandidates(country, mode, status, pending)
   )
   ipcMain.handle('course:coordinators', (_event, country) => getCoordinators(country))
   ipcMain.handle('course:coordinator-count', (_event, country) => getCoordinatorCount(country))
