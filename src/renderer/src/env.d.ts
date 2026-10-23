@@ -14,7 +14,8 @@ interface Window {
     logout(): Promise<void>
     enrolmentSummary(
       startDate: string,
-      endDate: string
+      endDate: string,
+      country: string
     ): Promise<import('./features/dashboard/dashboardApi').RegistrationSummary>
   }
 }

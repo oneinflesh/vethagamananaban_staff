@@ -64,8 +64,10 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('office:restore-session', () => restoreSession())
   ipcMain.handle('office:logout', () => logout())
-  ipcMain.handle('office:enrolment-summary', (_event, startDate: string, endDate: string) =>
-    getEnrolmentSummary(startDate, endDate)
+  ipcMain.handle(
+    'office:enrolment-summary',
+    (_event, startDate: string, endDate: string, country: string) =>
+      getEnrolmentSummary(startDate, endDate, country)
   )
   // Set app user model id for windows
   app.setAppUserModelId('com.vethagamananban.office')

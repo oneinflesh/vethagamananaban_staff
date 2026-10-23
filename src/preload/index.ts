@@ -10,8 +10,8 @@ const api = {
     ipcRenderer.invoke('office:login', username, password, remember),
   restoreSession: () => ipcRenderer.invoke('office:restore-session'),
   logout: () => ipcRenderer.invoke('office:logout'),
-  enrolmentSummary: (startDate: string, endDate: string) =>
-    ipcRenderer.invoke('office:enrolment-summary', startDate, endDate)
+  enrolmentSummary: (startDate: string, endDate: string, country: string) =>
+    ipcRenderer.invoke('office:enrolment-summary', startDate, endDate, country)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

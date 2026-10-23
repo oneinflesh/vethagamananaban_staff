@@ -30,6 +30,23 @@
   letter-spacing: -0.025em;
   color: #35261f;
 }
+.dashboard-country {
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #775d4e;
+  font-size: 13px;
+}
+.dashboard-country select {
+  height: 34px;
+  min-width: 150px;
+  padding: 0 8px;
+  border: 1px solid #e6d7c8;
+  border-radius: 8px;
+  background: white;
+  color: #35261f;
+}
 
 .dashboard-grid {
   display: grid;

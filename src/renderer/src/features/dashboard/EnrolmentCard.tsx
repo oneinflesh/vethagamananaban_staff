@@ -6,7 +6,13 @@ import { useSmoothLoading } from '../shell/useSmoothLoading'
 import { getEnrolmentSummary } from './dashboardApi'
 import { enrolmentRange, type EnrolmentPeriod } from './enrolmentPeriod'
 
-export default function EnrolmentCard({ date }: { date: string }): React.JSX.Element {
+export default function EnrolmentCard({
+  date,
+  country
+}: {
+  date: string
+  country: string
+}): React.JSX.Element {
   const [result, setResult] = useState<{ range: string; count: number } | null>(null)
   const [failedRange, setFailedRange] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
@@ -14,11 +20,11 @@ export default function EnrolmentCard({ date }: { date: string }): React.JSX.Ele
   const [period, setPeriod] = useState<EnrolmentPeriod>('today')
   const [customDate, setCustomDate] = useState(date)
   const { startDate, endDate } = enrolmentRange(date, period, customDate)
-  const range = `${startDate}:${endDate}`
+  const range = `${country}:${startDate}:${endDate}`
 
   useEffect(() => {
     let active = true
-    getEnrolmentSummary(startDate, endDate)
+    getEnrolmentSummary(startDate, endDate, country)
       .then((summary) => {
         if (active) {
           setResult({ range, count: summary.count })
@@ -34,7 +40,7 @@ export default function EnrolmentCard({ date }: { date: string }): React.JSX.Ele
     return () => {
       active = false
     }
-  }, [startDate, endDate, range, attempt, finish])
+  }, [startDate, endDate, country, range, attempt, finish])
 
   useEffect(() => {
     const timer = window.setInterval(() => {

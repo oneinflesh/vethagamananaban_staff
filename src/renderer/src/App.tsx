@@ -9,6 +9,7 @@ import TitleBar, { type Page } from './features/shell/TitleBar'
 import SplashScreen from './features/shell/SplashScreen'
 import { preloadAppResources } from './features/shell/preloadResources'
 import { NotificationProvider } from './features/notifications/Notifications'
+import { CountryProvider } from './features/country/CountryContext'
 
 export default function App(): React.JSX.Element {
   const [session, setSession] = useState<AuthSession | null>(null)
@@ -55,21 +56,23 @@ export default function App(): React.JSX.Element {
 
   return (
     <NotificationProvider>
-      <div className="app">
-        <TitleBar page={page} onPage={setPage} showNavigation={!!staff} onLogout={handleLogout} />
-        {staff ? (
-          page === 'dashboard' ? (
-            <DashboardPage />
-          ) : page === 'store' ? (
-            <StorePage />
+      <CountryProvider>
+        <div className="app">
+          <TitleBar page={page} onPage={setPage} showNavigation={!!staff} onLogout={handleLogout} />
+          {staff ? (
+            page === 'dashboard' ? (
+              <DashboardPage />
+            ) : page === 'store' ? (
+              <StorePage />
+            ) : (
+              <CoursePage />
+            )
           ) : (
-            <CoursePage />
-          )
-        ) : (
-          <LoginPage onLogin={setSession} />
-        )}
-        <StatusBar staff={staff} />
-      </div>
+            <LoginPage onLogin={setSession} />
+          )}
+          <StatusBar staff={staff} />
+        </div>
+      </CountryProvider>
     </NotificationProvider>
   )
 }
