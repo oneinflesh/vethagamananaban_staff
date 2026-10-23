@@ -1,4 +1,3 @@
-import { CalendarDays } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 
 export default function DateCard({ date }: { date: Date }): React.JSX.Element {
@@ -14,9 +13,7 @@ export default function DateCard({ date }: { date: Date }): React.JSX.Element {
   return (
     <Card className="dashboard-card dashboard-card--date">
       <div className="dashboard-card__top">
-        <span className="dashboard-card__icon">
-          <CalendarDays size={22} />
-        </span>
+        <span className="dashboard-card__label">Today’s date</span>
         <span className="dashboard-card__eyebrow">INDIA</span>
       </div>
       <div className="dashboard-date">

@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import { login, restoreSession } from './features/auth/auth'
-import { getTodayEnrolment } from './features/dashboard/dashboard'
+import { getEnrolmentSummary } from './features/dashboard/dashboard'
 
 function createWindow(): void {
   // Create the browser window.
@@ -63,7 +63,9 @@ app.whenReady().then(() => {
     login(username, password, remember)
   )
   ipcMain.handle('office:restore-session', () => restoreSession())
-  ipcMain.handle('office:today-enrolment', (_event, date: string) => getTodayEnrolment(date))
+  ipcMain.handle('office:enrolment-summary', (_event, startDate: string, endDate: string) =>
+    getEnrolmentSummary(startDate, endDate)
+  )
   // Set app user model id for windows
   app.setAppUserModelId('com.vethagamananban.office')
 

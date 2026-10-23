@@ -1,7 +1,9 @@
-export type RegistrationSummary = { date: string; count: number }
+export type RegistrationSummary = { start_date: string; end_date: string; count: number }
 
-export const getTodayEnrolment = (date: string): Promise<RegistrationSummary> =>
-  window.office.todayEnrolment(date)
+export const getEnrolmentSummary = (
+  startDate: string,
+  endDate: string
+): Promise<RegistrationSummary> => window.office.enrolmentSummary(startDate, endDate)
 
 export function indiaDateKey(date: Date): string {
   const parts = new Intl.DateTimeFormat('en-GB', {

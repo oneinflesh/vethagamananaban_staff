@@ -11,8 +11,9 @@ interface Window {
       remember: boolean
     ): Promise<import('./features/auth/auth').AuthSession>
     restoreSession(): Promise<import('./features/auth/auth').AuthSession | null>
-    todayEnrolment(
-      date: string
+    enrolmentSummary(
+      startDate: string,
+      endDate: string
     ): Promise<import('./features/dashboard/dashboardApi').RegistrationSummary>
   }
 }
