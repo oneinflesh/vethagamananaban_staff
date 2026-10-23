@@ -5,9 +5,18 @@ import { login, logout, restoreSession } from './features/auth/auth'
 import { getEnrolmentSummary } from './features/dashboard/dashboard'
 import {
   getCandidates,
+  getAllCandidates,
   getCandidateCounts,
+  getCoordinators,
+  getCoordinatorCount,
+  getRegistrationOptions,
+  createManualRegistration,
+  getInitialDispatch,
+  candidateAction,
+  updateAllocationScore,
   getCandidate,
   getCoordinator,
+  updateCoordinator,
   getCoordinatorMembers,
   updateCandidate,
   uploadCandidatePhoto
@@ -82,8 +91,25 @@ app.whenReady().then(() => {
     getCandidates(country, page, mode, status, search)
   )
   ipcMain.handle('course:candidate-counts', (_event, country) => getCandidateCounts(country))
+  ipcMain.handle('course:all-candidates', (_event, country, mode, status, pending, date) =>
+    getAllCandidates(country, mode, status, pending, date)
+  )
+  ipcMain.handle('course:coordinators', (_event, country) => getCoordinators(country))
+  ipcMain.handle('course:coordinator-count', (_event, country) => getCoordinatorCount(country))
+  ipcMain.handle('course:registration-options', () => getRegistrationOptions())
+  ipcMain.handle('course:manual-registration', (_event, courseKey, data) =>
+    createManualRegistration(courseKey, data)
+  )
+  ipcMain.handle('course:initial-dispatch', (_event, key) => getInitialDispatch(key))
+  ipcMain.handle('course:candidate-action', (_event, action, key, data) =>
+    candidateAction(action, key, data)
+  )
+  ipcMain.handle('course:allocation-score', (_event, key, score) =>
+    updateAllocationScore(key, score)
+  )
   ipcMain.handle('course:candidate', (_event, key) => getCandidate(key))
   ipcMain.handle('course:coordinator', (_event, key) => getCoordinator(key))
+  ipcMain.handle('course:update-coordinator', (_event, key, data) => updateCoordinator(key, data))
   ipcMain.handle('course:coordinator-members', (_event, key) => getCoordinatorMembers(key))
   ipcMain.handle('course:update-candidate', (_event, key, data) => updateCandidate(key, data))
   ipcMain.handle('course:upload-photo', (_event, key, bytes, name) =>

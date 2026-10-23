@@ -27,8 +27,37 @@ interface Window {
     courseCandidateCounts(
       country: string
     ): Promise<import('./features/course/courseApi').CandidateCounts>
+    courseAllCandidates(
+      country: string,
+      mode: string,
+      status: string,
+      pending: boolean,
+      date: string
+    ): Promise<import('./features/course/courseApi').Candidate[]>
+    courseCoordinators(
+      country: string
+    ): Promise<{ count: number; results: import('./features/course/courseApi').Coordinator[] }>
+    courseCoordinatorCount(country: string): Promise<number>
+    courseRegistrationOptions(): Promise<import('./features/course/courseApi').RegistrationOptions>
+    courseManualRegistration(
+      courseKey: string,
+      data: unknown
+    ): Promise<import('./features/course/courseApi').Candidate>
+    courseInitialDispatch(
+      key: string
+    ): Promise<import('./features/course/courseApi').InitialDispatch>
+    courseCandidateAction(
+      action: 'initial-dispatch' | 'set-password' | 'update-status' | 'manual-purchase',
+      key: string,
+      data: unknown
+    ): Promise<unknown>
+    courseAllocationScore(key: string, score: number | null): Promise<unknown>
     courseCandidate(key: string): Promise<import('./features/course/courseApi').CandidateSummary>
     courseCoordinator(key: string): Promise<import('./features/course/courseApi').Coordinator>
+    courseUpdateCoordinator(
+      key: string,
+      data: unknown
+    ): Promise<import('./features/course/courseApi').Coordinator>
     courseCoordinatorMembers(
       key: string
     ): Promise<import('./features/course/courseApi').CoordinatorMember[]>

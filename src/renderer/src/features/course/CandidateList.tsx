@@ -1,10 +1,12 @@
-import { useEffect, useState, type MouseEvent, type PointerEvent } from 'react'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import FullScreenLoader from '../shell/FullScreenLoader'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
-import { getCandidates, type Candidate, type CandidatePage } from './courseApi'
+import { getAllCandidates, type Candidate } from './courseApi'
 import { DataTable, Column } from './dataTable'
+import { resizeColumns } from './resizeColumns'
+import CandidateActionPanel, { type CandidateAction } from './CandidateActionPanel'
 import type { CourseSection } from './CoursePage'
 
 const names: Record<CourseSection, string> = {
@@ -12,41 +14,51 @@ const names: Record<CourseSection, string> = {
   online: 'Online candidates',
   offline: 'Offline candidates',
   discontinued: 'Discontinued candidates',
-  finished: 'Course finished candidates'
+  finished: 'Course finished candidates',
+  newOffline: 'New Registrations - Offline'
 }
-const pageSize = 20
 
 export default function CandidateList({
   section,
   country,
   onBack,
   onCandidate,
-  onCoordinator
+  onCoordinator,
+  onMarks
 }: {
   section: CourseSection
   country: string
   onBack: () => void
   onCandidate: (key: string) => void
   onCoordinator: (key: string) => void
+  onMarks: (key: string) => void
 }): React.JSX.Element {
-  const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
-  const [query, setQuery] = useState('')
-  const [data, setData] = useState<CandidatePage | null>(null)
+  const [data, setData] = useState<Candidate[] | null>(null)
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
+  const [date, setDate] = useState('')
+  const [selected, setSelected] = useState<Set<string>>(() => new Set())
+  const selectedRef = useRef<Set<string>>(new Set())
   const [menu, setMenu] = useState<{ x: number; y: number; candidate: Candidate } | null>(null)
+  const [action, setAction] = useState<{ kind: CandidateAction; candidate: Candidate } | null>(null)
+  const table = useRef<DataTableRef>(null)
   const { loading, leaving, start, finish } = useSmoothLoading()
-  const mode = section === 'online' ? 'ONLINE' : section === 'offline' ? 'OFFLINE' : ''
+  useEffect(() => {
+    selectedRef.current = selected
+    table.current?.dt()?.rows().invalidate().draw(false)
+  }, [selected])
+  const newOffline = section === 'newOffline'
+  const mode =
+    section === 'online' ? 'ONLINE' : section === 'offline' || newOffline ? 'OFFLINE' : ''
   const status =
     section === 'discontinued' ? 'SUSPENDED' : section === 'finished' ? 'COMPLETED' : ''
 
   useEffect(() => {
     let active = true
-    getCandidates(country, page, mode, status, query)
-      .then((value) => {
+    getAllCandidates(country, mode, status, newOffline, date)
+      .then((records) => {
         if (active) {
-          setData(value)
+          setData(records)
           setError('')
         }
       })
@@ -59,52 +71,53 @@ export default function CandidateList({
     return () => {
       active = false
     }
-  }, [country, page, mode, status, query, retry, finish])
+  }, [country, mode, status, newOffline, date, retry, finish])
+
+  function refresh(): void {
+    setData(null)
+    setSelected(new Set())
+    start()
+    setRetry((value) => value + 1)
+  }
 
   function openMenu(event: MouseEvent<HTMLDivElement>): void {
     const row = (event.target as HTMLElement).closest('tr')
-    const candidate = data?.results.find((item) => item.enrollment_key === row?.id)
+    const candidate = data?.find((item) => item.enrollment_key === row?.id)
     if (!candidate) return
     event.preventDefault()
     setMenu({
-      x: Math.min(event.clientX, window.innerWidth - 140),
-      y: Math.min(event.clientY, window.innerHeight - 55),
+      x: Math.min(event.clientX, window.innerWidth - 230),
+      y: Math.min(event.clientY, window.innerHeight - 270),
       candidate
     })
   }
 
-  function resizeColumn(event: PointerEvent<HTMLDivElement>): void {
-    const header = (event.target as HTMLElement).closest('th')
-    const table = header?.closest('table')
-    if (!header || !table || header.getBoundingClientRect().right - event.clientX > 12) return
-    event.preventDefault()
-    const headers = Array.from(table.querySelectorAll<HTMLTableCellElement>('thead th'))
-    const columns = Array.from(table.querySelectorAll<HTMLTableColElement>('colgroup col'))
-    const widths = headers.map((item) => item.getBoundingClientRect().width)
-    headers.forEach((item, index) => {
-      item.style.width = `${widths[index]}px`
-      item.style.minWidth = '70px'
+  function visibleSelection(): void {
+    const rows = table.current
+      ?.dt()
+      ?.rows({ page: 'current', search: 'applied' })
+      .data()
+      .toArray() as Candidate[] | undefined
+    if (!rows) return
+    setSelected((current) => {
+      const next = new Set(current)
+      const allSelected = rows.every((row) => next.has(row.enrollment_key))
+      rows.forEach((row) => {
+        if (allSelected) next.delete(row.enrollment_key)
+        else next.add(row.enrollment_key)
+      })
+      return next
     })
-    columns.forEach((item, index) => {
-      item.style.width = `${widths[index]}px`
-    })
-    const index = headers.indexOf(header)
-    const startX = event.clientX
-    const initialWidth = widths[index]
-    const initialTableWidth = widths.reduce((sum, width) => sum + width, 0)
-    const move = (pointer: globalThis.PointerEvent): void => {
-      const width = Math.max(70, initialWidth + pointer.clientX - startX)
-      header.style.width = `${width}px`
-      if (columns[index]) columns[index].style.width = `${width}px`
-      table.style.setProperty('width', `${initialTableWidth + width - initialWidth}px`, 'important')
-    }
-    const stop = (): void => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', stop)
-    }
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', stop, { once: true })
   }
+
+  const exportOptions = newOffline
+    ? {
+        rows: (_index: number, row: Candidate): boolean =>
+          selectedRef.current.has(row.enrollment_key),
+        columns: ':visible:not(:first-child)',
+        modifier: { search: 'none' as const, page: 'all' as const }
+      }
+    : { columns: ':visible', modifier: { search: 'none' as const, page: 'all' as const } }
 
   return (
     <section className="page course-page" onClick={() => menu && setMenu(null)}>
@@ -114,57 +127,101 @@ export default function CandidateList({
         </Button>
         <h1>{names[section]}</h1>
         <span>
-          {country} · {data?.count ?? 0} candidates
+          {country} · {data?.length ?? 0} candidates
         </span>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault()
-            start()
-            setPage(1)
-            setQuery(search)
-            setRetry((value) => value + 1)
-          }}
-        >
-          <Input
-            aria-label="Search candidates"
-            placeholder="Search name, BBS, phone…"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-          <Button type="submit">Search</Button>
-        </form>
+        {newOffline && (
+          <label className="course-date-filter">
+            Registration date
+            <input
+              type="date"
+              value={date}
+              onChange={(event) => {
+                start()
+                setData(null)
+                setSelected(new Set())
+                setDate(event.target.value)
+              }}
+            />
+          </label>
+        )}
+        {newOffline && (
+          <Button variant="outline" onClick={visibleSelection}>
+            Select all visible
+          </Button>
+        )}
+        <Button variant="outline" onClick={refresh}>
+          Refresh
+        </Button>
       </div>
       {error && (
         <div className="course-error">
           {error}{' '}
-          <Button
-            variant="link"
-            onClick={() => {
-              start()
-              setRetry((value) => value + 1)
-            }}
-          >
+          <Button variant="link" onClick={refresh}>
             Retry
           </Button>
         </div>
       )}
+      {newOffline && (
+        <p className="course-selection-note">
+          {selected.size} selected for printing or export. Print and CSV use only selected
+          candidates; other lists include everyone.
+        </p>
+      )}
       <div
         className="course-table-wrap course-table-wrap--candidates"
         onContextMenu={openMenu}
-        onPointerDown={resizeColumn}
+        onPointerDown={resizeColumns}
       >
         <DataTable
-          data={data?.results ?? []}
+          ref={table}
+          data={data ?? []}
           className="display course-table"
           options={{
-            paging: false,
-            searching: false,
-            info: false,
+            pageLength: 20,
+            lengthChange: false,
+            searching: true,
+            paging: true,
+            info: true,
             autoWidth: false,
             order: [],
-            rowId: 'enrollment_key'
+            rowId: 'enrollment_key',
+            buttons: [
+              { extend: 'copyHtml5', exportOptions },
+              { extend: 'csvHtml5', text: 'Export CSV', exportOptions },
+              { extend: 'print', exportOptions }
+            ],
+            layout: {
+              topStart: 'buttons',
+              topEnd: 'search',
+              bottomStart: 'info',
+              bottomEnd: 'paging'
+            }
           }}
         >
+          {newOffline && (
+            <Column
+              title="Select"
+              data="enrollment_key"
+              options={{ orderable: false, searchable: false }}
+            >
+              {(_value, _type, row: Candidate) => (
+                <input
+                  type="checkbox"
+                  aria-label={`Select ${row.full_name}`}
+                  checked={selected.has(row.enrollment_key)}
+                  onChange={(event) => {
+                    const checked = event.target.checked
+                    setSelected((current) => {
+                      const next = new Set(current)
+                      if (checked) next.add(row.enrollment_key)
+                      else next.delete(row.enrollment_key)
+                      return next
+                    })
+                  }}
+                />
+              )}
+            </Column>
+          )}
           <Column title="BBS number" data="bbs_identifier">
             {(_value, _type, row: Candidate) => (
               <button className="course-link" onClick={() => onCandidate(row.enrollment_key)}>
@@ -175,12 +232,12 @@ export default function CandidateList({
           <Column title="Name" data="full_name" />
           <Column title="Address 1" data="address_line1" />
           <Column title="Address 2" data="address_line2" />
-          <Column title="Address 3" data="address_line3" />
+          <Column title="Address 3" data="address_line3" options={{ defaultContent: '' }} />
           <Column title="District" data="district" />
           <Column title="State" data="state" />
           <Column title="Pincode" data="postal_code" />
           <Column title="Phone 1" data="phone" />
-          <Column title="Phone 2" data="phone2" />
+          <Column title="Phone 2" data="phone2" options={{ defaultContent: '' }} />
           <Column title="Coordinator" data="coordinator.name" options={{ defaultContent: '' }}>
             {(_value, _type, row: Candidate) =>
               row.coordinator ? (
@@ -195,49 +252,90 @@ export default function CandidateList({
               )
             }
           </Column>
+          {newOffline && <Column title="Initial parcel" data="initial_dispatch_status" />}
         </DataTable>
       </div>
-      <div className="course-pagination">
-        <span>
-          {data && data.count > 0
-            ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, data.count)} of ${data.count}`
-            : '0 candidates'}
-        </span>
-        <Button
-          variant="outline"
-          disabled={page <= 1}
-          onClick={() => {
-            start()
-            setPage(page - 1)
-          }}
-        >
-          Previous
-        </Button>
-        <span>
-          Page {page} of {Math.max(1, Math.ceil((data?.count ?? 0) / pageSize))}
-        </span>
-        <Button
-          variant="outline"
-          disabled={!data || page * pageSize >= data.count}
-          onClick={() => {
-            start()
-            setPage(page + 1)
-          }}
-        >
-          Next
-        </Button>
-      </div>
       {menu && (
-        <button
-          className="course-context-menu"
+        <div
+          className="course-context-menu course-context-menu--actions"
           style={{ left: menu.x, top: menu.y }}
-          onClick={(event) => {
-            event.stopPropagation()
-            onCandidate(menu.candidate.enrollment_key)
-          }}
+          onClick={(event) => event.stopPropagation()}
         >
-          Edit candidate
-        </button>
+          <button
+            onClick={() => {
+              onCandidate(menu.candidate.enrollment_key)
+              setMenu(null)
+            }}
+          >
+            View / update candidate
+          </button>
+          {menu.candidate.mode === 'OFFLINE' && (
+            <>
+              <button
+                onClick={() => {
+                  setAction({ kind: 'parcel', candidate: menu.candidate })
+                  setMenu(null)
+                }}
+              >
+                Prepare ID card and books
+              </button>
+              <button
+                onClick={() => {
+                  setAction({ kind: 'payment', candidate: menu.candidate })
+                  setMenu(null)
+                }}
+              >
+                Record offline payment
+              </button>
+              <button
+                onClick={() => {
+                  onMarks(menu.candidate.enrollment_key)
+                  setMenu(null)
+                }}
+              >
+                View / edit marks
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => {
+              setAction({ kind: 'password', candidate: menu.candidate })
+              setMenu(null)
+            }}
+          >
+            Change password
+          </button>
+          {menu.candidate.status === 'SUSPENDED' ? (
+            <button
+              onClick={() => {
+                setAction({ kind: 'restore', candidate: menu.candidate })
+                setMenu(null)
+              }}
+            >
+              Restore candidate
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setAction({ kind: 'discontinue', candidate: menu.candidate })
+                setMenu(null)
+              }}
+            >
+              Discontinue candidate
+            </button>
+          )}
+        </div>
+      )}
+      {action && (
+        <CandidateActionPanel
+          action={action.kind}
+          candidate={action.candidate}
+          onClose={() => setAction(null)}
+          onChanged={() => {
+            setAction(null)
+            refresh()
+          }}
+        />
       )}
       {loading && <FullScreenLoader message="Loading candidates" leaving={leaving} />}
     </section>

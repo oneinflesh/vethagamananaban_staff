@@ -4,35 +4,45 @@ import { useCountry } from '../country/CountryContext'
 import CandidateList from './CandidateList'
 import CandidateDetails from './CandidateDetails'
 import CoordinatorDetails from './CoordinatorDetails'
-import { getCandidateCounts, type CandidateCounts } from './courseApi'
+import CoordinatorList from './CoordinatorList'
+import ManualRegistrationPage from './ManualRegistrationPage'
+import { getCandidateCounts, getCoordinatorCount, type CandidateCounts } from './courseApi'
 import './course.css'
 
-export type CourseSection = 'all' | 'online' | 'offline' | 'discontinued' | 'finished'
+export type CourseSection =
+  'all' | 'online' | 'offline' | 'discontinued' | 'finished' | 'newOffline'
 const sections: { id: CourseSection; title: string; description: string }[] = [
   { id: 'all', title: 'All candidates', description: 'Every course registration' },
   { id: 'online', title: 'Online candidates', description: 'Online study mode' },
   { id: 'offline', title: 'Offline candidates', description: 'Postal study mode' },
   { id: 'discontinued', title: 'Discontinued candidates', description: 'Suspended registrations' },
-  { id: 'finished', title: 'Course finished candidates', description: 'Completed courses' }
+  { id: 'finished', title: 'Course finished candidates', description: 'Completed courses' },
+  { id: 'newOffline', title: 'New Registrations - Offline', description: 'Pending initial parcel' }
 ]
 export default function CoursePage(): React.JSX.Element {
   const { country } = useCountry()
   const [section, setSection] = useState<CourseSection | null>(null)
   const [candidateKey, setCandidateKey] = useState<string | null>(null)
+  const [candidateTab, setCandidateTab] = useState<'details' | 'exams'>('details')
   const [coordinatorKey, setCoordinatorKey] = useState<string | null>(null)
-  const [counts, setCounts] = useState<{ country: string; values: CandidateCounts } | null>(null)
+  const [coordinatorList, setCoordinatorList] = useState(false)
+  const [manualRegistration, setManualRegistration] = useState(false)
+  const [counts, setCounts] = useState<{
+    country: string
+    values: CandidateCounts & { coordinators: number }
+  } | null>(null)
   const [countError, setCountError] = useState<string | null>(null)
   const [retry, setRetry] = useState(0)
   useEffect(() => {
-    if (section || candidateKey || coordinatorKey) return
+    if (section || candidateKey || coordinatorKey || coordinatorList || manualRegistration) return
     let active = true
     Promise.all([
-      getCandidateCounts(country),
+      Promise.all([getCandidateCounts(country), getCoordinatorCount(country)]),
       new Promise<void>((resolve) => window.setTimeout(resolve, 400))
     ])
-      .then(([result]) => {
+      .then(([[result, coordinators]]) => {
         if (active) {
-          setCounts({ country, values: result })
+          setCounts({ country, values: { ...result, coordinators } })
           setCountError(null)
         }
       })
@@ -42,7 +52,7 @@ export default function CoursePage(): React.JSX.Element {
     return () => {
       active = false
     }
-  }, [country, section, candidateKey, coordinatorKey, retry])
+  }, [country, section, candidateKey, coordinatorKey, coordinatorList, manualRegistration, retry])
   const visibleCounts = counts?.country === country ? counts.values : null
   if (coordinatorKey)
     return (
@@ -61,8 +71,36 @@ export default function CoursePage(): React.JSX.Element {
       <CandidateDetails
         key={candidateKey}
         candidateKey={candidateKey}
+        initialTab={candidateTab}
         onBack={() => setCandidateKey(null)}
         onCoordinator={setCoordinatorKey}
+      />
+    )
+  if (coordinatorList)
+    return (
+      <CoordinatorList
+        country={country}
+        onBack={() => {
+          setCoordinatorList(false)
+          setCounts(null)
+        }}
+        onCoordinator={setCoordinatorKey}
+      />
+    )
+  if (manualRegistration)
+    return (
+      <ManualRegistrationPage
+        country={country}
+        onBack={() => {
+          setManualRegistration(false)
+          setCounts(null)
+        }}
+        onCandidate={(key) => {
+          setManualRegistration(false)
+          setCounts(null)
+          setCandidateTab('details')
+          setCandidateKey(key)
+        }}
       />
     )
   if (section)
@@ -75,7 +113,14 @@ export default function CoursePage(): React.JSX.Element {
           setCounts(null)
           setSection(null)
         }}
-        onCandidate={setCandidateKey}
+        onCandidate={(key) => {
+          setCandidateTab('details')
+          setCandidateKey(key)
+        }}
+        onMarks={(key) => {
+          setCandidateTab('exams')
+          setCandidateKey(key)
+        }}
         onCoordinator={setCoordinatorKey}
       />
     )
@@ -101,7 +146,7 @@ export default function CoursePage(): React.JSX.Element {
         </div>
       ) : visibleCounts ? (
         <div className="course-card-grid">
-          {sections.map((item) => (
+          {sections.slice(0, 5).map((item) => (
             <button className="course-nav-card" key={item.id} onClick={() => setSection(item.id)}>
               <span className="course-nav-card__count">{visibleCounts[item.id]}</span>
               <strong>{item.title}</strong>
@@ -111,10 +156,18 @@ export default function CoursePage(): React.JSX.Element {
               </span>
             </button>
           ))}
+          <button className="course-nav-card" onClick={() => setCoordinatorList(true)}>
+            <span className="course-nav-card__count">{visibleCounts.coordinators}</span>
+            <strong>Coordinators</strong>
+            <small>View coordinators and their people</small>
+            <span className="course-nav-card__arrow" aria-hidden="true">
+              →
+            </span>
+          </button>
         </div>
       ) : (
         <div className="course-card-grid" role="status" aria-label="Loading course cards">
-          {sections.map((item) => (
+          {sections.slice(0, 6).map((item) => (
             <div
               className="course-nav-card course-nav-card--loading"
               key={item.id}
@@ -125,6 +178,31 @@ export default function CoursePage(): React.JSX.Element {
               <span className="course-card-skeleton course-card-skeleton--description" />
             </div>
           ))}
+        </div>
+      )}
+      {visibleCounts && countError !== country && (
+        <div className="course-card-grid course-card-grid--second">
+          <button
+            className="course-nav-card course-nav-card--wide"
+            onClick={() => setSection('newOffline')}
+          >
+            <span className="course-nav-card__count">{visibleCounts.newOffline ?? ''}</span>
+            <strong>New Registrations - Offline</strong>
+            <small>Pending ID cards and registration books</small>
+            <span className="course-nav-card__arrow" aria-hidden="true">
+              →
+            </span>
+          </button>
+          <button
+            className="course-nav-card course-nav-card--wide"
+            onClick={() => setManualRegistration(true)}
+          >
+            <strong>New manual registration</strong>
+            <small>Register an offline candidate and record payment</small>
+            <span className="course-nav-card__arrow" aria-hidden="true">
+              →
+            </span>
+          </button>
         </div>
       )}
     </section>

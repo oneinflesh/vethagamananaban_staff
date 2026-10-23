@@ -16,8 +16,28 @@ const api = {
     ipcRenderer.invoke('course:candidates', country, page, mode, status, search),
   courseCandidateCounts: (country: string) =>
     ipcRenderer.invoke('course:candidate-counts', country),
+  courseAllCandidates: (
+    country: string,
+    mode: string,
+    status: string,
+    pending: boolean,
+    date: string
+  ) => ipcRenderer.invoke('course:all-candidates', country, mode, status, pending, date),
+  courseCoordinators: (country: string) => ipcRenderer.invoke('course:coordinators', country),
+  courseCoordinatorCount: (country: string) =>
+    ipcRenderer.invoke('course:coordinator-count', country),
+  courseRegistrationOptions: () => ipcRenderer.invoke('course:registration-options'),
+  courseManualRegistration: (courseKey: string, data: unknown) =>
+    ipcRenderer.invoke('course:manual-registration', courseKey, data),
+  courseInitialDispatch: (key: string) => ipcRenderer.invoke('course:initial-dispatch', key),
+  courseCandidateAction: (action: string, key: string, data: unknown) =>
+    ipcRenderer.invoke('course:candidate-action', action, key, data),
+  courseAllocationScore: (key: string, score: number | null) =>
+    ipcRenderer.invoke('course:allocation-score', key, score),
   courseCandidate: (key: string) => ipcRenderer.invoke('course:candidate', key),
   courseCoordinator: (key: string) => ipcRenderer.invoke('course:coordinator', key),
+  courseUpdateCoordinator: (key: string, data: unknown) =>
+    ipcRenderer.invoke('course:update-coordinator', key, data),
   courseCoordinatorMembers: (key: string) => ipcRenderer.invoke('course:coordinator-members', key),
   courseUpdateCandidate: (key: string, data: unknown) =>
     ipcRenderer.invoke('course:update-candidate', key, data),

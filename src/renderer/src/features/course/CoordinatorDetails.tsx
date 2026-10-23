@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { useNotifications } from '../notifications/Notifications'
 import FullScreenLoader from '../shell/FullScreenLoader'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
 import {
   getCoordinator,
   getCoordinatorMembers,
+  updateCoordinator,
   type Coordinator,
   type CoordinatorMember
 } from './courseApi'
 import { DataTable, Column } from './dataTable'
+import { resizeColumns } from './resizeColumns'
 
 export default function CoordinatorDetails({
   coordinatorKey,
@@ -22,6 +26,8 @@ export default function CoordinatorDetails({
   const [coordinator, setCoordinator] = useState<Coordinator | null>(null)
   const [members, setMembers] = useState<CoordinatorMember[]>([])
   const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const notify = useNotifications()
   const { loading, leaving, finish } = useSmoothLoading()
   useEffect(() => {
     let active = true
@@ -43,40 +49,100 @@ export default function CoordinatorDetails({
       active = false
     }
   }, [coordinatorKey, finish])
+  async function save(): Promise<void> {
+    if (!coordinator) return
+    setSaving(true)
+    try {
+      const saved = await updateCoordinator(coordinatorKey, {
+        name: coordinator.name,
+        phone: coordinator.phone,
+        email: coordinator.email,
+        address_line1: coordinator.address_line1,
+        address_line2: coordinator.address_line2,
+        address: [
+          coordinator.address_line1,
+          coordinator.address_line2,
+          coordinator.district,
+          coordinator.state,
+          coordinator.postal_code
+        ]
+          .filter(Boolean)
+          .join(', '),
+        district: coordinator.district,
+        state: coordinator.state,
+        postal_code: coordinator.postal_code
+      })
+      setCoordinator(saved)
+      notify.success('Coordinator updated')
+    } catch (cause) {
+      notify.error(cause instanceof Error ? cause.message : 'Could not update coordinator')
+    } finally {
+      setSaving(false)
+    }
+  }
   return (
     <section className="page course-page">
       <div className="course-toolbar">
         <Button variant="outline" onClick={onBack}>
-          ← Candidates
+          ← Coordinators
         </Button>
         <h1>{coordinator?.name || 'Coordinator'}</h1>
         <span>{coordinator?.member_count ?? 0} people</span>
       </div>
       {error && <p className="course-error">{error}</p>}
       {coordinator && (
-        <div className="coordinator-summary">
-          <span>Phone: {coordinator.phone}</span>
-          <span>Email: {coordinator.email}</span>
-          <span>
-            Address:{' '}
-            {[
-              coordinator.address_line1,
-              coordinator.address_line2,
-              coordinator.district,
-              coordinator.state,
-              coordinator.postal_code
-            ]
-              .filter(Boolean)
-              .join(', ')}
-          </span>
-          <span>Country: {coordinator.country}</span>
+        <div className="candidate-form coordinator-editor">
+          <div className="candidate-form__readonly">
+            <span>Country: {coordinator.country}</span>
+            <span>People: {coordinator.member_count}</span>
+            {coordinator.enrollment_key && (
+              <Button variant="link" onClick={() => onCandidate(coordinator.enrollment_key!)}>
+                View coordinator candidate details · {coordinator.bbs_number}
+              </Button>
+            )}
+          </div>
+          <div className="candidate-form__grid">
+            {(
+              [
+                'name',
+                'phone',
+                'email',
+                'address_line1',
+                'address_line2',
+                'district',
+                'state',
+                'postal_code'
+              ] as const
+            ).map((key) => (
+              <label key={key}>
+                {key.replaceAll('_', ' ')}
+                <Input
+                  value={coordinator[key] ?? ''}
+                  onChange={(event) =>
+                    setCoordinator({ ...coordinator, [key]: event.target.value })
+                  }
+                />
+              </label>
+            ))}
+          </div>
+          <Button disabled={saving} onClick={() => void save()}>
+            {saving ? 'Saving…' : 'Save coordinator'}
+          </Button>
         </div>
       )}
-      <div className="course-table-wrap">
+      <div className="course-table-wrap" onPointerDown={resizeColumns}>
         <DataTable
           data={members}
           className="display course-table"
-          options={{ paging: false, searching: false, info: false, order: [] }}
+          options={{
+            pageLength: 20,
+            lengthChange: false,
+            paging: true,
+            searching: true,
+            info: true,
+            autoWidth: false,
+            order: []
+          }}
         >
           <Column title="BBS number" data="bbs_number">
             {(_value, _type, row: CoordinatorMember) => (

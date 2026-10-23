@@ -35,16 +35,18 @@ const editable: { key: keyof Candidate; label: string; type?: string }[] = [
 
 export default function CandidateDetails({
   candidateKey,
+  initialTab = 'details',
   onBack,
   onCoordinator
 }: {
   candidateKey: string
+  initialTab?: Tab
   onBack: () => void
   onCoordinator: (key: string) => void
 }): React.JSX.Element {
   const [summary, setSummary] = useState<CandidateSummary | null>(null)
   const [form, setForm] = useState<Candidate | null>(null)
-  const [tab, setTab] = useState<Tab>('details')
+  const [tab, setTab] = useState<Tab>(initialTab)
   const [saving, setSaving] = useState(false)
   const notify = useNotifications()
   const { loading, leaving, finish } = useSmoothLoading()
@@ -198,7 +200,17 @@ export default function CandidateDetails({
         </div>
       )}
       {tab === 'payments' && summary && <PaymentsTable summary={summary} />}
-      {tab === 'exams' && summary && <ExamResultsTable results={summary.results} />}
+      {tab === 'exams' && summary && (
+        <ExamResultsTable
+          results={summary.results}
+          allocations={summary.candidate.book_allocations ?? []}
+          onUpdated={async () => {
+            const updated = await getCandidate(candidateKey)
+            setSummary(updated)
+            setForm(updated.candidate)
+          }}
+        />
+      )}
       {loading && <FullScreenLoader message="Loading candidate" leaving={leaving} />}
     </section>
   )

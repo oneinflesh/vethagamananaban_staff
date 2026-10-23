@@ -24,8 +24,17 @@
 }
 .course-card-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
+}
+.course-card-grid--second {
+  margin-top: 14px;
+}
+.course-nav-card--wide {
+  grid-column: span 2;
+}
+.course-nav-card--wide strong {
+  margin-top: 28px;
 }
 .course-nav-card {
   position: relative;
@@ -169,6 +178,33 @@
 .course-table-wrap .dt-container {
   min-width: 0;
 }
+.course-table-wrap .dt-layout-row {
+  padding: 8px 10px;
+  gap: 8px;
+}
+.course-table-wrap .dt-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.course-table-wrap .dt-button {
+  padding: 6px 10px;
+  border: 1px solid #e2cab5;
+  border-radius: 7px;
+  background: #fff8ef;
+  color: #914919;
+  font-size: 12px;
+  cursor: pointer;
+}
+.course-table-wrap .dt-input {
+  border: 1px solid #ded1c4;
+  border-radius: 7px;
+  padding: 5px 8px;
+}
+.course-table-wrap .dt-paging-button.current {
+  background: #f2d5b5 !important;
+  border-color: #d89559 !important;
+}
 .course-table-wrap--candidates table.dataTable {
   min-width: 1250px;
   table-layout: fixed;
@@ -180,6 +216,15 @@
 }
 .course-table-wrap--candidates table.dataTable thead th {
   position: relative;
+}
+.course-table-wrap--candidates table.dataTable thead th::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 20%;
+  width: 10px;
+  height: 60%;
+  border-right: 2px solid #d6ad86;
   cursor: col-resize;
 }
 .course-link {
@@ -201,6 +246,130 @@
   background: white;
   box-shadow: 0 8px 25px #0002;
   cursor: pointer;
+}
+.course-context-menu--actions {
+  display: flex;
+  flex-direction: column;
+  min-width: 215px;
+  padding: 5px;
+}
+.course-context-menu--actions button {
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #34261e;
+  text-align: left;
+  cursor: pointer;
+}
+.course-context-menu--actions button:hover {
+  background: #fff0dd;
+}
+.course-date-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  color: #755d4e;
+  font-size: 12px;
+}
+.course-date-filter input,
+.course-dialog select,
+.manual-registration-layout select,
+.course-marks-editor input {
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid #ded1c4;
+  border-radius: 7px;
+  background: white;
+  color: #34261e;
+}
+.course-selection-note {
+  margin: 0 0 10px;
+  color: #755d4e;
+  font-size: 12px;
+}
+.course-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: grid;
+  place-items: center;
+  background: rgb(33 20 11 / 45%);
+}
+.course-dialog {
+  width: min(620px, calc(100vw - 40px));
+  max-height: calc(100vh - 60px);
+  overflow: auto;
+  padding: 22px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 20px 60px #0003;
+}
+.course-dialog__header,
+.course-dialog__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.course-dialog__header h2 {
+  margin: 0;
+  font-size: 19px;
+}
+.course-dialog__footer {
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+.course-dialog__field,
+.course-choice {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.course-dialog__field {
+  flex-direction: column;
+}
+.course-choice {
+  align-items: center;
+}
+.course-choice-list {
+  max-height: 280px;
+  overflow: auto;
+  margin: 10px 0;
+}
+.manual-registration-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(250px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.manual-registration-layout h2 {
+  margin: 0 0 14px;
+  font-size: 17px;
+}
+.coordinator-editor {
+  margin-bottom: 16px;
+}
+.course-marks-editor {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  padding: 14px 0;
+}
+.course-marks-editor label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+.course-marks-allocations {
+  margin-top: 16px;
+}
+.course-marks-allocations h2 {
+  margin: 12px;
+  font-size: 16px;
 }
 .course-pagination {
   display: flex;
@@ -302,7 +471,7 @@
 }
 @media (max-width: 1000px) {
   .course-card-grid {
-    min-width: 810px;
+    min-width: 900px;
   }
   .candidate-form__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
