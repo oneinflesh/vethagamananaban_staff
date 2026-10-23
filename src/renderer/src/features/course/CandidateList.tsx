@@ -16,6 +16,7 @@ const names: Record<CourseSection, string> = {
   online: 'Online candidates',
   offline: 'Offline candidates',
   discontinued: 'Discontinued candidates',
+  dropout: 'Dropout candidates',
   finished: 'Course finished candidates',
   newOffline: 'New Registrations - Offline'
 }
@@ -60,7 +61,15 @@ export default function CandidateList({
   const mode =
     section === 'online' ? 'ONLINE' : section === 'offline' || newOffline ? 'OFFLINE' : ''
   const status =
-    section === 'discontinued' ? 'SUSPENDED' : section === 'finished' ? 'COMPLETED' : ''
+    section === 'discontinued'
+      ? 'SUSPENDED'
+      : section === 'dropout'
+        ? 'DROPOUT'
+        : section === 'finished'
+          ? 'COMPLETED'
+          : section === 'offline' || newOffline
+            ? 'ACTIVE'
+            : ''
 
   useEffect(() => {
     let active = true
@@ -96,7 +105,7 @@ export default function CandidateList({
     event.preventDefault()
     setMenu({
       x: Math.min(event.clientX, window.innerWidth - 230),
-      y: Math.min(event.clientY, window.innerHeight - 270),
+      y: Math.max(8, Math.min(event.clientY, window.innerHeight - 340)),
       candidate
     })
   }
@@ -311,6 +320,23 @@ export default function CandidateList({
             )}
           </Column>
           <Column title="Name" data="full_name" />
+          {section === 'all' && (
+            <Column title="Status" data="status">
+              {(_value, _type, row: Candidate) =>
+                row.status === 'SUSPENDED'
+                  ? 'Discontinued'
+                  : row.status === 'DROPOUT'
+                    ? 'Dropout'
+                    : row.status === 'ACTIVE'
+                      ? 'Active'
+                      : row.status === 'COMPLETED'
+                        ? 'Completed'
+                        : row.status === 'PAYMENT_PENDING'
+                          ? 'Payment pending'
+                          : row.status
+              }
+            </Column>
+          )}
           <Column title="Address 1" data="address_line1" />
           <Column title="Address 2" data="address_line2" />
           <Column title="Address 3" data="address_line3" options={{ defaultContent: '' }} />
@@ -397,16 +423,17 @@ export default function CandidateList({
           >
             Change password
           </button>
-          {menu.candidate.status === 'SUSPENDED' ? (
+          {menu.candidate.status !== 'ACTIVE' ? (
             <button
               onClick={() => {
                 setAction({ kind: 'restore', candidate: menu.candidate })
                 setMenu(null)
               }}
             >
-              Restore candidate
+              Activate candidate
             </button>
-          ) : (
+          ) : null}
+          {menu.candidate.status !== 'SUSPENDED' && (
             <button
               onClick={() => {
                 setAction({ kind: 'discontinue', candidate: menu.candidate })
@@ -414,6 +441,16 @@ export default function CandidateList({
               }}
             >
               Discontinue candidate
+            </button>
+          )}
+          {menu.candidate.status !== 'DROPOUT' && (
+            <button
+              onClick={() => {
+                setAction({ kind: 'dropout', candidate: menu.candidate })
+                setMenu(null)
+              }}
+            >
+              Dropout candidate
             </button>
           )}
         </div>

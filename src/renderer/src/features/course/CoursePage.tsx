@@ -10,13 +10,14 @@ import { getCandidateCounts, getCoordinatorCount, type CandidateCounts } from '.
 import './course.css'
 
 export type CourseSection =
-  'all' | 'online' | 'offline' | 'discontinued' | 'finished' | 'newOffline'
+  'all' | 'online' | 'offline' | 'discontinued' | 'dropout' | 'finished' | 'newOffline'
 const sections: { id: CourseSection; title: string; description: string }[] = [
   { id: 'all', title: 'All candidates', description: 'Every course registration' },
   { id: 'online', title: 'Online candidates', description: 'Online study mode' },
   { id: 'offline', title: 'Offline candidates', description: 'Postal study mode' },
   { id: 'discontinued', title: 'Discontinued candidates', description: 'Suspended registrations' },
   { id: 'finished', title: 'Course finished candidates', description: 'Completed courses' },
+  { id: 'dropout', title: 'Dropout candidates', description: 'Candidates who left the course' },
   { id: 'newOffline', title: 'New Registrations - Offline', description: 'Pending initial parcel' }
 ]
 export default function CoursePage(): React.JSX.Element {
@@ -199,6 +200,17 @@ export default function CoursePage(): React.JSX.Element {
           >
             <strong>New manual registration</strong>
             <small>Register an offline candidate and record payment</small>
+            <span className="course-nav-card__arrow" aria-hidden="true">
+              →
+            </span>
+          </button>
+          <button
+            className="course-nav-card course-nav-card--wide"
+            onClick={() => setSection('dropout')}
+          >
+            <span className="course-nav-card__count">{visibleCounts.dropout}</span>
+            <strong>Dropout candidates</strong>
+            <small>View candidates who left the course</small>
             <span className="course-nav-card__arrow" aria-hidden="true">
               →
             </span>

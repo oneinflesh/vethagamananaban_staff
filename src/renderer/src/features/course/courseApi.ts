@@ -39,7 +39,7 @@ export type Candidate = {
 }
 export type CandidatePage = { count: number; results: Candidate[] }
 export type CandidateCounts = Record<
-  'all' | 'online' | 'offline' | 'discontinued' | 'finished' | 'newOffline',
+  'all' | 'online' | 'offline' | 'discontinued' | 'dropout' | 'finished' | 'newOffline',
   number
 >
 export type CourseInfo = {

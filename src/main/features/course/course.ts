@@ -23,10 +23,11 @@ export async function getCandidateCounts(country: string): Promise<unknown> {
   const sections = [
     ['all', '', ''],
     ['online', 'ONLINE', ''],
-    ['offline', 'OFFLINE', ''],
+    ['offline', 'OFFLINE', 'ACTIVE'],
     ['discontinued', '', 'SUSPENDED'],
+    ['dropout', '', 'DROPOUT'],
     ['finished', '', 'COMPLETED'],
-    ['newOffline', 'OFFLINE', '']
+    ['newOffline', 'OFFLINE', 'ACTIVE']
   ] as const
   const counts = await Promise.all(
     sections.map(async ([name, mode, status]) => {

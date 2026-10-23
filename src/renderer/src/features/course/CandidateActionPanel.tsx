@@ -13,7 +13,8 @@ import {
   type RegistrationOptions
 } from './courseApi'
 
-export type CandidateAction = 'parcel' | 'payment' | 'password' | 'discontinue' | 'restore'
+export type CandidateAction =
+  'parcel' | 'payment' | 'password' | 'discontinue' | 'dropout' | 'restore'
 
 export default function CandidateActionPanel({
   action,
@@ -74,9 +75,9 @@ export default function CandidateActionPanel({
       if (action === 'password') {
         if (password.length < 8) throw new Error('Enter a password with at least 8 characters.')
         await candidateAction('set-password', candidate.enrollment_key, { password })
-      } else if (action === 'discontinue' || action === 'restore') {
+      } else if (action === 'discontinue' || action === 'dropout' || action === 'restore') {
         await candidateAction('update-status', candidate.enrollment_key, {
-          status: action === 'restore' ? 'ACTIVE' : 'SUSPENDED'
+          status: action === 'restore' ? 'ACTIVE' : action === 'dropout' ? 'DROPOUT' : 'SUSPENDED'
         })
       } else if (action === 'parcel') {
         if (!includeIdCard && selected.size === 0)
@@ -116,7 +117,8 @@ export default function CandidateActionPanel({
     payment: 'Record offline payment',
     password: 'Change password',
     discontinue: 'Discontinue candidate',
-    restore: 'Restore candidate'
+    dropout: 'Dropout candidate',
+    restore: 'Activate candidate'
   }[action]
   return (
     <div className="course-dialog-backdrop" onClick={onClose}>
@@ -149,7 +151,10 @@ export default function CandidateActionPanel({
           </label>
         )}
         {action === 'discontinue' && <p>Discontinue this candidate? They can be restored later.</p>}
-        {action === 'restore' && <p>Restore this candidate as active?</p>}
+        {action === 'dropout' && (
+          <p>Mark this candidate as dropped out? They can be restored later.</p>
+        )}
+        {action === 'restore' && <p>Activate this candidate?</p>}
         {action === 'parcel' &&
           (dispatch ? (
             <>

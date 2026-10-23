@@ -150,6 +150,7 @@ export default function CandidateDetails({
                   <option value="PAYMENT_PENDING">Payment pending</option>
                   <option value="ACTIVE">Active</option>
                   <option value="SUSPENDED">Discontinued</option>
+                  <option value="DROPOUT">Dropout</option>
                   <option value="COMPLETED">Completed</option>
                   <option value="ARCHIVED">Archived</option>
                 </select>
