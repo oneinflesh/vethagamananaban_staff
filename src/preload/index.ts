@@ -25,6 +25,7 @@ const api = {
   courseManualRegistration: (courseKey: string, data: unknown) =>
     ipcRenderer.invoke('course:manual-registration', courseKey, data),
   courseInitialDispatch: (key: string) => ipcRenderer.invoke('course:initial-dispatch', key),
+  courseOtherBookOptions: (key: string) => ipcRenderer.invoke('course:other-book-options', key),
   courseCandidateAction: (action: string, key: string, data: unknown) =>
     ipcRenderer.invoke('course:candidate-action', action, key, data),
   courseAllocationScore: (key: string, score: number | null) =>

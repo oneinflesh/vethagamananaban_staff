@@ -89,6 +89,12 @@ export type InitialDispatch = {
   wallet_balance?: string
   items: DispatchItem[]
 }
+export type OtherBookOption = {
+  release_key: string
+  exam_title: string
+  sequence: number
+  cycle: number
+}
 export type Payment = {
   payment_key: string
   paid_at: string | null
@@ -206,8 +212,15 @@ export const createManualRegistration = (courseKey: string, data: unknown): Prom
   window.office.courseManualRegistration(courseKey, data)
 export const getInitialDispatch = (key: string): Promise<InitialDispatch> =>
   window.office.courseInitialDispatch(key)
+export const getOtherBookOptions = (key: string): Promise<OtherBookOption[]> =>
+  window.office.courseOtherBookOptions(key)
 export const candidateAction = (
-  action: 'initial-dispatch' | 'set-password' | 'update-status' | 'manual-purchase',
+  action:
+    | 'initial-dispatch'
+    | 'other-book-dispatch'
+    | 'set-password'
+    | 'update-status'
+    | 'manual-purchase',
   key: string,
   data: unknown
 ): Promise<unknown> => window.office.courseCandidateAction(action, key, data)

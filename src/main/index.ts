@@ -12,6 +12,7 @@ import {
   getRegistrationOptions,
   createManualRegistration,
   getInitialDispatch,
+  getOtherBookOptions,
   candidateAction,
   updateAllocationScore,
   getCandidate,
@@ -108,6 +109,7 @@ app.whenReady().then(() => {
     createManualRegistration(courseKey, data)
   )
   ipcMain.handle('course:initial-dispatch', (_event, key) => getInitialDispatch(key))
+  ipcMain.handle('course:other-book-options', (_event, key) => getOtherBookOptions(key))
   ipcMain.handle('course:candidate-action', (_event, action, key, data) =>
     candidateAction(action, key, data)
   )

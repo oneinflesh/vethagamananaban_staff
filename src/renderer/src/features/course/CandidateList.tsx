@@ -482,6 +482,16 @@ export default function CandidateList({
               >
                 Prepare ID card and books
               </button>
+              {menu.candidate.status === 'ACTIVE' && (
+                <button
+                  onClick={() => {
+                    setAction({ kind: 'otherBook', candidate: menu.candidate })
+                    setMenu(null)
+                  }}
+                >
+                  Send previously released book
+                </button>
+              )}
               <button
                 onClick={() => {
                   setAction({ kind: 'payment', candidate: menu.candidate })

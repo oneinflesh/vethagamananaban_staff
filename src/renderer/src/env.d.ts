@@ -45,8 +45,16 @@ interface Window {
     courseInitialDispatch(
       key: string
     ): Promise<import('./features/course/courseApi').InitialDispatch>
+    courseOtherBookOptions(
+      key: string
+    ): Promise<import('./features/course/courseApi').OtherBookOption[]>
     courseCandidateAction(
-      action: 'initial-dispatch' | 'set-password' | 'update-status' | 'manual-purchase',
+      action:
+        | 'initial-dispatch'
+        | 'other-book-dispatch'
+        | 'set-password'
+        | 'update-status'
+        | 'manual-purchase',
       key: string,
       data: unknown
     ): Promise<unknown>

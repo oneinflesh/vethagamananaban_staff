@@ -6,15 +6,17 @@ import {
   candidateAction,
   getCandidate,
   getInitialDispatch,
+  getOtherBookOptions,
   getRegistrationOptions,
   type Candidate,
   type CandidateSummary,
   type InitialDispatch,
+  type OtherBookOption,
   type RegistrationOptions
 } from './courseApi'
 
 export type CandidateAction =
-  'parcel' | 'payment' | 'password' | 'discontinue' | 'dropout' | 'restore'
+  'parcel' | 'otherBook' | 'payment' | 'password' | 'discontinue' | 'dropout' | 'restore'
 
 export default function CandidateActionPanel({
   action,
@@ -28,6 +30,8 @@ export default function CandidateActionPanel({
   onChanged: () => void
 }): React.JSX.Element {
   const [dispatch, setDispatch] = useState<InitialDispatch | null>(null)
+  const [otherBooks, setOtherBooks] = useState<OtherBookOption[] | null>(null)
+  const [releaseKey, setReleaseKey] = useState('')
   const [options, setOptions] = useState<RegistrationOptions | null>(null)
   const [summary, setSummary] = useState<CandidateSummary | null>(null)
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
@@ -52,12 +56,25 @@ export default function CandidateActionPanel({
           if (active) setError(cause instanceof Error ? cause.message : 'Could not load parcel')
         })
     if (action === 'payment')
-      Promise.all([getRegistrationOptions(), getCandidate(candidate.enrollment_key)])
-        .then(([course, record]) => {
+      Promise.all([getRegistrationOptions(), getCandidate(candidate.enrollment_key)]).then(
+        ([course, record]) => {
           if (active) {
             setOptions(course)
             setSummary(record)
           }
+        }
+      )
+    if (action === 'otherBook')
+      getOtherBookOptions(candidate.enrollment_key)
+        .then((releases) => {
+          if (active) {
+            setOtherBooks(releases)
+            setReleaseKey(releases[0]?.release_key ?? '')
+          }
+        })
+        .catch((cause) => {
+          if (active)
+            setError(cause instanceof Error ? cause.message : 'Could not load released books')
         })
         .catch((cause) => {
           if (active)
@@ -95,6 +112,13 @@ export default function CandidateActionPanel({
                 tracking_number: tracking.trim()
               }
         )
+      } else if (action === 'otherBook') {
+        if (!releaseKey) throw new Error('Choose a previously released book.')
+        if (!tracking.trim()) throw new Error('Enter a tracking number.')
+        await candidateAction('other-book-dispatch', candidate.enrollment_key, {
+          release_key: releaseKey,
+          tracking_number: tracking.trim()
+        })
       } else {
         if (!Number.isInteger(months) || months < 1 || months > 50)
           throw new Error('Choose a valid number of books to fund.')
@@ -103,7 +127,7 @@ export default function CandidateActionPanel({
           payment_method: paymentMethod
         })
       }
-      notify.success('Candidate updated')
+      notify.success(action === 'otherBook' ? 'Earlier book shipped' : 'Candidate updated')
       onChanged()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not update candidate')
@@ -114,6 +138,7 @@ export default function CandidateActionPanel({
 
   const title = {
     parcel: 'Prepare ID card and registration books',
+    otherBook: 'Send previously released book',
     payment: 'Record offline payment',
     password: 'Change password',
     discontinue: 'Discontinue candidate',
@@ -155,6 +180,42 @@ export default function CandidateActionPanel({
           <p>Mark this candidate as dropped out? They can be restored later.</p>
         )}
         {action === 'restore' && <p>Activate this candidate?</p>}
+        {action === 'otherBook' &&
+          (otherBooks ? (
+            <>
+              <p>
+                Choose one earlier release for this offline candidate. The locked book price is
+                deducted from their wallet only when this shipment succeeds. Current course month
+                stays unchanged.
+              </p>
+              <p>Wallet balance: ₹{candidate.wallet_balance}</p>
+              {otherBooks.length ? (
+                <>
+                  <label className="course-dialog__field">
+                    Released book
+                    <select
+                      value={releaseKey}
+                      onChange={(event) => setReleaseKey(event.target.value)}
+                    >
+                      {otherBooks.map((item) => (
+                        <option key={item.release_key} value={item.release_key}>
+                          {item.sequence}. {item.exam_title} · Cycle {item.cycle}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="course-dialog__field">
+                    Tracking number
+                    <Input value={tracking} onChange={(event) => setTracking(event.target.value)} />
+                  </label>
+                </>
+              ) : (
+                <p>No earlier released books are available for this candidate.</p>
+              )}
+            </>
+          ) : (
+            !error && <p>Loading released books…</p>
+          ))}
         {action === 'parcel' &&
           (dispatch ? (
             <>
@@ -275,7 +336,10 @@ export default function CandidateActionPanel({
           </Button>
           <Button
             disabled={
-              saving || (action === 'parcel' && !dispatch) || (action === 'payment' && !options)
+              saving ||
+              (action === 'parcel' && !dispatch) ||
+              (action === 'payment' && !options) ||
+              (action === 'otherBook' && (!otherBooks?.length || !releaseKey))
             }
             onClick={() => void submit()}
           >

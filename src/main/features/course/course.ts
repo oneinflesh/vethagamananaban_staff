@@ -121,8 +121,15 @@ export const createManualRegistration = (courseKey: string, data: unknown): Prom
   })
 export const getInitialDispatch = (key: string): Promise<unknown> =>
   authorizedGet(`staff/course-enrollments/${encodeURIComponent(key)}/initial-dispatch/`)
+export const getOtherBookOptions = (key: string): Promise<unknown> =>
+  authorizedGet(`staff/course-enrollments/${encodeURIComponent(key)}/other-book-dispatch/`)
 export function candidateAction(
-  action: 'initial-dispatch' | 'set-password' | 'update-status' | 'manual-purchase',
+  action:
+    | 'initial-dispatch'
+    | 'other-book-dispatch'
+    | 'set-password'
+    | 'update-status'
+    | 'manual-purchase',
   key: string,
   data: unknown
 ): Promise<unknown> {
