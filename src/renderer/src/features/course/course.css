@@ -48,12 +48,6 @@
   box-shadow: 0 14px 34px rgb(166 87 28 / 12%);
   outline: none;
 }
-.course-nav-card__number {
-  color: #be6a2c;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-}
 .course-nav-card__count {
   margin-top: 10px;
   color: #994414;

@@ -78,9 +78,8 @@ export default function CoursePage(): React.JSX.Element {
       </div>
       {countError && <p className="course-error">Could not load candidate counts.</p>}
       <div className="course-card-grid">
-        {sections.map((item, index) => (
+        {sections.map((item) => (
           <button className="course-nav-card" key={item.id} onClick={() => setSection(item.id)}>
-            <span className="course-nav-card__number">{String(index + 1).padStart(2, '0')}</span>
             <span className="course-nav-card__count">
               {counts?.country === country ? counts.values[item.id] : '—'}
             </span>
