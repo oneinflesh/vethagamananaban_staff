@@ -38,9 +38,11 @@ export default function LoginPage({
           colorStops={['#5b6ee1', '#8b5cf6', '#2f80ed']}
           lightMode
           mouseInteraction={false}
-          speed={0.35}
-          amplitude={0.5}
-          glow={0.35}
+          speed={0.8}
+          amplitude={1.1}
+          glow={0.7}
+          layers={2}
+          height={0.6}
           paused={busy}
         />
       </div>

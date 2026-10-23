@@ -107,6 +107,14 @@ body {
   isolation: isolate;
   overflow: hidden;
 }
+.login-page,
+.splash-screen {
+  background:
+    radial-gradient(ellipse at 12% 16%, #aabfff 0%, transparent 48%),
+    radial-gradient(ellipse at 88% 78%, #cdb2ff 0%, transparent 52%), #eff3ff;
+  background-size: 160% 160%;
+  animation: aurora-fallback 7s ease-in-out infinite alternate;
+}
 .splash-screen {
   position: relative;
   isolation: isolate;
@@ -115,7 +123,6 @@ body {
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: var(--background);
 }
 .splash-aurora {
   position: absolute;
@@ -152,11 +159,8 @@ body {
 }
 .login-aurora,
 .splash-aurora {
-  background:
-    radial-gradient(ellipse at 18% 22%, #b7c6ff 0%, transparent 46%),
-    radial-gradient(ellipse at 82% 72%, #d5c1ff 0%, transparent 50%), #f4f7ff;
-  background-size: 150% 150%;
-  animation: aurora-fallback 12s ease-in-out infinite alternate;
+  opacity: 0.6;
+  mix-blend-mode: multiply;
 }
 @keyframes aurora-fallback {
   to {
@@ -213,7 +217,9 @@ body {
     animation: none;
   }
   .login-aurora,
-  .splash-aurora {
+  .splash-aurora,
+  .login-page,
+  .splash-screen {
     animation: none;
   }
 }
