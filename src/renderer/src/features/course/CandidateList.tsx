@@ -204,6 +204,21 @@ export default function CandidateList({
   const printable = newOffline
     ? (data ?? []).filter((candidate) => selected.has(candidate.enrollment_key))
     : filteredData
+  const searchControl = (
+    <label className="course-list-search">
+      <span>Search</span>
+      <input
+        type="search"
+        value={search}
+        placeholder="Search candidates"
+        onChange={(event) => {
+          const value = event.target.value
+          setSearch(value)
+          table.current?.dt()?.search(value).draw()
+        }}
+      />
+    </label>
+  )
 
   return (
     <section className="page course-page" onClick={() => menu && setMenu(null)}>
@@ -215,6 +230,7 @@ export default function CandidateList({
         <span>
           {country} · {data?.length ?? 0} candidates
         </span>
+        {section === 'all' && searchControl}
       </div>
       {newOffline && (
         <p className="course-selection-note">
@@ -323,19 +339,7 @@ export default function CandidateList({
             </label>
           </>
         )}
-        <label className="course-list-search">
-          <span>Search</span>
-          <input
-            type="search"
-            value={search}
-            placeholder="Search candidates"
-            onChange={(event) => {
-              const value = event.target.value
-              setSearch(value)
-              table.current?.dt()?.search(value).draw()
-            }}
-          />
-        </label>
+        {section !== 'all' && searchControl}
       </div>
       {error && (
         <div className="course-error">
