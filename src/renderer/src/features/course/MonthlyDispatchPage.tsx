@@ -42,6 +42,8 @@ export default function MonthlyDispatchPage({
   const [view, setView] = useState<DispatchView>('dispatch')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [stateFilter, setStateFilter] = useState('')
+  const [districtFilter, setDistrictFilter] = useState('')
   const [retry, setRetry] = useState(0)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -119,6 +121,8 @@ export default function MonthlyDispatchPage({
         bbs_number: student.bbs_number,
         student_name: student.name,
         student_phone: student.phone,
+        student_state: student.state,
+        student_district: student.district,
         book_number: exam.catalog_book_name || exam.title,
         exam_title: exam.title,
         payment_amount: '—',
@@ -131,13 +135,43 @@ export default function MonthlyDispatchPage({
     return [...funded, ...existing]
   }, [allocations, summary, exam])
   const statuses = useMemo(() => [...new Set(rows.map((row) => row.status))].sort(), [rows])
+  const allStudents = [...rows, ...(summary?.all_unpaid ?? [])]
+  const states = [
+    ...new Set(
+      allStudents
+        .map((row) => ('student_state' in row ? row.student_state : row.state))
+        .filter(Boolean)
+    )
+  ].sort()
+  const districts = [
+    ...new Set(
+      allStudents
+        .filter(
+          (row) =>
+            !stateFilter || ('student_state' in row ? row.student_state : row.state) === stateFilter
+        )
+        .map((row) => ('student_district' in row ? row.student_district : row.district))
+        .filter(Boolean)
+    )
+  ].sort()
   const visibleRows = useMemo(
-    () => rows.filter((row) => !statusFilter || row.status === statusFilter),
-    [rows, statusFilter]
+    () =>
+      rows.filter(
+        (row) =>
+          (!statusFilter || row.status === statusFilter) &&
+          (!stateFilter || row.student_state === stateFilter) &&
+          (!districtFilter || row.student_district === districtFilter)
+      ),
+    [rows, statusFilter, stateFilter, districtFilter]
   )
 
-  const unpaid: MonthlyStudent[] =
+  const unpaid: MonthlyStudent[] = (
     view === 'previous' ? (summary?.previous_exam_unpaid ?? []) : (summary?.all_unpaid ?? [])
+  ).filter(
+    (row) =>
+      (!stateFilter || row.state === stateFilter) &&
+      (!districtFilter || row.district === districtFilter)
+  )
 
   function refresh(): void {
     start()
@@ -253,22 +287,55 @@ export default function MonthlyDispatchPage({
         <h1>Monthly book dispatch</h1>
         <span>{country}</span>
       </div>
-      {view === 'dispatch' && (
-        <div className="course-list-actions course-list-actions--dispatch-filter">
-          <label className="course-list-filter">
-            Book status
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              <option value="">All statuses</option>
-              {statuses.map((status) => (
-                <option key={status} value={status}>
-                  {status.replaceAll('_', ' ')}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      )}
-      <div className="course-list-actions">
+      <div className="course-list-actions course-list-actions--dispatch-filter">
+        <label className="course-list-filter">
+          Book status
+          <select
+            value={statusFilter}
+            disabled={view !== 'dispatch'}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option value="">All statuses</option>
+            {statuses.map((status) => (
+              <option key={status} value={status}>
+                {status.replaceAll('_', ' ')}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="course-list-filter">
+          State
+          <select
+            value={stateFilter}
+            onChange={(event) => {
+              setStateFilter(event.target.value)
+              setDistrictFilter('')
+            }}
+          >
+            <option value="">All states</option>
+            {states.map((state) => (
+              <option key={state} value={state}>
+                {state}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="course-list-filter">
+          District
+          <select
+            value={districtFilter}
+            onChange={(event) => setDistrictFilter(event.target.value)}
+          >
+            <option value="">All districts</option>
+            {districts.map((district) => (
+              <option key={district} value={district}>
+                {district}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="course-list-actions course-list-actions--month">
         <label className="course-list-filter">
           Book / month
           <select
@@ -291,6 +358,17 @@ export default function MonthlyDispatchPage({
         <Button variant="outline" disabled={!examKey || busy} onClick={refresh}>
           Refresh
         </Button>
+        <label className="course-list-search">
+          Search
+          <input
+            type="search"
+            value={search}
+            placeholder="Name, BBS or phone"
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </label>
+      </div>
+      <div className="course-list-actions course-list-actions--views">
         <Button
           variant={view === 'dispatch' ? 'secondary' : 'outline'}
           onClick={() => setView('dispatch')}
@@ -309,17 +387,6 @@ export default function MonthlyDispatchPage({
         >
           Previous exam complete, unpaid ({summary?.previous_exam_unpaid_count ?? 0})
         </Button>
-        <label className="course-list-search">
-          Search
-          <input
-            type="search"
-            value={search}
-            placeholder="Name, BBS or phone"
-            onChange={(event) => {
-              setSearch(event.target.value)
-            }}
-          />
-        </label>
       </div>
       {summary && (
         <div className="course-dispatch-stats">

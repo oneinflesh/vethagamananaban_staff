@@ -146,6 +146,8 @@ export type MonthlyStudent = {
   bbs_number: string
   name: string
   phone: string
+  state: string
+  district: string
 }
 export type MonthlySummary = {
   paid_count: number
@@ -163,6 +165,8 @@ export type MonthlyAllocation = {
   bbs_number: string
   student_name: string
   student_phone: string
+  student_state: string
+  student_district: string
   book_number: string
   exam_title: string
   payment_amount: string
