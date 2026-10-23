@@ -48,6 +48,42 @@
   box-shadow: 0 14px 34px rgb(166 87 28 / 12%);
   outline: none;
 }
+.course-nav-card--loading {
+  cursor: default;
+  pointer-events: none;
+}
+.course-card-skeleton {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(100deg, #f4e9dd 30%, #fff8ef 50%, #f4e9dd 70%);
+  background-size: 200% 100%;
+  animation: course-card-shimmer 1.2s ease-in-out infinite;
+}
+.course-card-skeleton--count {
+  width: 54px;
+  height: 28px;
+  margin-top: 10px;
+}
+.course-card-skeleton--title {
+  width: 78%;
+  height: 15px;
+  margin-top: 13px;
+}
+.course-card-skeleton--description {
+  width: 58%;
+  height: 11px;
+  margin-top: 10px;
+}
+@keyframes course-card-shimmer {
+  to {
+    background-position-x: -200%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .course-card-skeleton {
+    animation: none;
+  }
+}
 .course-nav-card__count {
   margin-top: 10px;
   color: #994414;
