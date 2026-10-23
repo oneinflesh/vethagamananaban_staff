@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import FullScreenLoader from '../shell/FullScreenLoader'
+import { useSmoothLoading } from '../shell/useSmoothLoading'
 import { getEnrolmentSummary } from './dashboardApi'
 import { enrolmentRange, type EnrolmentPeriod } from './enrolmentPeriod'
 
@@ -9,7 +10,7 @@ export default function EnrolmentCard({ date }: { date: string }): React.JSX.Ele
   const [result, setResult] = useState<{ range: string; count: number } | null>(null)
   const [failedRange, setFailedRange] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const { loading, leaving, start, finish } = useSmoothLoading()
   const [period, setPeriod] = useState<EnrolmentPeriod>('today')
   const [customDate, setCustomDate] = useState(date)
   const { startDate, endDate } = enrolmentRange(date, period, customDate)
@@ -28,20 +29,20 @@ export default function EnrolmentCard({ date }: { date: string }): React.JSX.Ele
         if (active) setFailedRange(range)
       })
       .finally(() => {
-        if (active) setLoading(false)
+        if (active) finish()
       })
     return () => {
       active = false
     }
-  }, [startDate, endDate, range, attempt])
+  }, [startDate, endDate, range, attempt, finish])
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setLoading(true)
+      start()
       setAttempt((value) => value + 1)
     }, 60_000)
     return () => window.clearInterval(timer)
-  }, [])
+  }, [start])
 
   const showLoader = loading || (result?.range !== range && failedRange !== range)
 
@@ -55,7 +56,7 @@ export default function EnrolmentCard({ date }: { date: string }): React.JSX.Ele
             aria-label="Enrolment period"
             value={period}
             onChange={(event) => {
-              setLoading(true)
+              start()
               setPeriod(event.target.value as EnrolmentPeriod)
             }}
           >
@@ -76,7 +77,7 @@ export default function EnrolmentCard({ date }: { date: string }): React.JSX.Ele
               value={customDate}
               onChange={(event) => {
                 if (event.target.value) {
-                  setLoading(true)
+                  start()
                   setCustomDate(event.target.value)
                 }
               }}
@@ -89,7 +90,7 @@ export default function EnrolmentCard({ date }: { date: string }): React.JSX.Ele
                 variant="link"
                 size="xs"
                 onClick={() => {
-                  setLoading(true)
+                  start()
                   setAttempt((value) => value + 1)
                 }}
               >
@@ -103,7 +104,7 @@ export default function EnrolmentCard({ date }: { date: string }): React.JSX.Ele
           )}
         </div>
       </Card>
-      {showLoader && <FullScreenLoader message="Loading enrolments" />}
+      {showLoader && <FullScreenLoader message="Loading enrolments" leaving={leaving} />}
     </>
   )
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import LoginPage from './features/auth/LoginPage'
-import { restoreSession, type AuthSession } from './features/auth/auth'
+import { logout, restoreSession, type AuthSession } from './features/auth/auth'
 import CoursePage from './features/course/CoursePage'
 import DashboardPage from './features/dashboard/DashboardPage'
 import StorePage from './features/store/StorePage'
@@ -47,10 +47,16 @@ export default function App(): React.JSX.Element {
 
   if (!ready) return <SplashScreen />
 
+  async function handleLogout(): Promise<void> {
+    await logout()
+    setSession(null)
+    setPage('dashboard')
+  }
+
   return (
     <NotificationProvider>
       <div className="app">
-        <TitleBar page={page} onPage={setPage} showNavigation={!!staff} />
+        <TitleBar page={page} onPage={setPage} showNavigation={!!staff} onLogout={handleLogout} />
         {staff ? (
           page === 'dashboard' ? (
             <DashboardPage />

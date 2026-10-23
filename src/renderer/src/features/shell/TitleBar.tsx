@@ -1,29 +1,60 @@
 import { Button } from '@/components/ui/button'
 import { Minus, Square, X } from 'lucide-react'
+import { useState } from 'react'
+import { useNotifications } from '../notifications/Notifications'
 export type Page = 'dashboard' | 'store' | 'course'
 export default function TitleBar({
   page,
   onPage,
-  showNavigation
+  showNavigation,
+  onLogout
 }: {
   page: Page
   onPage: (page: Page) => void
   showNavigation: boolean
+  onLogout: () => Promise<void>
 }): React.JSX.Element {
+  const [signingOut, setSigningOut] = useState(false)
+  const notify = useNotifications()
+
+  async function handleLogout(): Promise<void> {
+    setSigningOut(true)
+    try {
+      await onLogout()
+      notify.success('Signed out')
+    } catch (error) {
+      notify.error(error instanceof Error ? error.message : 'Could not sign out')
+    } finally {
+      setSigningOut(false)
+    }
+  }
+
   return (
     <header className="titlebar">
       <nav className="title-menu">
-        {showNavigation &&
-          (['dashboard', 'store', 'course'] as const).map((item) => (
+        {showNavigation && (
+          <>
+            {(['dashboard', 'store', 'course'] as const).map((item) => (
+              <Button
+                key={item}
+                variant={page === item ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => onPage(item)}
+              >
+                {item === 'store' ? 'Book Store' : item[0].toUpperCase() + item.slice(1)}
+              </Button>
+            ))}
             <Button
-              key={item}
-              variant={page === item ? 'secondary' : 'ghost'}
+              className="titlebar-logout"
+              variant="ghost"
               size="sm"
-              onClick={() => onPage(item)}
+              disabled={signingOut}
+              onClick={() => void handleLogout()}
             >
-              {item === 'store' ? 'Book Store' : item[0].toUpperCase() + item.slice(1)}
+              Logout
             </Button>
-          ))}
+          </>
+        )}
       </nav>
       <div className="drag-region" />
       <div className="window-controls">

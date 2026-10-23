@@ -9,6 +9,7 @@ const api = {
   login: (username: string, password: string, remember: boolean) =>
     ipcRenderer.invoke('office:login', username, password, remember),
   restoreSession: () => ipcRenderer.invoke('office:restore-session'),
+  logout: () => ipcRenderer.invoke('office:logout'),
   enrolmentSummary: (startDate: string, endDate: string) =>
     ipcRenderer.invoke('office:enrolment-summary', startDate, endDate)
 }

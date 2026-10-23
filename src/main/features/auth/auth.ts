@@ -49,6 +49,26 @@ export async function login(
   return { staff: data.account, expiresAt }
 }
 
+export function logout(): void {
+  const previousAccess = accessToken
+  const previousRefresh = refreshToken
+  clearSession()
+  accessToken = null
+  refreshToken = null
+  sessionExpiresAt = null
+  if (previousAccess && previousRefresh) {
+    void fetch(`${apiBase}auth/logout/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${previousAccess}`
+      },
+      body: JSON.stringify({ refresh: previousRefresh }),
+      signal: AbortSignal.timeout(5000)
+    }).catch(() => {})
+  }
+}
+
 async function refreshAccessToken(): Promise<void> {
   if (!refreshToken || (sessionExpiresAt !== null && Date.now() >= sessionExpiresAt)) {
     accessToken = null

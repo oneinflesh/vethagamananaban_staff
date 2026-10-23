@@ -11,6 +11,7 @@ interface Window {
       remember: boolean
     ): Promise<import('./features/auth/auth').AuthSession>
     restoreSession(): Promise<import('./features/auth/auth').AuthSession | null>
+    logout(): Promise<void>
     enrolmentSummary(
       startDate: string,
       endDate: string
