@@ -90,7 +90,6 @@ export default function MonthlyDispatchPage({
   useEffect(() => {
     if (!examKey || !options) return
     let active = true
-    start()
     Promise.all([getMonthlySummary(examKey, country), getMonthlyAllocations(examKey, country)])
       .then(([nextSummary, nextAllocations]) => {
         if (!active) return
@@ -174,7 +173,6 @@ export default function MonthlyDispatchPage({
   )
 
   function refresh(): void {
-    start()
     setRetry((value) => value + 1)
   }
 
@@ -237,14 +235,25 @@ export default function MonthlyDispatchPage({
   async function saveTracking(row: DispatchRow, rawValue: string): Promise<void> {
     if (row.kind !== 'allocation' || savingTrackingKey) return
     const value = rawValue.trim()
-    if (!value || value === (row.tracking_number ?? '')) return
+    if (!value || (row.status !== 'PROCESSING' && value === (row.tracking_number ?? ''))) return
     setSavingTrackingKey(row.allocation_key)
     try {
-      const updated = await saveMonthlyTracking(row.allocation_key, value)
+      if (row.status !== 'PROCESSING' && row.status !== 'SHIPPED')
+        throw new Error('Open this month before shipping this book.')
+      if (row.status === 'PROCESSING' && !row.delivery_address_key)
+        throw new Error('This candidate needs a delivery address before shipping.')
+      const updated =
+        row.status === 'PROCESSING'
+          ? await shipMonthlyAllocation(row.allocation_key, row.delivery_address_key!, value)
+          : await saveMonthlyTracking(row.allocation_key, value)
       setAllocations((current) =>
         current.map((item) => (item.allocation_key === row.allocation_key ? updated : item))
       )
-      notify.success(`Tracking ID saved for ${row.bbs_number}`)
+      notify.success(
+        row.status === 'PROCESSING'
+          ? `${row.bbs_number} marked shipped`
+          : `Tracking ID saved for ${row.bbs_number}`
+      )
     } catch (cause) {
       notify.error(cause instanceof Error ? cause.message : 'Could not save tracking ID')
     } finally {
@@ -506,12 +515,7 @@ export default function MonthlyDispatchPage({
           </section>
         </div>
       )}
-      {(loading || busy) && (
-        <FullScreenLoader
-          message={busy ? 'Updating monthly dispatch' : 'Loading monthly dispatch'}
-          leaving={loading && leaving}
-        />
-      )}
+      {loading && <FullScreenLoader message="Loading monthly dispatch" leaving={leaving} />}
     </section>
   )
 }

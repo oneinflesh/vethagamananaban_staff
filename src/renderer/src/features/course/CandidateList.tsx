@@ -55,7 +55,7 @@ export default function CandidateList({
   const [action, setAction] = useState<{ kind: CandidateAction; candidate: Candidate } | null>(null)
   const table = useRef<DataTableRef>(null)
   const tableWrap = useRef<HTMLDivElement>(null)
-  const { loading, leaving, start, finish } = useSmoothLoading()
+  const { loading, leaving, finish } = useSmoothLoading()
   const notify = useNotifications()
   useEffect(() => {
     tableWrap.current
@@ -102,9 +102,7 @@ export default function CandidateList({
   }, [country, mode, status, newOffline, retry, finish])
 
   function refresh(): void {
-    setData(null)
     setSelected(new Set())
-    start()
     setRetry((value) => value + 1)
   }
 

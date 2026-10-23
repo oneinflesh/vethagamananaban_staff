@@ -83,6 +83,63 @@ export default function CoursePage(): React.JSX.Element {
     retry
   ])
   const visibleCounts = counts?.country === country ? counts.values : null
+  if (section)
+    return (
+      <>
+        <div
+          className={
+            bookCandidate || candidateKey || coordinatorKey
+              ? 'course-list-host course-list-host--hidden'
+              : 'course-list-host'
+          }
+        >
+          <CandidateList
+            key={`${section}:${country}`}
+            section={section}
+            country={country}
+            onBack={() => {
+              setCounts(null)
+              setSection(null)
+            }}
+            onCandidate={(key) => {
+              setCandidateTab('details')
+              setCandidateKey(key)
+            }}
+            onMarks={(key) => {
+              setCandidateTab('exams')
+              setCandidateKey(key)
+            }}
+            onCoordinator={setCoordinatorKey}
+            onSendReleasedBooks={setBookCandidate}
+          />
+        </div>
+        {coordinatorKey ? (
+          <CoordinatorDetails
+            key={coordinatorKey}
+            coordinatorKey={coordinatorKey}
+            onBack={() => setCoordinatorKey(null)}
+            onCandidate={(key) => {
+              setCoordinatorKey(null)
+              setCandidateKey(key)
+            }}
+          />
+        ) : candidateKey ? (
+          <CandidateDetails
+            key={candidateKey}
+            candidateKey={candidateKey}
+            initialTab={candidateTab}
+            onBack={() => setCandidateKey(null)}
+            onCoordinator={setCoordinatorKey}
+          />
+        ) : bookCandidate ? (
+          <SendReleasedBooksPage
+            key={bookCandidate.enrollment_key}
+            candidate={bookCandidate}
+            onBack={() => setBookCandidate(null)}
+          />
+        ) : null}
+      </>
+    )
   if (coordinatorKey)
     return (
       <CoordinatorDetails
@@ -95,7 +152,7 @@ export default function CoursePage(): React.JSX.Element {
         }}
       />
     )
-  if (candidateKey)
+  if (candidateKey && !monthlyDispatch)
     return (
       <CandidateDetails
         key={candidateKey}
@@ -134,51 +191,31 @@ export default function CoursePage(): React.JSX.Element {
     )
   if (monthlyDispatch)
     return (
-      <MonthlyDispatchPage
-        country={country}
-        onBack={() => {
-          setMonthlyDispatch(false)
-          setCounts(null)
-        }}
-        onCandidate={(key) => {
-          setCandidateTab('details')
-          setCandidateKey(key)
-        }}
-      />
-    )
-  if (section)
-    return (
       <>
         <div
           className={
-            bookCandidate ? 'course-list-host course-list-host--hidden' : 'course-list-host'
+            candidateKey ? 'course-list-host course-list-host--hidden' : 'course-list-host'
           }
         >
-          <CandidateList
-            key={`${section}:${country}`}
-            section={section}
+          <MonthlyDispatchPage
             country={country}
             onBack={() => {
+              setMonthlyDispatch(false)
               setCounts(null)
-              setSection(null)
             }}
             onCandidate={(key) => {
               setCandidateTab('details')
               setCandidateKey(key)
             }}
-            onMarks={(key) => {
-              setCandidateTab('exams')
-              setCandidateKey(key)
-            }}
-            onCoordinator={setCoordinatorKey}
-            onSendReleasedBooks={setBookCandidate}
           />
         </div>
-        {bookCandidate && (
-          <SendReleasedBooksPage
-            key={bookCandidate.enrollment_key}
-            candidate={bookCandidate}
-            onBack={() => setBookCandidate(null)}
+        {candidateKey && (
+          <CandidateDetails
+            key={candidateKey}
+            candidateKey={candidateKey}
+            initialTab={candidateTab}
+            onBack={() => setCandidateKey(null)}
+            onCoordinator={setCoordinatorKey}
           />
         )}
       </>
