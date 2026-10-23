@@ -182,20 +182,6 @@
   padding: 8px 10px;
   gap: 8px;
 }
-.course-table-wrap .dt-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.course-table-wrap .dt-button {
-  padding: 6px 10px;
-  border: 1px solid #e2cab5;
-  border-radius: 7px;
-  background: #fff8ef;
-  color: #914919;
-  font-size: 12px;
-  cursor: pointer;
-}
 .course-table-wrap .dt-input {
   border: 1px solid #ded1c4;
   border-radius: 7px;

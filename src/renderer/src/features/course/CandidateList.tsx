@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent } from 'react'
 import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
 import FullScreenLoader from '../shell/FullScreenLoader'
@@ -8,6 +8,7 @@ import { DataTable, Column } from './dataTable'
 import { resizeColumns } from './resizeColumns'
 import CandidateActionPanel, { type CandidateAction } from './CandidateActionPanel'
 import type { CourseSection } from './CoursePage'
+import { exportAddressCsv, printAddressLabels } from './addressLabels'
 
 const names: Record<CourseSection, string> = {
   all: 'All candidates',
@@ -38,16 +39,21 @@ export default function CandidateList({
   const [retry, setRetry] = useState(0)
   const [date, setDate] = useState('')
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
-  const selectedRef = useRef<Set<string>>(new Set())
+  const [visibleKeys, setVisibleKeys] = useState<string[]>([])
   const [menu, setMenu] = useState<{ x: number; y: number; candidate: Candidate } | null>(null)
   const [action, setAction] = useState<{ kind: CandidateAction; candidate: Candidate } | null>(null)
   const table = useRef<DataTableRef>(null)
+  const tableWrap = useRef<HTMLDivElement>(null)
   const { loading, leaving, start, finish } = useSmoothLoading()
   useEffect(() => {
-    selectedRef.current = selected
-    table.current?.dt()?.rows().invalidate().draw(false)
-  }, [selected])
+    tableWrap.current
+      ?.querySelectorAll<HTMLInputElement>('input[data-candidate-key]')
+      .forEach((input) => {
+        input.checked = selected.has(input.dataset.candidateKey ?? '')
+      })
+  }, [selected, visibleKeys])
   const newOffline = section === 'newOffline'
+  const addressActions = section === 'offline' || newOffline
   const mode =
     section === 'online' ? 'ONLINE' : section === 'offline' || newOffline ? 'OFFLINE' : ''
   const status =
@@ -93,31 +99,34 @@ export default function CandidateList({
   }
 
   function visibleSelection(): void {
-    const rows = table.current
-      ?.dt()
-      ?.rows({ page: 'current', search: 'applied' })
-      .data()
-      .toArray() as Candidate[] | undefined
-    if (!rows) return
+    if (!visibleKeys.length) return
     setSelected((current) => {
       const next = new Set(current)
-      const allSelected = rows.every((row) => next.has(row.enrollment_key))
-      rows.forEach((row) => {
-        if (allSelected) next.delete(row.enrollment_key)
-        else next.add(row.enrollment_key)
+      const allSelected = visibleKeys.every((key) => next.has(key))
+      visibleKeys.forEach((key) => {
+        if (allSelected) next.delete(key)
+        else next.add(key)
       })
       return next
     })
   }
 
-  const exportOptions = newOffline
-    ? {
-        rows: (_index: number, row: Candidate): boolean =>
-          selectedRef.current.has(row.enrollment_key),
-        columns: ':visible:not(:first-child)',
-        modifier: { search: 'none' as const, page: 'all' as const }
-      }
-    : { columns: ':visible', modifier: { search: 'none' as const, page: 'all' as const } }
+  function selectionChange(event: ChangeEvent<HTMLDivElement>): void {
+    const target = event.target as HTMLInputElement
+    if (!target.matches('input[data-candidate-key]')) return
+    const key = target.dataset.candidateKey
+    if (!key) return
+    setSelected((current) => {
+      const next = new Set(current)
+      if (target.checked) next.add(key)
+      else next.delete(key)
+      return next
+    })
+  }
+
+  const printable = newOffline
+    ? (data ?? []).filter((candidate) => selected.has(candidate.enrollment_key))
+    : (data ?? [])
 
   return (
     <section className="page course-page" onClick={() => menu && setMenu(null)}>
@@ -145,9 +154,29 @@ export default function CandidateList({
           </label>
         )}
         {newOffline && (
-          <Button variant="outline" onClick={visibleSelection}>
-            Select all visible
+          <Button variant="outline" onClick={visibleSelection} disabled={!visibleKeys.length}>
+            {visibleKeys.length && visibleKeys.every((key) => selected.has(key))
+              ? 'Deselect all'
+              : 'Select all visible'}
           </Button>
+        )}
+        {addressActions && (
+          <>
+            <Button
+              variant="outline"
+              disabled={!printable.length}
+              onClick={() => exportAddressCsv(printable)}
+            >
+              Export CSV
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!printable.length}
+              onClick={() => printAddressLabels(printable, newOffline)}
+            >
+              Print labels
+            </Button>
+          </>
         )}
         <Button variant="outline" onClick={refresh}>
           Refresh
@@ -163,14 +192,16 @@ export default function CandidateList({
       )}
       {newOffline && (
         <p className="course-selection-note">
-          {selected.size} selected for printing or export. Print and CSV use only selected
-          candidates; other lists include everyone.
+          {selected.size} selected for printing or export. Select candidates across pages; only
+          selected candidates appear in the output.
         </p>
       )}
       <div
+        ref={tableWrap}
         className="course-table-wrap course-table-wrap--candidates"
         onContextMenu={openMenu}
         onPointerDown={resizeColumns}
+        onChange={selectionChange}
       >
         <DataTable
           ref={table}
@@ -185,13 +216,15 @@ export default function CandidateList({
             autoWidth: false,
             order: [],
             rowId: 'enrollment_key',
-            buttons: [
-              { extend: 'copyHtml5', exportOptions },
-              { extend: 'csvHtml5', text: 'Export CSV', exportOptions },
-              { extend: 'print', exportOptions }
-            ],
+            drawCallback: function () {
+              const rows = this.api()
+                .rows({ page: 'current', search: 'applied' })
+                .data()
+                .toArray() as Candidate[]
+              setVisibleKeys(rows.map((row) => row.enrollment_key))
+            },
             layout: {
-              topStart: 'buttons',
+              topStart: null,
               topEnd: 'search',
               bottomStart: 'info',
               bottomEnd: 'paging'
@@ -208,16 +241,8 @@ export default function CandidateList({
                 <input
                   type="checkbox"
                   aria-label={`Select ${row.full_name}`}
-                  checked={selected.has(row.enrollment_key)}
-                  onChange={(event) => {
-                    const checked = event.target.checked
-                    setSelected((current) => {
-                      const next = new Set(current)
-                      if (checked) next.add(row.enrollment_key)
-                      else next.delete(row.enrollment_key)
-                      return next
-                    })
-                  }}
+                  data-candidate-key={row.enrollment_key}
+                  defaultChecked={false}
                 />
               )}
             </Column>
