@@ -3,6 +3,14 @@ import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import { login, logout, restoreSession } from './features/auth/auth'
 import { getEnrolmentSummary } from './features/dashboard/dashboard'
+import {
+  getCandidates,
+  getCandidate,
+  getCoordinator,
+  getCoordinatorMembers,
+  updateCandidate,
+  uploadCandidatePhoto
+} from './features/course/course'
 
 function createWindow(): void {
   // Create the browser window.
@@ -68,6 +76,16 @@ app.whenReady().then(() => {
     'office:enrolment-summary',
     (_event, startDate: string, endDate: string, country: string) =>
       getEnrolmentSummary(startDate, endDate, country)
+  )
+  ipcMain.handle('course:candidates', (_event, country, page, mode, status, search) =>
+    getCandidates(country, page, mode, status, search)
+  )
+  ipcMain.handle('course:candidate', (_event, key) => getCandidate(key))
+  ipcMain.handle('course:coordinator', (_event, key) => getCoordinator(key))
+  ipcMain.handle('course:coordinator-members', (_event, key) => getCoordinatorMembers(key))
+  ipcMain.handle('course:update-candidate', (_event, key, data) => updateCandidate(key, data))
+  ipcMain.handle('course:upload-photo', (_event, key, bytes, name) =>
+    uploadCandidatePhoto(key, bytes, name)
   )
   // Set app user model id for windows
   app.setAppUserModelId('com.vethagamananban.office')

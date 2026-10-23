@@ -86,25 +86,28 @@ async function refreshAccessToken(): Promise<void> {
   }
 }
 
-export async function authorizedGet<T>(path: string): Promise<T> {
+export async function authorizedRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (sessionExpiresAt !== null && Date.now() >= sessionExpiresAt) {
     accessToken = null
     refreshToken = null
     clearSession()
   }
   if (!accessToken) throw new Error('Please sign in again.')
-  const get = (): Promise<T> =>
+  const send = (): Promise<T> =>
     request<T>(path, {
-      headers: { Authorization: `Bearer ${accessToken}` }
+      ...init,
+      headers: { ...init.headers, Authorization: `Bearer ${accessToken}` }
     })
   try {
-    return await get()
+    return await send()
   } catch (error) {
     if (!(error instanceof ApiError) || error.status !== 401) throw error
     await refreshAccessToken()
-    return get()
+    return send()
   }
 }
+
+export const authorizedGet = <T>(path: string): Promise<T> => authorizedRequest<T>(path)
 
 let restoration: Promise<AuthSession | null> | null = null
 

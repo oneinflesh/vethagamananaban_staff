@@ -17,5 +17,26 @@ interface Window {
       endDate: string,
       country: string
     ): Promise<import('./features/dashboard/dashboardApi').RegistrationSummary>
+    courseCandidates(
+      country: string,
+      page: number,
+      mode: string,
+      status: string,
+      search: string
+    ): Promise<import('./features/course/courseApi').CandidatePage>
+    courseCandidate(key: string): Promise<import('./features/course/courseApi').CandidateSummary>
+    courseCoordinator(key: string): Promise<import('./features/course/courseApi').Coordinator>
+    courseCoordinatorMembers(
+      key: string
+    ): Promise<import('./features/course/courseApi').CoordinatorMember[]>
+    courseUpdateCandidate(
+      key: string,
+      data: unknown
+    ): Promise<import('./features/course/courseApi').Candidate>
+    courseUploadPhoto(
+      key: string,
+      bytes: Uint8Array,
+      name: string
+    ): Promise<import('./features/course/courseApi').Candidate>
   }
 }
