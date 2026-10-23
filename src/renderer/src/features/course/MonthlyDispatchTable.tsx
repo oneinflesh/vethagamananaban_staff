@@ -5,7 +5,7 @@ import { resizeColumns } from './resizeColumns'
 import type { MonthlyAllocation, MonthlyStudent } from './courseApi'
 
 export type DispatchRow = MonthlyAllocation & { kind: 'allocation' | 'funded' }
-export type DispatchView = 'dispatch' | 'unpaid' | 'previous'
+export type DispatchView = 'dispatch' | 'previous'
 
 function dateLabel(value: string | null): string {
   if (!value) return '—'

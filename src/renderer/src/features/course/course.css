@@ -139,6 +139,23 @@
 .course-toolbar {
   flex-wrap: wrap;
 }
+.course-toolbar--dispatch {
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.course-dispatch-title-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+.course-list-filter--compact {
+  gap: 4px;
+}
+.course-list-filter--compact select {
+  max-width: 110px;
+}
 .course-list-actions {
   display: flex;
   align-items: center;

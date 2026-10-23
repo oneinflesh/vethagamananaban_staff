@@ -165,9 +165,7 @@ export default function MonthlyDispatchPage({
     [rows, statusFilter, stateFilter, districtFilter]
   )
 
-  const unpaid: MonthlyStudent[] = (
-    view === 'previous' ? (summary?.previous_exam_unpaid ?? []) : (summary?.all_unpaid ?? [])
-  ).filter(
+  const unpaid: MonthlyStudent[] = (summary?.previous_exam_unpaid ?? []).filter(
     (row) =>
       (!stateFilter || row.state === stateFilter) &&
       (!districtFilter || row.district === districtFilter)
@@ -280,60 +278,72 @@ export default function MonthlyDispatchPage({
 
   return (
     <section className="page course-page" onClick={() => menu && setMenu(null)}>
-      <div className="course-toolbar">
+      <div className="course-toolbar course-toolbar--dispatch">
         <Button variant="outline" onClick={onBack}>
           ← Course
         </Button>
         <h1>Monthly book dispatch</h1>
         <span>{country}</span>
-      </div>
-      <div className="course-list-actions course-list-actions--dispatch-filter">
-        <label className="course-list-filter">
-          Book status
-          <select
-            value={statusFilter}
-            disabled={view !== 'dispatch'}
-            onChange={(event) => setStatusFilter(event.target.value)}
+        <div className="course-dispatch-title-controls">
+          <label className="course-list-filter course-list-filter--compact">
+            Book status
+            <select
+              value={statusFilter}
+              disabled={view !== 'dispatch'}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <option value="">All statuses</option>
+              {statuses.map((status) => (
+                <option key={status} value={status}>
+                  {status.replaceAll('_', ' ')}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="course-list-filter course-list-filter--compact">
+            State
+            <select
+              value={stateFilter}
+              onChange={(event) => {
+                setStateFilter(event.target.value)
+                setDistrictFilter('')
+              }}
+            >
+              <option value="">All states</option>
+              {states.map((state) => (
+                <option key={state} value={state}>
+                  {state}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="course-list-filter course-list-filter--compact">
+            District
+            <select
+              value={districtFilter}
+              onChange={(event) => setDistrictFilter(event.target.value)}
+            >
+              <option value="">All districts</option>
+              {districts.map((district) => (
+                <option key={district} value={district}>
+                  {district}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button
+            variant={view === 'dispatch' ? 'secondary' : 'outline'}
+            onClick={() => setView('dispatch')}
           >
-            <option value="">All statuses</option>
-            {statuses.map((status) => (
-              <option key={status} value={status}>
-                {status.replaceAll('_', ' ')}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="course-list-filter">
-          State
-          <select
-            value={stateFilter}
-            onChange={(event) => {
-              setStateFilter(event.target.value)
-              setDistrictFilter('')
-            }}
+            All paid ({summary?.paid_count ?? 0})
+          </Button>
+          <Button
+            variant={view === 'previous' ? 'secondary' : 'outline'}
+            onClick={() => setView('previous')}
           >
-            <option value="">All states</option>
-            {states.map((state) => (
-              <option key={state} value={state}>
-                {state}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="course-list-filter">
-          District
-          <select
-            value={districtFilter}
-            onChange={(event) => setDistrictFilter(event.target.value)}
-          >
-            <option value="">All districts</option>
-            {districts.map((district) => (
-              <option key={district} value={district}>
-                {district}
-              </option>
-            ))}
-          </select>
-        </label>
+            Previous exam complete, unpaid ({summary?.previous_exam_unpaid_count ?? 0})
+          </Button>
+        </div>
       </div>
       <div className="course-list-actions course-list-actions--month">
         <label className="course-list-filter">
@@ -367,26 +377,6 @@ export default function MonthlyDispatchPage({
             onChange={(event) => setSearch(event.target.value)}
           />
         </label>
-      </div>
-      <div className="course-list-actions course-list-actions--views">
-        <Button
-          variant={view === 'dispatch' ? 'secondary' : 'outline'}
-          onClick={() => setView('dispatch')}
-        >
-          Dispatch
-        </Button>
-        <Button
-          variant={view === 'unpaid' ? 'secondary' : 'outline'}
-          onClick={() => setView('unpaid')}
-        >
-          All unpaid ({summary?.unpaid_count ?? 0})
-        </Button>
-        <Button
-          variant={view === 'previous' ? 'secondary' : 'outline'}
-          onClick={() => setView('previous')}
-        >
-          Previous exam complete, unpaid ({summary?.previous_exam_unpaid_count ?? 0})
-        </Button>
       </div>
       {summary && (
         <div className="course-dispatch-stats">
