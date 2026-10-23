@@ -1,4 +1,4 @@
-import type { Candidate, Coordinator } from './courseApi'
+import type { Candidate } from './courseApi'
 
 export type PaperSize = 'A3' | 'A4'
 
@@ -76,27 +76,6 @@ export function printAddressLabels(
     paper === 'A3' ? 5 : 3,
     paper === 'A3' ? 8 : 7,
     1
-  )
-}
-
-export function printCoordinatorLabels(coordinators: Coordinator[], paper: PaperSize = 'A3'): void {
-  printSheets(
-    coordinators.map((coordinator) =>
-      [
-        coordinator.name,
-        coordinator.address_line1,
-        coordinator.address_line2,
-        coordinator.address_line3,
-        coordinator.district,
-        [coordinator.state, coordinator.postal_code].filter(Boolean).join(' - '),
-        coordinator.phone
-      ].filter(Boolean)
-    ),
-    'Coordinator address labels',
-    paper,
-    paper === 'A3' ? 5 : 3,
-    paper === 'A3' ? 8 : 7,
-    0
   )
 }
 

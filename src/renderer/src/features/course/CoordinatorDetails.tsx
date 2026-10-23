@@ -15,7 +15,7 @@ import {
 } from './courseApi'
 import { DataTable, Column } from './dataTable'
 import { resizeColumns } from './resizeColumns'
-import { printCoordinatorLabels } from './addressLabels'
+import { printCoordinatorLabels } from './coordinatorLabels'
 
 export default function CoordinatorDetails({
   coordinatorKey,
