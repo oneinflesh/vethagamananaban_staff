@@ -473,6 +473,17 @@
   font-size: 18px;
   font-weight: 700;
 }
+.course-book-candidate {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-top: 12px;
+  font-size: 18px;
+}
+.course-book-candidate span {
+  font-weight: 700;
+  color: #a45323;
+}
 .course-book-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

@@ -47,7 +47,7 @@ interface Window {
     ): Promise<import('./features/course/courseApi').InitialDispatch>
     courseOtherBookOptions(
       key: string
-    ): Promise<import('./features/course/courseApi').OtherBookOption[]>
+    ): Promise<import('./features/course/courseApi').OtherBookOptions>
     courseCandidateAction(
       action:
         | 'initial-dispatch'
