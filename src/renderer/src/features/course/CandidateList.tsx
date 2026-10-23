@@ -65,6 +65,7 @@ export default function CandidateList({
   const newOffline = section === 'newOffline'
   const addressActions = section === 'offline' || newOffline
   const showFilters = section === 'all' || section === 'online' || section === 'offline'
+  const showStatusFilter = section === 'all' || section === 'online'
   const mode =
     section === 'online' ? 'ONLINE' : section === 'offline' || newOffline ? 'OFFLINE' : ''
   const status =
@@ -193,12 +194,12 @@ export default function CandidateList({
       showFilters
         ? source.filter(
             (candidate) =>
-              (!statusFilter || candidate.status === statusFilter) &&
+              (!showStatusFilter || !statusFilter || candidate.status === statusFilter) &&
               (!stateFilter || candidate.state === stateFilter) &&
               (!districtFilter || candidate.district === districtFilter)
           )
         : source,
-    [source, showFilters, statusFilter, stateFilter, districtFilter]
+    [source, showFilters, showStatusFilter, statusFilter, stateFilter, districtFilter]
   )
   const printable = newOffline
     ? (data ?? []).filter((candidate) => selected.has(candidate.enrollment_key))
@@ -270,20 +271,22 @@ export default function CandidateList({
         )}
         {showFilters && (
           <>
-            <label className="course-list-filter">
-              Status
-              <select
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-              >
-                <option value="">All statuses</option>
-                {fieldOptions(source, 'status').map((value) => (
-                  <option key={value} value={value}>
-                    {statusLabel(value)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {showStatusFilter && (
+              <label className="course-list-filter">
+                Status
+                <select
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+                >
+                  <option value="">All statuses</option>
+                  {fieldOptions(source, 'status').map((value) => (
+                    <option key={value} value={value}>
+                      {statusLabel(value)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label className="course-list-filter">
               State
               <select
