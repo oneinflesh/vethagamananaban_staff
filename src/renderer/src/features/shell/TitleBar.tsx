@@ -34,31 +34,24 @@ export default function TitleBar({
   return (
     <header className="titlebar">
       <nav className="title-menu">
-        {showNavigation && (
-          <>
-            {(['dashboard', 'store', 'course'] as const).map((item) => (
-              <Button
-                key={item}
-                variant={page === item ? 'secondary' : 'ghost'}
-                size="sm"
-                onClick={() => onPage(item)}
-              >
-                {item === 'store' ? 'Book Store' : item[0].toUpperCase() + item.slice(1)}
-              </Button>
-            ))}
+        {showNavigation &&
+          (['dashboard', 'store', 'course'] as const).map((item) => (
             <Button
-              className="titlebar-logout"
-              variant="ghost"
+              key={item}
+              variant={page === item ? 'secondary' : 'ghost'}
               size="sm"
-              disabled={signingOut}
-              onClick={() => void handleLogout()}
+              onClick={() => onPage(item)}
             >
-              Logout
+              {item === 'store' ? 'Book Store' : item[0].toUpperCase() + item.slice(1)}
             </Button>
-          </>
-        )}
+          ))}
       </nav>
       <div className="drag-region" />
+      {showNavigation && (
+        <Button variant="ghost" size="sm" disabled={signingOut} onClick={() => void handleLogout()}>
+          Logout
+        </Button>
+      )}
       {showNavigation && (
         <label className="titlebar-country">
           Country
