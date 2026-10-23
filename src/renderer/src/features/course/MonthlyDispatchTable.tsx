@@ -18,6 +18,8 @@ export default function MonthlyDispatchTable({
   unpaid,
   view,
   search,
+  savingTrackingKey,
+  onTrackingSave,
   onCandidate,
   onContextMenu
 }: {
@@ -25,6 +27,8 @@ export default function MonthlyDispatchTable({
   unpaid: MonthlyStudent[]
   view: DispatchView
   search: string
+  savingTrackingKey: string | null
+  onTrackingSave: (row: DispatchRow, value: string) => void
   onCandidate: (key: string) => void
   onContextMenu: (event: MouseEvent<HTMLDivElement>) => void
 }): React.JSX.Element {
@@ -66,13 +70,36 @@ export default function MonthlyDispatchTable({
           </Column>
           <Column title="Student" data="student_name" />
           <Column title="Phone" data="student_phone" />
-          <Column title="Book" data="exam_title" />
           <Column title="Paid" data="payment_amount" />
           <Column title="Purchased" data="purchased_at">
             {(_value, _type, row: DispatchRow) => dateLabel(row.purchased_at)}
           </Column>
           <Column title="Status" data="status" />
-          <Column title="Tracking ID" data="tracking_number" options={{ defaultContent: '' }} />
+          <Column title="Tracking ID" data="tracking_number" options={{ defaultContent: '' }}>
+            {(_value, _type, row: DispatchRow) =>
+              row.kind === 'funded' ? (
+                <span>Ship book to add tracking</span>
+              ) : (
+                <div className="course-tracking-cell">
+                  <input
+                    key={`${row.allocation_key}:${row.tracking_number}`}
+                    aria-label={`Tracking ID for ${row.bbs_number}`}
+                    title="Press Enter to save tracking ID"
+                    defaultValue={row.tracking_number ?? ''}
+                    maxLength={100}
+                    disabled={savingTrackingKey === row.allocation_key}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        onTrackingSave(row, event.currentTarget.value)
+                      }
+                    }}
+                  />
+                  {savingTrackingKey === row.allocation_key && <span>Saving…</span>}
+                </div>
+              )
+            }
+          </Column>
           <Column title="Address" data="delivery_address.city" options={{ defaultContent: '' }}>
             {(_value, _type, row: DispatchRow) =>
               row.delivery_address?.city

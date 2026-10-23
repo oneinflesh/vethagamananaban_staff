@@ -41,3 +41,13 @@ export const shipMonthlyAllocation = (
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ delivery_address_key: addressKey, tracking_number: trackingNumber })
   })
+
+export const saveMonthlyTracking = (
+  allocationKey: string,
+  trackingNumber: string
+): Promise<unknown> =>
+  authorizedRequest(`staff/course-allocations/${encodeURIComponent(allocationKey)}/tracking/`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tracking_number: trackingNumber })
+  })

@@ -25,7 +25,8 @@ import {
   getMonthlySummary,
   getMonthlyAllocations,
   openMonthlyDispatch,
-  shipMonthlyAllocation
+  shipMonthlyAllocation,
+  saveMonthlyTracking
 } from './features/course/monthlyDispatch'
 
 function createWindow(): void {
@@ -132,6 +133,9 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('course:monthly-ship', (_event, allocationKey, addressKey, trackingNumber) =>
     shipMonthlyAllocation(allocationKey, addressKey, trackingNumber)
+  )
+  ipcMain.handle('course:monthly-tracking', (_event, allocationKey, trackingNumber) =>
+    saveMonthlyTracking(allocationKey, trackingNumber)
   )
   // Set app user model id for windows
   app.setAppUserModelId('com.vethagamananban.office')

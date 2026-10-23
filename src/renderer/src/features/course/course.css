@@ -332,6 +332,24 @@
 .course-table-wrap--candidates table.dataTable thead th {
   position: relative;
 }
+.course-tracking-cell {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.course-tracking-cell input {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid #ded1c4;
+  border-radius: 6px;
+}
+.course-tracking-cell span {
+  color: #694a36;
+  font-size: 11px;
+}
 .course-table-wrap--candidates table.dataTable thead th::after {
   content: '';
   position: absolute;

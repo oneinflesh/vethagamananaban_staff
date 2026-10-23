@@ -45,7 +45,9 @@ const api = {
   courseMonthlyOpen: (examKey: string, country: string) =>
     ipcRenderer.invoke('course:monthly-open', examKey, country),
   courseMonthlyShip: (allocationKey: string, addressKey: string, trackingNumber: string) =>
-    ipcRenderer.invoke('course:monthly-ship', allocationKey, addressKey, trackingNumber)
+    ipcRenderer.invoke('course:monthly-ship', allocationKey, addressKey, trackingNumber),
+  courseMonthlyTracking: (allocationKey: string, trackingNumber: string) =>
+    ipcRenderer.invoke('course:monthly-tracking', allocationKey, trackingNumber)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

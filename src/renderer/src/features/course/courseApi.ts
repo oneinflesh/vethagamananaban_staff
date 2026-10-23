@@ -237,6 +237,10 @@ export const shipMonthlyAllocation = (
   trackingNumber: string
 ): Promise<MonthlyAllocation> =>
   window.office.courseMonthlyShip(allocationKey, addressKey, trackingNumber)
+export const saveMonthlyTracking = (
+  allocationKey: string,
+  trackingNumber: string
+): Promise<MonthlyAllocation> => window.office.courseMonthlyTracking(allocationKey, trackingNumber)
 export const updateCandidate = (key: string, data: unknown): Promise<Candidate> =>
   window.office.courseUpdateCandidate(key, data)
 export async function uploadPhoto(key: string, file: File): Promise<Candidate> {

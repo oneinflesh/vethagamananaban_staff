@@ -83,5 +83,9 @@ interface Window {
       addressKey: string,
       trackingNumber: string
     ): Promise<import('./features/course/courseApi').MonthlyAllocation>
+    courseMonthlyTracking(
+      allocationKey: string,
+      trackingNumber: string
+    ): Promise<import('./features/course/courseApi').MonthlyAllocation>
   }
 }
