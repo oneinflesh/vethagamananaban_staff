@@ -37,6 +37,13 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  ipcMain.handle('office:ping', async () => { try { const response = await fetch('https://api.bible2bible.com/api/v1/auth/staff/login/', { method: 'OPTIONS', signal: AbortSignal.timeout(5000) }); return response.ok } catch { return false } })
+  ipcMain.handle('office:login', async (_event, identifier: string, password: string) => {
+    const response = await fetch('https://api.bible2bible.com/api/v1/auth/staff/login/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ identifier, password }), signal: AbortSignal.timeout(15000) })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.message || data.detail || 'Login failed')
+    return data.account
+  })
   // Set app user model id for windows
   app.setAppUserModelId('com.vethagamananban.office')
 

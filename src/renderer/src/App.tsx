@@ -6,11 +6,13 @@ import DashboardPage from './features/dashboard/DashboardPage'
 import StorePage from './features/store/StorePage'
 import StatusBar from './features/shell/StatusBar'
 import TitleBar, { type Page } from './features/shell/TitleBar'
+import { FluentProvider, webLightTheme } from '@fluentui/react-components'
+import { ToastContainer } from 'react-toastify'
 
 export default function App(): React.JSX.Element {
   const [staff, setStaff] = useState<Staff | null>(null)
   const [page, setPage] = useState<Page>('dashboard')
-  return <div className="app"><TitleBar page={page} onPage={setPage}/>
+  return <FluentProvider theme={webLightTheme} className="app"><TitleBar page={page} onPage={setPage} showNavigation={!!staff}/>
     {staff ? page === 'dashboard' ? <DashboardPage/> : page === 'store' ? <StorePage/> : <CoursePage/> : <LoginPage onLogin={setStaff}/>}
-    <StatusBar staff={staff}/></div>
+    <StatusBar staff={staff}/><ToastContainer position="top-right" theme="light"/></FluentProvider>
 }
