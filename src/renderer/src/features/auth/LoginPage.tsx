@@ -6,15 +6,16 @@ import { Label } from '@/components/ui/label'
 import { useNotifications } from '../notifications/Notifications'
 import OrangeBackground from '../visuals/OrangeBackground'
 import FullScreenLoader from './FullScreenLoader'
-import { login, type Staff } from './auth'
+import { login, type AuthSession } from './auth'
 
 export default function LoginPage({
   onLogin
 }: {
-  onLogin: (staff: Staff) => void
+  onLogin: (session: AuthSession) => void
 }): React.JSX.Element {
-  const [identifier, setIdentifier] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [remember, setRemember] = useState(false)
   const [busy, setBusy] = useState(false)
   const notify = useNotifications()
 
@@ -22,7 +23,7 @@ export default function LoginPage({
     event.preventDefault()
     setBusy(true)
     try {
-      onLogin(await login(identifier.trim(), password))
+      onLogin(await login(username.trim(), password, remember))
       notify.success('Signed in')
     } catch (cause) {
       notify.error(cause instanceof Error ? cause.message : 'Login failed')
@@ -43,13 +44,16 @@ export default function LoginPage({
         <CardContent>
           <form className="grid gap-4" onSubmit={submit}>
             <div className="grid gap-2">
-              <Label htmlFor="identifier">Username or email</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="identifier"
+                id="username"
                 autoFocus
                 required
-                value={identifier}
-                onChange={(event) => setIdentifier(event.target.value)}
+                autoComplete="username"
+                pattern="[^@\s]+"
+                title="Enter your username, not an email address"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
               />
             </div>
             <div className="grid gap-2">
@@ -58,10 +62,19 @@ export default function LoginPage({
                 id="password"
                 type="password"
                 required
+                autoComplete="current-password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
             </div>
+            <label className="login-remember">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={(event) => setRemember(event.target.checked)}
+              />
+              Remember me for 24 hours
+            </label>
             <Button type="submit" disabled={busy}>
               {busy ? 'Connecting…' : 'Sign in'}
             </Button>

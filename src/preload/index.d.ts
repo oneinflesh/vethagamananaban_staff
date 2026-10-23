@@ -5,7 +5,8 @@ declare global {
       maximize(): void
       close(): void
       ping(): Promise<boolean>
-      login(identifier: string, password: string): Promise<unknown>
+      login(username: string, password: string, remember: boolean): Promise<unknown>
+      restoreSession(): Promise<unknown>
     }
   }
 }

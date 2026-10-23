@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
+import { login, restoreSession } from './features/auth/auth'
 
 function createWindow(): void {
   // Create the browser window.
@@ -57,17 +58,10 @@ app.whenReady().then(() => {
       return false
     }
   })
-  ipcMain.handle('office:login', async (_event, identifier: string, password: string) => {
-    const response = await fetch('https://api.bible2bible.com/api/v1/auth/staff/login/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier, password }),
-      signal: AbortSignal.timeout(15000)
-    })
-    const data = await response.json()
-    if (!response.ok) throw new Error(data.message || data.detail || 'Login failed')
-    return data.account
-  })
+  ipcMain.handle('office:login', (_event, username: string, password: string, remember: boolean) =>
+    login(username, password, remember)
+  )
+  ipcMain.handle('office:restore-session', () => restoreSession())
   // Set app user model id for windows
   app.setAppUserModelId('com.vethagamananban.office')
 

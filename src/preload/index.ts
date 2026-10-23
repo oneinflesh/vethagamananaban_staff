@@ -6,8 +6,9 @@ const api = {
   maximize: () => ipcRenderer.send('window:maximize'),
   close: () => ipcRenderer.send('window:close'),
   ping: (): Promise<boolean> => ipcRenderer.invoke('office:ping'),
-  login: (identifier: string, password: string) =>
-    ipcRenderer.invoke('office:login', identifier, password)
+  login: (username: string, password: string, remember: boolean) =>
+    ipcRenderer.invoke('office:login', username, password, remember),
+  restoreSession: () => ipcRenderer.invoke('office:restore-session')
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

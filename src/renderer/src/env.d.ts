@@ -5,6 +5,11 @@ interface Window {
     maximize(): void
     close(): void
     ping(): Promise<boolean>
-    login(identifier: string, password: string): Promise<import('./features/auth/auth').Staff>
+    login(
+      username: string,
+      password: string,
+      remember: boolean
+    ): Promise<import('./features/auth/auth').AuthSession>
+    restoreSession(): Promise<import('./features/auth/auth').AuthSession | null>
   }
 }

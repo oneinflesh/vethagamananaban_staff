@@ -156,6 +156,19 @@ body {
   line-height: 1.4;
   font-weight: 600;
 }
+.login-remember {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.login-remember input {
+  width: 16px;
+  height: 16px;
+  accent-color: #a74712;
+  cursor: pointer;
+}
 .login-loading-overlay {
   position: fixed;
   inset: 0;

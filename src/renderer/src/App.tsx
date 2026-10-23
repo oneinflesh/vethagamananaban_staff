@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import LoginPage from './features/auth/LoginPage'
-import type { Staff } from './features/auth/auth'
+import { restoreSession, type AuthSession } from './features/auth/auth'
 import CoursePage from './features/course/CoursePage'
 import DashboardPage from './features/dashboard/DashboardPage'
 import StorePage from './features/store/StorePage'
@@ -11,7 +11,8 @@ import { preloadAppResources } from './features/shell/preloadResources'
 import { NotificationProvider } from './features/notifications/Notifications'
 
 export default function App(): React.JSX.Element {
-  const [staff, setStaff] = useState<Staff | null>(null)
+  const [session, setSession] = useState<AuthSession | null>(null)
+  const staff = session?.staff ?? null
   const [page, setPage] = useState<Page>('dashboard')
   const [ready, setReady] = useState(false)
 
@@ -19,7 +20,10 @@ export default function App(): React.JSX.Element {
     let active = true
     let timer = 0
     const started = performance.now()
-    void preloadAppResources()
+    void Promise.all([preloadAppResources().catch(() => {}), restoreSession().catch(() => null)])
+      .then(([, restored]) => {
+        if (active && restored) setSession(restored)
+      })
       .catch(() => {})
       .finally(() => {
         if (!active) return
@@ -33,6 +37,13 @@ export default function App(): React.JSX.Element {
       window.clearTimeout(timer)
     }
   }, [])
+
+  useEffect(() => {
+    if (!session?.expiresAt) return
+    const remaining = session.expiresAt - Date.now()
+    const timer = window.setTimeout(() => setSession(null), Math.max(0, remaining))
+    return () => window.clearTimeout(timer)
+  }, [session])
 
   if (!ready) return <SplashScreen />
 
@@ -49,7 +60,7 @@ export default function App(): React.JSX.Element {
             <CoursePage />
           )
         ) : (
-          <LoginPage onLogin={setStaff} />
+          <LoginPage onLogin={setSession} />
         )}
         <StatusBar staff={staff} />
       </div>
