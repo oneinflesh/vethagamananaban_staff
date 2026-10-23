@@ -19,8 +19,25 @@ export function getCandidates(
   return authorizedGet(`staff/course-enrollments/?${params}`)
 }
 
-export const getCandidateCounts = (country: string): Promise<unknown> =>
-  authorizedGet(`staff/course-enrollments/candidate-counts/?country=${encodeURIComponent(country)}`)
+export async function getCandidateCounts(country: string): Promise<unknown> {
+  const sections = [
+    ['all', '', ''],
+    ['online', 'ONLINE', ''],
+    ['offline', 'OFFLINE', ''],
+    ['discontinued', '', 'SUSPENDED'],
+    ['finished', '', 'COMPLETED']
+  ] as const
+  const counts = await Promise.all(
+    sections.map(async ([name, mode, status]) => {
+      const params = new URLSearchParams({ country, scope: 'course', page_size: '1' })
+      if (mode) params.set('mode', mode)
+      if (status) params.set('status', status)
+      const result = await authorizedGet<{ count: number }>(`staff/course-enrollments/?${params}`)
+      return [name, result.count] as const
+    })
+  )
+  return Object.fromEntries(counts)
+}
 
 export const getCandidate = (key: string): Promise<unknown> =>
   authorizedGet(`staff/course-enrollments/${encodeURIComponent(key)}/summary/`)

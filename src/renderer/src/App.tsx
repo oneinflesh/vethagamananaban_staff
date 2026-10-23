@@ -16,12 +16,10 @@ export default function App(): React.JSX.Element {
   const staff = session?.staff ?? null
   const [page, setPage] = useState<Page>('dashboard')
   const [ready, setReady] = useState(false)
-  const [splashComplete, setSplashComplete] = useState(false)
 
   useEffect(() => {
     let active = true
     let timer = 0
-    let finishTimer = 0
     const started = performance.now()
     void Promise.all([preloadAppResources().catch(() => {}), restoreSession().catch(() => null)])
       .then(([, restored]) => {
@@ -32,18 +30,12 @@ export default function App(): React.JSX.Element {
         if (!active) return
         const remaining = Math.max(0, 5000 - (performance.now() - started))
         timer = window.setTimeout(() => {
-          if (active) {
-            setSplashComplete(true)
-            finishTimer = window.setTimeout(() => {
-              if (active) setReady(true)
-            }, 350)
-          }
+          if (active) setReady(true)
         }, remaining)
       })
     return () => {
       active = false
       window.clearTimeout(timer)
-      window.clearTimeout(finishTimer)
     }
   }, [])
 
@@ -54,7 +46,7 @@ export default function App(): React.JSX.Element {
     return () => window.clearTimeout(timer)
   }, [session])
 
-  if (!ready) return <SplashScreen complete={splashComplete} />
+  if (!ready) return <SplashScreen />
 
   async function handleLogout(): Promise<void> {
     await logout()

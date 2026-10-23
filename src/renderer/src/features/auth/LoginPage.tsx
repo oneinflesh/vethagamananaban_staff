@@ -17,22 +17,15 @@ export default function LoginPage({
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [completed, setCompleted] = useState(false)
   const notify = useNotifications()
 
   async function submit(event: React.FormEvent): Promise<void> {
     event.preventDefault()
     setBusy(true)
-    setCompleted(false)
     try {
-      const session = await login(username.trim(), password, remember)
-      setCompleted(true)
-      await new Promise((resolve) => window.setTimeout(resolve, 300))
-      onLogin(session)
+      onLogin(await login(username.trim(), password, remember))
       notify.success('Signed in')
     } catch (cause) {
-      setCompleted(true)
-      await new Promise((resolve) => window.setTimeout(resolve, 300))
       notify.error(cause instanceof Error ? cause.message : 'Login failed')
     } finally {
       setBusy(false)
@@ -88,7 +81,7 @@ export default function LoginPage({
           </form>
         </CardContent>
       </Card>
-      {busy && <FullScreenLoader message="Signing you in" complete={completed} />}
+      {busy && <FullScreenLoader message="Signing you in" showProgress={false} />}
     </main>
   )
 }

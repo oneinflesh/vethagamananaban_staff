@@ -4,11 +4,11 @@ import LoadingProgress from './LoadingProgress'
 export default function FullScreenLoader({
   message,
   leaving = false,
-  complete = false
+  showProgress = true
 }: {
   message: string
   leaving?: boolean
-  complete?: boolean
+  showProgress?: boolean
 }): React.JSX.Element {
   return (
     <div
@@ -26,7 +26,7 @@ export default function FullScreenLoader({
           delay={140}
           className="screen-loading-text"
         />
-        <LoadingProgress complete={leaving || complete} />
+        {showProgress && <LoadingProgress complete={leaving} />}
       </div>
     </div>
   )
