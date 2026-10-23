@@ -24,7 +24,7 @@ export function printCoordinatorLabels(coordinators: Coordinator[]): void {
     article { border: 0.3mm solid #bbb; overflow: hidden; overflow-wrap: anywhere; line-height: 1.3; }
     article.normal { width: 55mm; height: 50mm; padding: 2mm; font-size: 9pt; }
     article.a6 { width: 105mm; height: 148mm; padding: 6mm; font-size: 14pt; }
-    article.a5 { width: 148mm; height: 210mm; padding: 9mm; font-size: 19pt; }
+    article.a5 { width: 200mm; height: 141mm; padding: 9mm; font-size: 19pt; }
     article.a4 { width: 200mm; height: 287mm; padding: 12mm; font-size: 24pt; }
     p { margin: 0 0 0.35em; }
     p.address-name { font-weight: 700; line-height: 1.15; margin-bottom: 0.6em; }
