@@ -31,7 +31,7 @@ export default function CandidateActionPanel({
 }): React.JSX.Element {
   const [dispatch, setDispatch] = useState<InitialDispatch | null>(null)
   const [otherBooks, setOtherBooks] = useState<OtherBookOption[] | null>(null)
-  const [releaseKey, setReleaseKey] = useState('')
+  const [selectedReleases, setSelectedReleases] = useState<Set<string>>(() => new Set())
   const [options, setOptions] = useState<RegistrationOptions | null>(null)
   const [summary, setSummary] = useState<CandidateSummary | null>(null)
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
@@ -56,29 +56,27 @@ export default function CandidateActionPanel({
           if (active) setError(cause instanceof Error ? cause.message : 'Could not load parcel')
         })
     if (action === 'payment')
-      Promise.all([getRegistrationOptions(), getCandidate(candidate.enrollment_key)]).then(
-        ([course, record]) => {
+      Promise.all([getRegistrationOptions(), getCandidate(candidate.enrollment_key)])
+        .then(([course, record]) => {
           if (active) {
             setOptions(course)
             setSummary(record)
           }
-        }
-      )
+        })
+        .catch((cause) => {
+          if (active)
+            setError(cause instanceof Error ? cause.message : 'Could not load payment details')
+        })
     if (action === 'otherBook')
       getOtherBookOptions(candidate.enrollment_key)
         .then((releases) => {
           if (active) {
             setOtherBooks(releases)
-            setReleaseKey(releases[0]?.release_key ?? '')
           }
         })
         .catch((cause) => {
           if (active)
             setError(cause instanceof Error ? cause.message : 'Could not load released books')
-        })
-        .catch((cause) => {
-          if (active)
-            setError(cause instanceof Error ? cause.message : 'Could not load payment details')
         })
     return () => {
       active = false
@@ -113,10 +111,10 @@ export default function CandidateActionPanel({
               }
         )
       } else if (action === 'otherBook') {
-        if (!releaseKey) throw new Error('Choose a previously released book.')
+        if (!selectedReleases.size) throw new Error('Choose at least one released book.')
         if (!tracking.trim()) throw new Error('Enter a tracking number.')
         await candidateAction('other-book-dispatch', candidate.enrollment_key, {
-          release_key: releaseKey,
+          release_keys: [...selectedReleases],
           tracking_number: tracking.trim()
         })
       } else {
@@ -127,7 +125,7 @@ export default function CandidateActionPanel({
           payment_method: paymentMethod
         })
       }
-      notify.success(action === 'otherBook' ? 'Earlier book shipped' : 'Candidate updated')
+      notify.success(action === 'otherBook' ? 'Selected books shipped' : 'Candidate updated')
       onChanged()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not update candidate')
@@ -138,7 +136,7 @@ export default function CandidateActionPanel({
 
   const title = {
     parcel: 'Prepare ID card and registration books',
-    otherBook: 'Send previously released book',
+    otherBook: 'Send released books',
     payment: 'Record offline payment',
     password: 'Change password',
     discontinue: 'Discontinue candidate',
@@ -183,34 +181,39 @@ export default function CandidateActionPanel({
         {action === 'otherBook' &&
           (otherBooks ? (
             <>
-              <p>
-                Choose one earlier release for this offline candidate. The locked book price is
-                deducted from their wallet only when this shipment succeeds. Current course month
-                stays unchanged.
-              </p>
-              <p>Wallet balance: ₹{candidate.wallet_balance}</p>
+              <div className="course-wallet-balance">
+                Wallet balance: ₹{candidate.wallet_balance}
+              </div>
               {otherBooks.length ? (
                 <>
-                  <label className="course-dialog__field">
-                    Released book
-                    <select
-                      value={releaseKey}
-                      onChange={(event) => setReleaseKey(event.target.value)}
-                    >
-                      {otherBooks.map((item) => (
-                        <option key={item.release_key} value={item.release_key}>
-                          {item.sequence}. {item.exam_title} · Cycle {item.cycle}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <div className="course-choice-list">
+                    {otherBooks.map((item) => (
+                      <label className="course-choice" key={item.release_key}>
+                        <input
+                          type="checkbox"
+                          checked={selectedReleases.has(item.release_key)}
+                          disabled={item.assigned}
+                          onChange={(event) =>
+                            setSelectedReleases((current) => {
+                              const next = new Set(current)
+                              if (event.target.checked) next.add(item.release_key)
+                              else next.delete(item.release_key)
+                              return next
+                            })
+                          }
+                        />
+                        {item.sequence}. {item.exam_title} · Cycle {item.cycle}
+                        {item.assigned ? ' (already assigned)' : ''}
+                      </label>
+                    ))}
+                  </div>
                   <label className="course-dialog__field">
                     Tracking number
                     <Input value={tracking} onChange={(event) => setTracking(event.target.value)} />
                   </label>
                 </>
               ) : (
-                <p>No earlier released books are available for this candidate.</p>
+                <p>No released books are available for this candidate.</p>
               )}
             </>
           ) : (
@@ -339,7 +342,7 @@ export default function CandidateActionPanel({
               saving ||
               (action === 'parcel' && !dispatch) ||
               (action === 'payment' && !options) ||
-              (action === 'otherBook' && (!otherBooks?.length || !releaseKey))
+              (action === 'otherBook' && (!otherBooks?.length || !selectedReleases.size))
             }
             onClick={() => void submit()}
           >

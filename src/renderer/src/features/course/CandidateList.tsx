@@ -489,7 +489,7 @@ export default function CandidateList({
                     setMenu(null)
                   }}
                 >
-                  Send previously released book
+                  Send released books
                 </button>
               )}
               <button

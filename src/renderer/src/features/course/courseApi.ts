@@ -94,6 +94,7 @@ export type OtherBookOption = {
   exam_title: string
   sequence: number
   cycle: number
+  assigned: boolean
 }
 export type Payment = {
   payment_key: string

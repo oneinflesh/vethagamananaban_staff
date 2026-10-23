@@ -463,6 +463,16 @@
   overflow: auto;
   margin: 10px 0;
 }
+.course-wallet-balance {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid #d89559;
+  border-radius: 8px;
+  background: #fff4e8;
+  color: #5f351e;
+  font-size: 18px;
+  font-weight: 700;
+}
 .manual-registration-layout {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(250px, 1fr);
