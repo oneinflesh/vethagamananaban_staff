@@ -6,6 +6,7 @@ import CandidateDetails from './CandidateDetails'
 import CoordinatorDetails from './CoordinatorDetails'
 import CoordinatorList from './CoordinatorList'
 import ManualRegistrationPage from './ManualRegistrationPage'
+import MonthlyDispatchPage from './MonthlyDispatchPage'
 import { getCandidateCounts, getCoordinatorCount, type CandidateCounts } from './courseApi'
 import './course.css'
 
@@ -28,6 +29,7 @@ export default function CoursePage(): React.JSX.Element {
   const [coordinatorKey, setCoordinatorKey] = useState<string | null>(null)
   const [coordinatorList, setCoordinatorList] = useState(false)
   const [manualRegistration, setManualRegistration] = useState(false)
+  const [monthlyDispatch, setMonthlyDispatch] = useState(false)
   const [counts, setCounts] = useState<{
     country: string
     values: CandidateCounts & { coordinators: number }
@@ -35,7 +37,15 @@ export default function CoursePage(): React.JSX.Element {
   const [countError, setCountError] = useState<string | null>(null)
   const [retry, setRetry] = useState(0)
   useEffect(() => {
-    if (section || candidateKey || coordinatorKey || coordinatorList || manualRegistration) return
+    if (
+      section ||
+      candidateKey ||
+      coordinatorKey ||
+      coordinatorList ||
+      manualRegistration ||
+      monthlyDispatch
+    )
+      return
     let active = true
     Promise.all([
       Promise.all([getCandidateCounts(country), getCoordinatorCount(country)]),
@@ -53,7 +63,16 @@ export default function CoursePage(): React.JSX.Element {
     return () => {
       active = false
     }
-  }, [country, section, candidateKey, coordinatorKey, coordinatorList, manualRegistration, retry])
+  }, [
+    country,
+    section,
+    candidateKey,
+    coordinatorKey,
+    coordinatorList,
+    manualRegistration,
+    monthlyDispatch,
+    retry
+  ])
   const visibleCounts = counts?.country === country ? counts.values : null
   if (coordinatorKey)
     return (
@@ -99,6 +118,20 @@ export default function CoursePage(): React.JSX.Element {
         onCandidate={(key) => {
           setManualRegistration(false)
           setCounts(null)
+          setCandidateTab('details')
+          setCandidateKey(key)
+        }}
+      />
+    )
+  if (monthlyDispatch)
+    return (
+      <MonthlyDispatchPage
+        country={country}
+        onBack={() => {
+          setMonthlyDispatch(false)
+          setCounts(null)
+        }}
+        onCandidate={(key) => {
           setCandidateTab('details')
           setCandidateKey(key)
         }}
@@ -211,6 +244,20 @@ export default function CoursePage(): React.JSX.Element {
             <span className="course-nav-card__count">{visibleCounts.dropout}</span>
             <strong>Dropout candidates</strong>
             <small>View candidates who left the course</small>
+            <span className="course-nav-card__arrow" aria-hidden="true">
+              →
+            </span>
+          </button>
+        </div>
+      )}
+      {visibleCounts && countError !== country && (
+        <div className="course-card-grid course-card-grid--third">
+          <button
+            className="course-nav-card course-nav-card--monthly"
+            onClick={() => setMonthlyDispatch(true)}
+          >
+            <strong>Monthly book dispatch</strong>
+            <small>Open month, ship books, view unpaid candidates, and print addresses</small>
             <span className="course-nav-card__arrow" aria-hidden="true">
               →
             </span>

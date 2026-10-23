@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
 import FullScreenLoader from '../shell/FullScreenLoader'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
 import { getCoordinators, type Coordinator } from './courseApi'
 import { DataTable, Column } from './dataTable'
 import { resizeColumns } from './resizeColumns'
+import { fieldOptions, statusLabel } from './tableFilters'
 
 export default function CoordinatorList({
   country,
@@ -18,9 +20,15 @@ export default function CoordinatorList({
   const [records, setRecords] = useState<Coordinator[]>([])
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [stateFilter, setStateFilter] = useState('')
+  const [districtFilter, setDistrictFilter] = useState('')
+  const table = useRef<DataTableRef>(null)
   const { loading, leaving, start, finish } = useSmoothLoading()
   useEffect(() => {
     let active = true
+    start()
     getCoordinators(country)
       .then((result) => {
         if (active) {
@@ -37,7 +45,17 @@ export default function CoordinatorList({
     return () => {
       active = false
     }
-  }, [country, retry, finish])
+  }, [country, retry, start, finish])
+  const filtered = useMemo(
+    () =>
+      records.filter(
+        (row) =>
+          (!statusFilter || (row.enrollment_status ?? 'NONE') === statusFilter) &&
+          (!stateFilter || row.state === stateFilter) &&
+          (!districtFilter || row.district === districtFilter)
+      ),
+    [records, statusFilter, stateFilter, districtFilter]
+  )
   return (
     <section className="page course-page">
       <div className="course-toolbar">
@@ -48,6 +66,8 @@ export default function CoordinatorList({
         <span>
           {country} · {records.length} coordinators
         </span>
+      </div>
+      <div className="course-list-actions">
         <Button
           variant="outline"
           onClick={() => {
@@ -57,6 +77,66 @@ export default function CoordinatorList({
         >
           Refresh
         </Button>
+        <label className="course-list-filter">
+          Status
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+            <option value="">All statuses</option>
+            {fieldOptions(records, 'enrollment_status').map((value) => (
+              <option key={value} value={value}>
+                {statusLabel(value)}
+              </option>
+            ))}
+            {records.some((row) => !row.enrollment_status) && (
+              <option value="NONE">No linked candidate</option>
+            )}
+          </select>
+        </label>
+        <label className="course-list-filter">
+          State
+          <select
+            value={stateFilter}
+            onChange={(event) => {
+              setStateFilter(event.target.value)
+              setDistrictFilter('')
+            }}
+          >
+            <option value="">All states</option>
+            {fieldOptions(records, 'state').map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="course-list-filter">
+          District
+          <select
+            value={districtFilter}
+            onChange={(event) => setDistrictFilter(event.target.value)}
+          >
+            <option value="">All districts</option>
+            {fieldOptions(
+              records.filter((row) => !stateFilter || row.state === stateFilter),
+              'district'
+            ).map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="course-list-search">
+          Search
+          <input
+            type="search"
+            value={search}
+            placeholder="Search coordinators"
+            onChange={(event) => {
+              setSearch(event.target.value)
+              table.current?.dt()?.search(event.target.value).draw()
+            }}
+          />
+        </label>
       </div>
       {error && <div className="course-error">{error}</div>}
       <div
@@ -64,7 +144,8 @@ export default function CoordinatorList({
         onPointerDown={resizeColumns}
       >
         <DataTable
-          data={records}
+          ref={table}
+          data={filtered}
           className="display course-table"
           options={{
             pageLength: 20,
@@ -73,7 +154,8 @@ export default function CoordinatorList({
             paging: true,
             info: true,
             autoWidth: false,
-            order: []
+            order: [],
+            layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' }
           }}
         >
           <Column title="BBS number" data="bbs_number" options={{ defaultContent: '' }} />

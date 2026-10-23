@@ -37,7 +37,17 @@ const api = {
   courseUpdateCandidate: (key: string, data: unknown) =>
     ipcRenderer.invoke('course:update-candidate', key, data),
   courseUploadPhoto: (key: string, bytes: Uint8Array, name: string) =>
-    ipcRenderer.invoke('course:upload-photo', key, bytes, name)
+    ipcRenderer.invoke('course:upload-photo', key, bytes, name),
+  courseMonthlySummary: (examKey: string, country: string) =>
+    ipcRenderer.invoke('course:monthly-summary', examKey, country),
+  courseMonthlyAllocations: (examKey: string, country: string) =>
+    ipcRenderer.invoke('course:monthly-allocations', examKey, country),
+  courseMonthlyAddresses: (courseKey: string, country: string) =>
+    ipcRenderer.invoke('course:monthly-addresses', courseKey, country),
+  courseMonthlyOpen: (examKey: string, country: string) =>
+    ipcRenderer.invoke('course:monthly-open', examKey, country),
+  courseMonthlyShip: (allocationKey: string, addressKey: string, trackingNumber: string) =>
+    ipcRenderer.invoke('course:monthly-ship', allocationKey, addressKey, trackingNumber)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

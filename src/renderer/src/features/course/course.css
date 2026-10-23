@@ -30,6 +30,26 @@
 .course-card-grid--second {
   margin-top: 14px;
 }
+.course-card-grid--third {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  margin-top: 14px;
+}
+.course-nav-card--monthly {
+  grid-column: span 3;
+}
+.course-dispatch-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: 4px 0 12px;
+  color: #694a36;
+  font-size: 13px;
+}
+@media (max-width: 900px) {
+  .course-nav-card--monthly {
+    grid-column: span 6;
+  }
+}
 .course-nav-card--wide {
   grid-column: span 2;
 }
@@ -133,6 +153,22 @@
   margin-left: auto;
   color: #694a36;
   font-size: 13px;
+}
+.course-list-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #694a36;
+  font-size: 13px;
+}
+.course-list-filter select {
+  height: 36px;
+  max-width: 170px;
+  padding: 0 8px;
+  border: 1px solid #ded1c4;
+  border-radius: 7px;
+  background: white;
+  color: #34261e;
 }
 .course-list-search input {
   width: 220px;

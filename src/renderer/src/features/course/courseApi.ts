@@ -56,7 +56,15 @@ export type LanguageInfo = {
   is_active: boolean
   offline_enabled: boolean
 }
-export type ExamInfo = { exam_key: string; sequence: number; title: string; is_active: boolean }
+export type ExamInfo = {
+  exam_key: string
+  sequence: number
+  title: string
+  catalog_book_name: string
+  scheduled_month: string | null
+  is_current: boolean
+  is_active: boolean
+}
 export type RegistrationOptions = {
   course: CourseInfo
   languages: LanguageInfo[]
@@ -112,6 +120,7 @@ export type CandidateSummary = {
 export type Coordinator = {
   coordinator_key: string
   enrollment_key: string | null
+  enrollment_status: string | null
   bbs_number: string
   name: string
   phone: string
@@ -130,6 +139,60 @@ export type CoordinatorMember = {
   name: string
   phone: string
   address: string
+}
+
+export type MonthlyStudent = {
+  enrollment_key: string
+  bbs_number: string
+  name: string
+  phone: string
+}
+export type MonthlySummary = {
+  paid_count: number
+  paid_amount: string
+  funded_pending_count: number
+  funded_pending: MonthlyStudent[]
+  unpaid_count: number
+  previous_exam_unpaid_count: number
+  all_unpaid: MonthlyStudent[]
+  previous_exam_unpaid: MonthlyStudent[]
+}
+export type MonthlyAllocation = {
+  allocation_key: string
+  enrollment_key: string
+  bbs_number: string
+  student_name: string
+  student_phone: string
+  book_number: string
+  exam_title: string
+  payment_amount: string
+  purchased_at: string | null
+  status: string
+  tracking_number: string
+  delivery_address_key: string | null
+  delivery_address: {
+    city?: string
+    state?: string
+    postal_code?: string
+  } | null
+}
+export type MonthlyAddress = {
+  enrollment_key: string
+  bbs_number: string
+  name: string
+  phone: string
+  line1: string
+  line2: string
+  landmark: string
+  district: string
+  state: string
+  country: string
+  postal_code: string
+}
+export type MonthlyAddressReport = {
+  active_count: number
+  missing_address_count: number
+  addresses: MonthlyAddress[]
 }
 
 export const getCandidates = (
@@ -173,6 +236,26 @@ export const updateCoordinator = (key: string, data: unknown): Promise<Coordinat
   window.office.courseUpdateCoordinator(key, data)
 export const getCoordinatorMembers = (key: string): Promise<CoordinatorMember[]> =>
   window.office.courseCoordinatorMembers(key)
+export const getMonthlySummary = (examKey: string, country: string): Promise<MonthlySummary> =>
+  window.office.courseMonthlySummary(examKey, country)
+export const getMonthlyAllocations = (
+  examKey: string,
+  country: string
+): Promise<MonthlyAllocation[]> => window.office.courseMonthlyAllocations(examKey, country)
+export const getMonthlyAddresses = (
+  courseKey: string,
+  country: string
+): Promise<MonthlyAddressReport> => window.office.courseMonthlyAddresses(courseKey, country)
+export const openMonthlyDispatch = (
+  examKey: string,
+  country: string
+): Promise<{ processing: number }> => window.office.courseMonthlyOpen(examKey, country)
+export const shipMonthlyAllocation = (
+  allocationKey: string,
+  addressKey: string,
+  trackingNumber: string
+): Promise<MonthlyAllocation> =>
+  window.office.courseMonthlyShip(allocationKey, addressKey, trackingNumber)
 export const updateCandidate = (key: string, data: unknown): Promise<Candidate> =>
   window.office.courseUpdateCandidate(key, data)
 export async function uploadPhoto(key: string, file: File): Promise<Candidate> {

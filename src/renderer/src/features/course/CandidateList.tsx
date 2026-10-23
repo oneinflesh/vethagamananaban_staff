@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type MouseEvent } from 'react'
 import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
 import FullScreenLoader from '../shell/FullScreenLoader'
@@ -9,7 +9,8 @@ import { DataTable, Column } from './dataTable'
 import { resizeColumns } from './resizeColumns'
 import CandidateActionPanel, { type CandidateAction } from './CandidateActionPanel'
 import type { CourseSection } from './CoursePage'
-import { exportAddressCsv, printAddressLabels } from './addressLabels'
+import { exportAddressCsv, printAddressLabels, type PaperSize } from './addressLabels'
+import { fieldOptions, statusLabel } from './tableFilters'
 
 const names: Record<CourseSection, string> = {
   all: 'All candidates',
@@ -20,6 +21,7 @@ const names: Record<CourseSection, string> = {
   finished: 'Course finished candidates',
   newOffline: 'New Registrations - Offline'
 }
+const emptyCandidates: Candidate[] = []
 
 export default function CandidateList({
   section,
@@ -40,6 +42,10 @@ export default function CandidateList({
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [stateFilter, setStateFilter] = useState('')
+  const [districtFilter, setDistrictFilter] = useState('')
+  const [paper, setPaper] = useState<PaperSize>(section === 'newOffline' ? 'A4' : 'A3')
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
   const [visibleKeys, setVisibleKeys] = useState<string[]>([])
   const [shipping, setShipping] = useState(false)
@@ -58,6 +64,7 @@ export default function CandidateList({
   }, [selected, visibleKeys])
   const newOffline = section === 'newOffline'
   const addressActions = section === 'offline' || newOffline
+  const showFilters = section === 'all' || section === 'online' || section === 'offline'
   const mode =
     section === 'online' ? 'ONLINE' : section === 'offline' || newOffline ? 'OFFLINE' : ''
   const status =
@@ -180,9 +187,22 @@ export default function CandidateList({
     refresh()
   }
 
+  const source = data ?? emptyCandidates
+  const filteredData = useMemo(
+    () =>
+      showFilters
+        ? source.filter(
+            (candidate) =>
+              (!statusFilter || candidate.status === statusFilter) &&
+              (!stateFilter || candidate.state === stateFilter) &&
+              (!districtFilter || candidate.district === districtFilter)
+          )
+        : source,
+    [source, showFilters, statusFilter, stateFilter, districtFilter]
+  )
   const printable = newOffline
     ? (data ?? []).filter((candidate) => selected.has(candidate.enrollment_key))
-    : (data ?? [])
+    : filteredData
 
   return (
     <section className="page course-page" onClick={() => menu && setMenu(null)}>
@@ -230,7 +250,7 @@ export default function CandidateList({
             <Button
               variant="outline"
               disabled={!printable.length}
-              onClick={() => printAddressLabels(printable, newOffline)}
+              onClick={() => printAddressLabels(printable, newOffline, paper)}
             >
               Print labels
             </Button>
@@ -239,6 +259,67 @@ export default function CandidateList({
         <Button variant="outline" onClick={refresh}>
           Refresh
         </Button>
+        {addressActions && (
+          <label className="course-list-filter">
+            Paper
+            <select value={paper} onChange={(event) => setPaper(event.target.value as PaperSize)}>
+              <option value="A3">A3</option>
+              <option value="A4">A4</option>
+            </select>
+          </label>
+        )}
+        {showFilters && (
+          <>
+            <label className="course-list-filter">
+              Status
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
+                <option value="">All statuses</option>
+                {fieldOptions(source, 'status').map((value) => (
+                  <option key={value} value={value}>
+                    {statusLabel(value)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="course-list-filter">
+              State
+              <select
+                value={stateFilter}
+                onChange={(event) => {
+                  setStateFilter(event.target.value)
+                  setDistrictFilter('')
+                }}
+              >
+                <option value="">All states</option>
+                {fieldOptions(source, 'state').map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="course-list-filter">
+              District
+              <select
+                value={districtFilter}
+                onChange={(event) => setDistrictFilter(event.target.value)}
+              >
+                <option value="">All districts</option>
+                {fieldOptions(
+                  source.filter((row) => !stateFilter || row.state === stateFilter),
+                  'district'
+                ).map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        )}
         <label className="course-list-search">
           <span>Search</span>
           <input
@@ -270,7 +351,7 @@ export default function CandidateList({
       >
         <DataTable
           ref={table}
-          data={data ?? []}
+          data={filteredData}
           className="display course-table"
           options={{
             pageLength: 20,
@@ -322,19 +403,7 @@ export default function CandidateList({
           <Column title="Name" data="full_name" />
           {section === 'all' && (
             <Column title="Status" data="status">
-              {(_value, _type, row: Candidate) =>
-                row.status === 'SUSPENDED'
-                  ? 'Discontinued'
-                  : row.status === 'DROPOUT'
-                    ? 'Dropout'
-                    : row.status === 'ACTIVE'
-                      ? 'Active'
-                      : row.status === 'COMPLETED'
-                        ? 'Completed'
-                        : row.status === 'PAYMENT_PENDING'
-                          ? 'Payment pending'
-                          : row.status
-              }
+              {(_value, _type, row: Candidate) => statusLabel(row.status)}
             </Column>
           )}
           <Column title="Address 1" data="address_line1" />

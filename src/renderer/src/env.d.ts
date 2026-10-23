@@ -69,5 +69,23 @@ interface Window {
       bytes: Uint8Array,
       name: string
     ): Promise<import('./features/course/courseApi').Candidate>
+    courseMonthlySummary(
+      examKey: string,
+      country: string
+    ): Promise<import('./features/course/courseApi').MonthlySummary>
+    courseMonthlyAllocations(
+      examKey: string,
+      country: string
+    ): Promise<import('./features/course/courseApi').MonthlyAllocation[]>
+    courseMonthlyAddresses(
+      courseKey: string,
+      country: string
+    ): Promise<import('./features/course/courseApi').MonthlyAddressReport>
+    courseMonthlyOpen(examKey: string, country: string): Promise<{ processing: number }>
+    courseMonthlyShip(
+      allocationKey: string,
+      addressKey: string,
+      trackingNumber: string
+    ): Promise<import('./features/course/courseApi').MonthlyAllocation>
   }
 }

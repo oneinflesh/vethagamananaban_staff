@@ -1,4 +1,6 @@
-import type { Candidate } from './courseApi'
+import type { Candidate, MonthlyAddress } from './courseApi'
+
+export type PaperSize = 'A3' | 'A4'
 
 function labelLines(candidate: Candidate): string[] {
   return [
@@ -13,36 +15,40 @@ function labelLines(candidate: Candidate): string[] {
   ].filter(Boolean)
 }
 
-export function printAddressLabels(candidates: Candidate[], newRegistrations: boolean): void {
+function printSheets(
+  lines: string[][],
+  title: string,
+  paper: PaperSize,
+  columns: number,
+  rows: number,
+  landscape = false
+): void {
   const popup = window.open('', '_blank')
   if (!popup) throw new Error('Allow the print window to open, then try again.')
   const page = popup.document
-  page.title = newRegistrations
-    ? 'New registration address labels'
-    : 'Offline candidate address labels'
+  page.title = title
   const style = page.createElement('style')
   style.textContent = `
-    @page { size: ${newRegistrations ? 'A4' : 'A3'} portrait; margin: 5mm; }
+    @page { size: ${paper} ${landscape ? 'landscape' : 'portrait'}; margin: 5mm; }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: Arial, sans-serif; color: #111; }
-    section { display: grid; grid-template-columns: repeat(${newRegistrations ? 3 : 5}, 1fr); grid-auto-rows: ${newRegistrations ? '40mm' : '51.25mm'}; break-after: page; }
+    section { display: grid; grid-template-columns: repeat(${columns}, 1fr); grid-template-rows: repeat(${rows}, 1fr); height: ${paper === 'A3' ? '410mm' : landscape ? '200mm' : '287mm'}; break-after: page; }
     section:last-child { break-after: auto; }
-    article { padding: 2mm; border: 0.3mm solid #bbb; overflow: hidden; break-inside: avoid; font-size: ${newRegistrations ? '8pt' : '9pt'}; line-height: 1.25; overflow-wrap: anywhere; }
+    article { padding: 2mm; border: 0.3mm solid #bbb; overflow: hidden; break-inside: avoid; font-size: ${paper === 'A4' ? '8pt' : '9pt'}; line-height: 1.25; overflow-wrap: anywhere; }
     p { margin: 0; }
     p:first-child, p:nth-child(2) { font-weight: 700; }
-    @media screen { body { padding: 5mm; background: #ddd; } section { background: white; max-width: ${newRegistrations ? '200mm' : '287mm'}; margin: 0 auto 5mm; } }
+    @media screen { body { padding: 5mm; background: #ddd; } section { background: white; width: ${paper === 'A3' ? '287mm' : landscape ? '287mm' : '200mm'}; margin: 0 auto 5mm; } }
   `
   page.head.append(style)
   const main = page.createElement('main')
   let sheet: HTMLElement | null = null
-  const perSheet = newRegistrations ? 21 : 40
-  candidates.forEach((candidate, index) => {
-    if (index % perSheet === 0) {
+  lines.forEach((address, index) => {
+    if (index % (columns * rows) === 0) {
       sheet = page.createElement('section')
       main.append(sheet)
     }
     const label = page.createElement('article')
-    labelLines(candidate).forEach((line) => {
+    address.forEach((line) => {
       const paragraph = page.createElement('p')
       paragraph.textContent = line
       label.append(paragraph)
@@ -52,6 +58,81 @@ export function printAddressLabels(candidates: Candidate[], newRegistrations: bo
   page.body.append(main)
   popup.focus()
   window.setTimeout(() => popup.print(), 200)
+}
+
+export function printAddressLabels(
+  candidates: Candidate[],
+  newRegistrations: boolean,
+  paper: PaperSize = newRegistrations ? 'A4' : 'A3'
+): void {
+  printSheets(
+    candidates.map(labelLines),
+    newRegistrations ? 'New registration address labels' : 'Offline candidate address labels',
+    paper,
+    paper === 'A3' ? 5 : 3,
+    paper === 'A3' ? 8 : 7
+  )
+}
+
+export function printMonthlyAddressLabels(addresses: MonthlyAddress[], paper: PaperSize): void {
+  printSheets(
+    addresses.map((item) =>
+      [
+        item.bbs_number,
+        item.name,
+        item.line1,
+        item.line2,
+        item.landmark,
+        item.district,
+        [item.state, item.postal_code].filter(Boolean).join(' - '),
+        item.country,
+        item.phone
+      ].filter(Boolean)
+    ),
+    'Monthly dispatch address labels',
+    paper,
+    paper === 'A3' ? 5 : 4,
+    paper === 'A3' ? 8 : 5,
+    paper === 'A4'
+  )
+}
+
+export function exportMonthlyAddressCsv(addresses: MonthlyAddress[]): void {
+  const rows = [
+    [
+      'BBS Number',
+      'Name',
+      'Address Line 1',
+      'Address Line 2',
+      'Landmark',
+      'District',
+      'State',
+      'Country',
+      'Pincode',
+      'Phone'
+    ],
+    ...addresses.map((item) => [
+      item.bbs_number,
+      item.name,
+      item.line1,
+      item.line2,
+      item.landmark,
+      item.district,
+      item.state,
+      item.country,
+      item.postal_code,
+      item.phone
+    ])
+  ]
+  const csv = rows
+    .map((row) => row.map((value) => `"${String(value ?? '').replaceAll('"', '""')}"`).join(','))
+    .join('\r\n')
+  const url = URL.createObjectURL(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }))
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = 'monthly-addresses.csv'
+  anchor.click()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 export function exportAddressCsv(candidates: Candidate[]): void {

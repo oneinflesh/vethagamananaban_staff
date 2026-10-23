@@ -21,6 +21,13 @@ import {
   updateCandidate,
   uploadCandidatePhoto
 } from './features/course/course'
+import {
+  getMonthlySummary,
+  getMonthlyAllocations,
+  getMonthlyAddresses,
+  openMonthlyDispatch,
+  shipMonthlyAllocation
+} from './features/course/monthlyDispatch'
 
 function createWindow(): void {
   // Create the browser window.
@@ -114,6 +121,21 @@ app.whenReady().then(() => {
   ipcMain.handle('course:update-candidate', (_event, key, data) => updateCandidate(key, data))
   ipcMain.handle('course:upload-photo', (_event, key, bytes, name) =>
     uploadCandidatePhoto(key, bytes, name)
+  )
+  ipcMain.handle('course:monthly-summary', (_event, examKey, country) =>
+    getMonthlySummary(examKey, country)
+  )
+  ipcMain.handle('course:monthly-allocations', (_event, examKey, country) =>
+    getMonthlyAllocations(examKey, country)
+  )
+  ipcMain.handle('course:monthly-addresses', (_event, courseKey, country) =>
+    getMonthlyAddresses(courseKey, country)
+  )
+  ipcMain.handle('course:monthly-open', (_event, examKey, country) =>
+    openMonthlyDispatch(examKey, country)
+  )
+  ipcMain.handle('course:monthly-ship', (_event, allocationKey, addressKey, trackingNumber) =>
+    shipMonthlyAllocation(allocationKey, addressKey, trackingNumber)
   )
   // Set app user model id for windows
   app.setAppUserModelId('com.vethagamananban.office')

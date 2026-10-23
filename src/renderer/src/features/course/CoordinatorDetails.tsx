@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useNotifications } from '../notifications/Notifications'
@@ -27,6 +28,8 @@ export default function CoordinatorDetails({
   const [members, setMembers] = useState<CoordinatorMember[]>([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [search, setSearch] = useState('')
+  const table = useRef<DataTableRef>(null)
   const notify = useNotifications()
   const { loading, leaving, finish } = useSmoothLoading()
   useEffect(() => {
@@ -130,8 +133,23 @@ export default function CoordinatorDetails({
           </Button>
         </div>
       )}
+      <div className="course-list-actions">
+        <label className="course-list-search">
+          Search
+          <input
+            type="search"
+            value={search}
+            placeholder="Search people"
+            onChange={(event) => {
+              setSearch(event.target.value)
+              table.current?.dt()?.search(event.target.value).draw()
+            }}
+          />
+        </label>
+      </div>
       <div className="course-table-wrap" onPointerDown={resizeColumns}>
         <DataTable
+          ref={table}
           data={members}
           className="display course-table"
           options={{
@@ -141,7 +159,8 @@ export default function CoordinatorDetails({
             searching: true,
             info: true,
             autoWidth: false,
-            order: []
+            order: [],
+            layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' }
           }}
         >
           <Column title="BBS number" data="bbs_number">
