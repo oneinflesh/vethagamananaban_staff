@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Minus, Square, X } from 'lucide-react'
 import { useState } from 'react'
 import { useNotifications } from '../notifications/Notifications'
+import { countries, useCountry } from '../country/CountryContext'
 export type Page = 'dashboard' | 'store' | 'course'
 export default function TitleBar({
   page,
@@ -16,6 +17,7 @@ export default function TitleBar({
 }): React.JSX.Element {
   const [signingOut, setSigningOut] = useState(false)
   const notify = useNotifications()
+  const { country, setCountry } = useCountry()
 
   async function handleLogout(): Promise<void> {
     setSigningOut(true)
@@ -44,6 +46,16 @@ export default function TitleBar({
                 {item === 'store' ? 'Book Store' : item[0].toUpperCase() + item.slice(1)}
               </Button>
             ))}
+            <label className="titlebar-country">
+              Country
+              <select value={country} onChange={(event) => setCountry(event.target.value)}>
+                {countries.map(([code, name]) => (
+                  <option key={code} value={code}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </label>
             <Button
               className="titlebar-logout"
               variant="ghost"

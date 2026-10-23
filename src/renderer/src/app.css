@@ -85,6 +85,24 @@ body {
 .titlebar-logout {
   color: #a74712;
 }
+.titlebar-country {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: 10px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.titlebar-country select {
+  max-width: 150px;
+  height: 29px;
+  padding: 0 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-app-region: no-drag;
+}
 .page,
 .login-page {
   flex: 1;
