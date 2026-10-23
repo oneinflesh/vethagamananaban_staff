@@ -5,15 +5,14 @@ export type PaperSize = 'A3' | 'A4'
 function labelLines(candidate: Candidate): string[] {
   return [
     candidate.bbs_identifier,
-    candidate.coordinator
-      ? `${candidate.full_name} c/o ${candidate.coordinator.name}`
-      : candidate.full_name,
+    candidate.full_name,
     candidate.address_line1 || candidate.address,
     candidate.address_line2,
     candidate.address_line3,
     candidate.district,
     [candidate.state, candidate.postal_code].filter(Boolean).join(' - '),
-    candidate.phone
+    candidate.phone,
+    candidate.coordinator ? `c/o ${candidate.coordinator.name}` : ''
   ].filter(Boolean)
 }
 
@@ -89,7 +88,8 @@ export function exportAddressCsv(candidates: Candidate[]): void {
     'District',
     'State',
     'Pincode',
-    'Phone'
+    'Phone',
+    'Care of'
   ]
   const quote = (value: unknown): string => `"${String(value ?? '').replaceAll('"', '""')}"`
   const csv = [
@@ -97,16 +97,15 @@ export function exportAddressCsv(candidates: Candidate[]): void {
     ...candidates.map((candidate) => {
       return [
         candidate.bbs_identifier,
-        candidate.coordinator
-          ? `${candidate.full_name} c/o ${candidate.coordinator.name}`
-          : candidate.full_name,
+        candidate.full_name,
         candidate.address_line1 || candidate.address,
         candidate.address_line2,
         candidate.address_line3,
         candidate.district,
         candidate.state,
         candidate.postal_code,
-        candidate.phone
+        candidate.phone,
+        candidate.coordinator ? `c/o ${candidate.coordinator.name}` : ''
       ]
         .map(quote)
         .join(',')
