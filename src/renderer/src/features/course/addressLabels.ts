@@ -2,6 +2,12 @@ import type { Candidate } from './courseApi'
 
 export type PaperSize = 'A3' | 'A4'
 
+function careOfLine(candidate: Candidate): string {
+  const coordinator = candidate.coordinator
+  if (!coordinator) return ''
+  return `c/o ${coordinator.name}${coordinator.bbs_number ? ` (${coordinator.bbs_number})` : ''}`
+}
+
 function labelLines(candidate: Candidate): string[] {
   return [
     candidate.bbs_identifier,
@@ -12,7 +18,7 @@ function labelLines(candidate: Candidate): string[] {
     candidate.district,
     [candidate.state, candidate.postal_code].filter(Boolean).join(' - '),
     candidate.phone,
-    candidate.coordinator ? `c/o ${candidate.coordinator.name}` : ''
+    careOfLine(candidate)
   ].filter(Boolean)
 }
 
@@ -105,7 +111,7 @@ export function exportAddressCsv(candidates: Candidate[]): void {
         candidate.state,
         candidate.postal_code,
         candidate.phone,
-        candidate.coordinator ? `c/o ${candidate.coordinator.name}` : ''
+        careOfLine(candidate)
       ]
         .map(quote)
         .join(',')

@@ -1,4 +1,4 @@
-export type CoordinatorLink = { coordinator_key: string; name: string }
+export type CoordinatorLink = { coordinator_key: string; name: string; bbs_number: string | null }
 export type Candidate = {
   enrollment_key: string
   bbs_identifier: string
