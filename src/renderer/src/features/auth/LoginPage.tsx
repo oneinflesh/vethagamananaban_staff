@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useNotifications } from '../notifications/Notifications'
-import Aurora from '../visuals/Aurora'
+import OrangeBackground from '../visuals/OrangeBackground'
 import FullScreenLoader from './FullScreenLoader'
 import { login, type Staff } from './auth'
 
@@ -33,19 +33,7 @@ export default function LoginPage({
 
   return (
     <main className="login-page">
-      <div className="login-aurora" aria-hidden="true">
-        <Aurora
-          colorStops={['#5b6ee1', '#8b5cf6', '#2f80ed']}
-          lightMode
-          mouseInteraction={false}
-          speed={0.8}
-          amplitude={1.1}
-          glow={0.7}
-          layers={2}
-          height={0.6}
-          paused={busy}
-        />
-      </div>
+      <OrangeBackground />
       <Card className="login-card">
         <CardHeader>
           <CardTitle className="login-greeting" lang="ta">

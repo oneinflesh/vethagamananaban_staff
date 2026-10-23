@@ -1,0 +1,80 @@
+.orange-background {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #fff7eb;
+}
+
+.orange-background__glow,
+.orange-background__ring {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.orange-background__glow--one {
+  width: 64vw;
+  height: 64vw;
+  min-width: 560px;
+  min-height: 560px;
+  left: -22%;
+  top: -60%;
+  background: radial-gradient(circle, #ffad4a 0%, #ffd39a 39%, transparent 69%);
+  animation: orange-drift-one 8s ease-in-out infinite alternate;
+}
+
+.orange-background__glow--two {
+  width: 68vw;
+  height: 68vw;
+  min-width: 620px;
+  min-height: 620px;
+  right: -25%;
+  bottom: -80%;
+  background: radial-gradient(circle, #f77f32 0%, #ffc285 42%, transparent 70%);
+  animation: orange-drift-two 10s ease-in-out infinite alternate;
+}
+
+.orange-background__ring {
+  width: 44vw;
+  height: 44vw;
+  min-width: 400px;
+  min-height: 400px;
+  border: 2px solid rgb(211 99 24 / 16%);
+}
+
+.orange-background__ring--one {
+  top: -30%;
+  right: -8%;
+  animation: orange-drift-two 13s ease-in-out infinite alternate;
+}
+
+.orange-background__ring--two {
+  bottom: -49%;
+  left: -9%;
+  animation: orange-drift-one 12s ease-in-out infinite alternate;
+}
+
+.orange-background .noise {
+  z-index: 2;
+}
+
+@keyframes orange-drift-one {
+  to {
+    transform: translate(12%, 14%) scale(1.12);
+  }
+}
+
+@keyframes orange-drift-two {
+  to {
+    transform: translate(-12%, -12%) scale(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orange-background__glow,
+  .orange-background__ring {
+    animation: none;
+  }
+}

@@ -1,21 +1,10 @@
-import Aurora from '../visuals/Aurora'
+import OrangeBackground from '../visuals/OrangeBackground'
 import BlurText from '../visuals/BlurText'
 
 export default function SplashScreen(): React.JSX.Element {
   return (
     <main className="splash-screen" role="status" aria-label="Loading application">
-      <div className="splash-aurora" aria-hidden="true">
-        <Aurora
-          colorStops={['#5b6ee1', '#8b5cf6', '#2f80ed']}
-          lightMode
-          mouseInteraction={false}
-          speed={0.8}
-          amplitude={1.1}
-          glow={0.7}
-          layers={2}
-          height={0.6}
-        />
-      </div>
+      <OrangeBackground />
       <div className="splash-content">
         <span className="login-loading-spinner" aria-hidden="true" />
         <BlurText

@@ -109,11 +109,9 @@ body {
 }
 .login-page,
 .splash-screen {
-  background:
-    radial-gradient(ellipse at 12% 16%, #aabfff 0%, transparent 48%),
-    radial-gradient(ellipse at 88% 78%, #cdb2ff 0%, transparent 52%), #eff3ff;
-  background-size: 160% 160%;
-  animation: aurora-fallback 7s ease-in-out infinite alternate;
+  --primary: oklch(0.52 0.16 48);
+  --ring: oklch(0.7 0.16 60);
+  background: #fff7eb;
 }
 .splash-screen {
   position: relative;
@@ -123,12 +121,6 @@ body {
   display: grid;
   place-items: center;
   overflow: hidden;
-}
-.splash-aurora {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
 }
 .splash-content {
   position: relative;
@@ -150,22 +142,6 @@ body {
   margin: 0;
   color: var(--muted-foreground);
   font-size: 0.9rem;
-}
-.login-aurora {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-.login-aurora,
-.splash-aurora {
-  opacity: 0.6;
-  mix-blend-mode: multiply;
-}
-@keyframes aurora-fallback {
-  to {
-    background-position: 100% 100%;
-  }
 }
 .login-card {
   position: relative;
@@ -214,12 +190,6 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .login-loading-spinner {
-    animation: none;
-  }
-  .login-aurora,
-  .splash-aurora,
-  .login-page,
-  .splash-screen {
     animation: none;
   }
 }
