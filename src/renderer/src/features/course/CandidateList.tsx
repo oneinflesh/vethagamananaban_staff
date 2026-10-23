@@ -29,6 +29,7 @@ export default function CandidateList({
   onBack,
   onCandidate,
   onCoordinator,
+  onSendReleasedBooks,
   onMarks
 }: {
   section: CourseSection
@@ -36,6 +37,7 @@ export default function CandidateList({
   onBack: () => void
   onCandidate: (key: string) => void
   onCoordinator: (key: string) => void
+  onSendReleasedBooks: (candidate: Candidate) => void
   onMarks: (key: string) => void
 }): React.JSX.Element {
   const [data, setData] = useState<Candidate[] | null>(null)
@@ -485,7 +487,7 @@ export default function CandidateList({
               {menu.candidate.status === 'ACTIVE' && (
                 <button
                   onClick={() => {
-                    setAction({ kind: 'otherBook', candidate: menu.candidate })
+                    onSendReleasedBooks(menu.candidate)
                     setMenu(null)
                   }}
                 >

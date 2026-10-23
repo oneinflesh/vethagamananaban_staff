@@ -7,7 +7,13 @@ import CoordinatorDetails from './CoordinatorDetails'
 import CoordinatorList from './CoordinatorList'
 import ManualRegistrationPage from './ManualRegistrationPage'
 import MonthlyDispatchPage from './MonthlyDispatchPage'
-import { getCandidateCounts, getCoordinatorCount, type CandidateCounts } from './courseApi'
+import SendReleasedBooksPage from './SendReleasedBooksPage'
+import {
+  getCandidateCounts,
+  getCoordinatorCount,
+  type Candidate,
+  type CandidateCounts
+} from './courseApi'
 import './course.css'
 
 export type CourseSection =
@@ -30,6 +36,7 @@ export default function CoursePage(): React.JSX.Element {
   const [coordinatorList, setCoordinatorList] = useState(false)
   const [manualRegistration, setManualRegistration] = useState(false)
   const [monthlyDispatch, setMonthlyDispatch] = useState(false)
+  const [bookCandidate, setBookCandidate] = useState<Candidate | null>(null)
   const [counts, setCounts] = useState<{
     country: string
     values: CandidateCounts & { coordinators: number }
@@ -43,7 +50,8 @@ export default function CoursePage(): React.JSX.Element {
       coordinatorKey ||
       coordinatorList ||
       manualRegistration ||
-      monthlyDispatch
+      monthlyDispatch ||
+      bookCandidate
     )
       return
     let active = true
@@ -71,6 +79,7 @@ export default function CoursePage(): React.JSX.Element {
     coordinatorList,
     manualRegistration,
     monthlyDispatch,
+    bookCandidate,
     retry
   ])
   const visibleCounts = counts?.country === country ? counts.values : null
@@ -139,24 +148,40 @@ export default function CoursePage(): React.JSX.Element {
     )
   if (section)
     return (
-      <CandidateList
-        key={`${section}:${country}`}
-        section={section}
-        country={country}
-        onBack={() => {
-          setCounts(null)
-          setSection(null)
-        }}
-        onCandidate={(key) => {
-          setCandidateTab('details')
-          setCandidateKey(key)
-        }}
-        onMarks={(key) => {
-          setCandidateTab('exams')
-          setCandidateKey(key)
-        }}
-        onCoordinator={setCoordinatorKey}
-      />
+      <>
+        <div
+          className={
+            bookCandidate ? 'course-list-host course-list-host--hidden' : 'course-list-host'
+          }
+        >
+          <CandidateList
+            key={`${section}:${country}`}
+            section={section}
+            country={country}
+            onBack={() => {
+              setCounts(null)
+              setSection(null)
+            }}
+            onCandidate={(key) => {
+              setCandidateTab('details')
+              setCandidateKey(key)
+            }}
+            onMarks={(key) => {
+              setCandidateTab('exams')
+              setCandidateKey(key)
+            }}
+            onCoordinator={setCoordinatorKey}
+            onSendReleasedBooks={setBookCandidate}
+          />
+        </div>
+        {bookCandidate && (
+          <SendReleasedBooksPage
+            key={bookCandidate.enrollment_key}
+            candidate={bookCandidate}
+            onBack={() => setBookCandidate(null)}
+          />
+        )}
+      </>
     )
   return (
     <section className="page course-page">

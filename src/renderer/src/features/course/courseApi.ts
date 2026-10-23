@@ -90,10 +90,11 @@ export type InitialDispatch = {
   items: DispatchItem[]
 }
 export type OtherBookOption = {
-  release_key: string
+  release_key: string | null
   exam_title: string
   sequence: number
-  cycle: number
+  cycle: number | null
+  released: boolean
   assigned: boolean
 }
 export type Payment = {
