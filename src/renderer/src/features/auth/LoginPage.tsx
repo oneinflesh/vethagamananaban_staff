@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useNotifications } from '../notifications/Notifications'
+import Aurora from './Aurora'
+import FullScreenLoader from './FullScreenLoader'
 import { login, type Staff } from './auth'
 
 export default function LoginPage({
@@ -31,9 +33,22 @@ export default function LoginPage({
 
   return (
     <main className="login-page">
+      <div className="login-aurora" aria-hidden="true">
+        <Aurora
+          colorStops={['#c7d2fe', '#e0e7ff', '#dbeafe']}
+          lightMode
+          mouseInteraction={false}
+          speed={0.35}
+          amplitude={0.5}
+          glow={0.35}
+          paused={busy}
+        />
+      </div>
       <Card className="login-card">
         <CardHeader>
-          <CardTitle>Office sign in</CardTitle>
+          <CardTitle className="login-greeting" lang="ta">
+            வணக்கம் வேதாகம நண்பன்
+          </CardTitle>
           <CardDescription>Use your existing staff credentials.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -64,6 +79,7 @@ export default function LoginPage({
           </form>
         </CardContent>
       </Card>
+      {busy && <FullScreenLoader />}
     </main>
   )
 }

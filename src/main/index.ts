@@ -23,7 +23,6 @@ function createWindow(): void {
     mainWindow.show()
   })
 
-
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -37,9 +36,24 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  ipcMain.handle('office:ping', async () => { try { const response = await fetch('https://api.bible2bible.com/api/v1/auth/staff/login/', { method: 'OPTIONS', signal: AbortSignal.timeout(5000) }); return response.ok } catch { return false } })
+  ipcMain.handle('office:ping', async () => {
+    try {
+      const response = await fetch('https://api.bible2bible.com/api/v1/auth/staff/login/', {
+        method: 'OPTIONS',
+        signal: AbortSignal.timeout(5000)
+      })
+      return response.ok
+    } catch {
+      return false
+    }
+  })
   ipcMain.handle('office:login', async (_event, identifier: string, password: string) => {
-    const response = await fetch('https://api.bible2bible.com/api/v1/auth/staff/login/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ identifier, password }), signal: AbortSignal.timeout(15000) })
+    const response = await fetch('https://api.bible2bible.com/api/v1/auth/staff/login/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier, password }),
+      signal: AbortSignal.timeout(15000)
+    })
     const data = await response.json()
     if (!response.ok) throw new Error(data.message || data.detail || 'Login failed')
     return data.account
@@ -53,7 +67,11 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('window:minimize', (event) => BrowserWindow.fromWebContents(event.sender)?.minimize())
-  ipcMain.on('window:maximize', (event) => { const window = BrowserWindow.fromWebContents(event.sender); if (window?.isMaximized()) window.unmaximize(); else window?.maximize() })
+  ipcMain.on('window:maximize', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (window?.isMaximized()) window.unmaximize()
+    else window?.maximize()
+  })
   ipcMain.on('window:close', (event) => BrowserWindow.fromWebContents(event.sender)?.close())
 
   createWindow()
