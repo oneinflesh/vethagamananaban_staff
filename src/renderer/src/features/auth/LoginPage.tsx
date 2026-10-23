@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useNotifications } from '../notifications/Notifications'
 import OrangeBackground from '../visuals/OrangeBackground'
-import FullScreenLoader from './FullScreenLoader'
+import FullScreenLoader from '../shell/FullScreenLoader'
 import { login, type AuthSession } from './auth'
 
 export default function LoginPage({
@@ -81,7 +81,7 @@ export default function LoginPage({
           </form>
         </CardContent>
       </Card>
-      {busy && <FullScreenLoader />}
+      {busy && <FullScreenLoader message="Signing you in" />}
     </main>
   )
 }

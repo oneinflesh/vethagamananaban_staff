@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import FullScreenLoader from '../shell/FullScreenLoader'
 import { getEnrolmentSummary } from './dashboardApi'
 import { enrolmentRange, type EnrolmentPeriod } from './enrolmentPeriod'
 
@@ -8,6 +9,7 @@ export default function EnrolmentCard({ date }: { date: string }): React.JSX.Ele
   const [result, setResult] = useState<{ range: string; count: number } | null>(null)
   const [failedRange, setFailedRange] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
+  const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<EnrolmentPeriod>('today')
   const [customDate, setCustomDate] = useState(date)
   const { startDate, endDate } = enrolmentRange(date, period, customDate)
@@ -25,59 +27,83 @@ export default function EnrolmentCard({ date }: { date: string }): React.JSX.Ele
       .catch(() => {
         if (active) setFailedRange(range)
       })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
     return () => {
       active = false
     }
   }, [startDate, endDate, range, attempt])
 
   useEffect(() => {
-    const timer = window.setInterval(() => setAttempt((value) => value + 1), 60_000)
+    const timer = window.setInterval(() => {
+      setLoading(true)
+      setAttempt((value) => value + 1)
+    }, 60_000)
     return () => window.clearInterval(timer)
   }, [])
 
+  const showLoader = loading || (result?.range !== range && failedRange !== range)
+
   return (
-    <Card className="dashboard-card dashboard-card--enrolment">
-      <div className="dashboard-card__top">
-        <span className="dashboard-card__label">Enrolments</span>
-        <select
-          className="dashboard-period"
-          aria-label="Enrolment period"
-          value={period}
-          onChange={(event) => setPeriod(event.target.value as EnrolmentPeriod)}
-        >
-          <option value="today">Today</option>
-          <option value="week">This week</option>
-          <option value="month">This month</option>
-          <option value="year">This year</option>
-          <option value="custom">Custom date</option>
-        </select>
-      </div>
-      <div className="dashboard-card__bottom">
-        {period === 'custom' && (
-          <input
-            className="dashboard-custom-date"
-            type="date"
-            aria-label="Choose enrolment date"
-            max={date}
-            value={customDate}
+    <>
+      <Card className="dashboard-card dashboard-card--enrolment">
+        <div className="dashboard-card__top">
+          <span className="dashboard-card__label">Enrolments</span>
+          <select
+            className="dashboard-period"
+            aria-label="Enrolment period"
+            value={period}
             onChange={(event) => {
-              if (event.target.value) setCustomDate(event.target.value)
+              setLoading(true)
+              setPeriod(event.target.value as EnrolmentPeriod)
             }}
-          />
-        )}
-        {failedRange === range ? (
-          <div className="dashboard-card__error">
-            <span>Couldn’t load</span>
-            <Button variant="link" size="xs" onClick={() => setAttempt((value) => value + 1)}>
-              Retry
-            </Button>
-          </div>
-        ) : (
-          <strong className="dashboard-card__number" aria-live="polite">
-            {result?.range === range ? result.count : '—'}
-          </strong>
-        )}
-      </div>
-    </Card>
+          >
+            <option value="today">Today</option>
+            <option value="week">This week</option>
+            <option value="month">This month</option>
+            <option value="year">This year</option>
+            <option value="custom">Custom date</option>
+          </select>
+        </div>
+        <div className="dashboard-card__bottom">
+          {period === 'custom' && (
+            <input
+              className="dashboard-custom-date"
+              type="date"
+              aria-label="Choose enrolment date"
+              max={date}
+              value={customDate}
+              onChange={(event) => {
+                if (event.target.value) {
+                  setLoading(true)
+                  setCustomDate(event.target.value)
+                }
+              }}
+            />
+          )}
+          {failedRange === range ? (
+            <div className="dashboard-card__error">
+              <span>Couldn’t load</span>
+              <Button
+                variant="link"
+                size="xs"
+                onClick={() => {
+                  setLoading(true)
+                  setAttempt((value) => value + 1)
+                }}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : (
+            <strong className="dashboard-card__number" aria-live="polite">
+              {result?.range === range ? result.count : '—'}
+            </strong>
+          )}
+        </div>
+      </Card>
+      {showLoader && <FullScreenLoader message="Loading enrolments" />}
+    </>
   )
 }

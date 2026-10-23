@@ -6,7 +6,7 @@ export default function SplashScreen(): React.JSX.Element {
     <main className="splash-screen" role="status" aria-label="Loading application">
       <OrangeBackground />
       <div className="splash-content">
-        <span className="login-loading-spinner" aria-hidden="true" />
+        <span className="screen-loading-spinner" aria-hidden="true" />
         <BlurText
           text="வணக்கம் வேதாகம நண்பன்"
           trigger="load"

@@ -169,7 +169,7 @@ body {
   accent-color: #a74712;
   cursor: pointer;
 }
-.login-loading-overlay {
+.screen-loading-overlay {
   position: fixed;
   inset: 0;
   z-index: 2000;
@@ -177,32 +177,32 @@ body {
   place-items: center;
   background: var(--background);
 }
-.login-loading-content {
+.screen-loading-content {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 24px;
 }
-.login-loading-spinner {
+.screen-loading-spinner {
   width: 46px;
   height: 46px;
   border: 3px solid var(--border);
   border-top-color: var(--foreground);
   border-radius: 50%;
-  animation: login-spin 0.8s linear infinite;
+  animation: screen-loading-spin 0.8s linear infinite;
 }
-.login-loading-text {
+.screen-loading-text {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 600;
 }
-@keyframes login-spin {
+@keyframes screen-loading-spin {
   to {
     transform: rotate(360deg);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .login-loading-spinner {
+  .screen-loading-spinner {
     animation: none;
   }
 }
