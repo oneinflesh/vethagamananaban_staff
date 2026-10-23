@@ -1,3 +1,4 @@
+import { Card, CardHeader, Title2, Body1 } from '@fluentui/react-components'
 export default function CoursePage(): React.JSX.Element {
-  return <section className="page"><h1>Course</h1><div className="page-card">Course administration</div></section>
+  return <section className="page"><Title2>Course</Title2><Card className="page-card"><CardHeader header={<Body1>Course administration</Body1>}/></Card></section>
 }

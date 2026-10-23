@@ -1,3 +1,4 @@
+import { Card, CardHeader, Title2, Body1 } from '@fluentui/react-components'
 export default function StorePage(): React.JSX.Element {
-  return <section className="page"><h1>Book Store</h1><div className="page-card">Book Store administration</div></section>
+  return <section className="page"><Title2>Book Store</Title2><Card className="page-card"><CardHeader header={<Body1>Book Store administration</Body1>}/></Card></section>
 }
