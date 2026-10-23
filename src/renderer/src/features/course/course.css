@@ -207,8 +207,9 @@
 .course-table-wrap .dt-container {
   min-width: 0;
 }
-.course-table-wrap .dt-layout-row {
-  padding: 8px 10px;
+.course-table-wrap div.dt-container div.dt-layout-row {
+  margin: 0;
+  padding: 0;
   gap: 8px;
 }
 .course-table-wrap .dt-input {

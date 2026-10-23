@@ -46,16 +46,6 @@ export default function TitleBar({
                 {item === 'store' ? 'Book Store' : item[0].toUpperCase() + item.slice(1)}
               </Button>
             ))}
-            <label className="titlebar-country">
-              Country
-              <select value={country} onChange={(event) => setCountry(event.target.value)}>
-                {countries.map(([code, name]) => (
-                  <option key={code} value={code}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </label>
             <Button
               className="titlebar-logout"
               variant="ghost"
@@ -69,6 +59,18 @@ export default function TitleBar({
         )}
       </nav>
       <div className="drag-region" />
+      {showNavigation && (
+        <label className="titlebar-country">
+          Country
+          <select value={country} onChange={(event) => setCountry(event.target.value)}>
+            {countries.map(([code, name]) => (
+              <option key={code} value={code}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <div className="window-controls">
         <Button
           variant="ghost"

@@ -89,9 +89,10 @@ body {
   display: flex;
   align-items: center;
   gap: 7px;
-  margin-left: 10px;
+  margin-right: 8px;
   color: var(--muted-foreground);
   font-size: 12px;
+  -webkit-app-region: no-drag;
 }
 .titlebar-country select {
   max-width: 150px;
