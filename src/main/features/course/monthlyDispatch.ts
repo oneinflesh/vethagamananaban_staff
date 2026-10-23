@@ -39,7 +39,10 @@ export const shipMonthlyAllocation = (
   authorizedRequest(`staff/course-allocations/${encodeURIComponent(allocationKey)}/dispatch/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ delivery_address_key: addressKey, tracking_number: trackingNumber })
+    body: JSON.stringify({
+      ...(addressKey ? { delivery_address_key: addressKey } : {}),
+      tracking_number: trackingNumber
+    })
   })
 
 export const saveMonthlyTracking = (

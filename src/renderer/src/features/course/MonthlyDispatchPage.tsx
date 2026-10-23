@@ -213,11 +213,9 @@ export default function MonthlyDispatchPage({
       } else {
         if (shipping.status !== 'PROCESSING')
           throw new Error('Open this month before shipping this book.')
-        if (!shipping.delivery_address_key)
-          throw new Error('This candidate needs a delivery address before shipping.')
         await shipMonthlyAllocation(
           shipping.allocation_key,
-          shipping.delivery_address_key,
+          shipping.delivery_address_key ?? '',
           tracking.trim()
         )
       }
@@ -240,11 +238,9 @@ export default function MonthlyDispatchPage({
     try {
       if (row.status !== 'PROCESSING' && row.status !== 'SHIPPED')
         throw new Error('Open this month before shipping this book.')
-      if (row.status === 'PROCESSING' && !row.delivery_address_key)
-        throw new Error('This candidate needs a delivery address before shipping.')
       const updated =
         row.status === 'PROCESSING'
-          ? await shipMonthlyAllocation(row.allocation_key, row.delivery_address_key!, value)
+          ? await shipMonthlyAllocation(row.allocation_key, row.delivery_address_key ?? '', value)
           : await saveMonthlyTracking(row.allocation_key, value)
       setAllocations((current) =>
         current.map((item) => (item.allocation_key === row.allocation_key ? updated : item))
