@@ -205,6 +205,33 @@ body {
   font-size: 1.1rem;
   font-weight: 600;
 }
+.loading-progress {
+  width: min(300px, 70vw);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #a74712;
+}
+.loading-progress__number {
+  font-size: 2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.loading-progress__track {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #f2dfcc;
+}
+.loading-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #e8a75a, #a74712);
+  transition: width 70ms linear;
+}
 @keyframes screen-loading-spin {
   to {
     transform: rotate(360deg);
