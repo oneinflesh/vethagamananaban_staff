@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useNotifications } from '../notifications/Notifications'
 import { login, type Staff } from './auth'
-import { Button, Field, Input } from '@fluentui/react-components'
-import { toast } from 'react-toastify'
 
 export default function LoginPage({
   onLogin
@@ -11,43 +14,56 @@ export default function LoginPage({
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
+  const notify = useNotifications()
+
   async function submit(event: React.FormEvent): Promise<void> {
     event.preventDefault()
     setBusy(true)
     try {
       onLogin(await login(identifier.trim(), password))
-      toast.success('Signed in')
+      notify.success('Signed in')
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : 'Login failed')
+      notify.error(cause instanceof Error ? cause.message : 'Login failed')
     } finally {
       setBusy(false)
     }
   }
+
   return (
     <main className="login-page">
-      <form className="login-card" onSubmit={submit}>
-        <h1>Office sign in</h1>
-        <p>Use your existing staff credentials.</p>
-        <Field label="Username or email" required>
-          <Input
-            autoFocus
-            required
-            value={identifier}
-            onChange={(_, data) => setIdentifier(data.value)}
-          />
-        </Field>
-        <Field label="Password" required>
-          <Input
-            type="password"
-            required
-            value={password}
-            onChange={(_, data) => setPassword(data.value)}
-          />
-        </Field>
-        <Button appearance="primary" type="submit" disabled={busy}>
-          {busy ? 'Connecting…' : 'Sign in'}
-        </Button>
-      </form>
+      <Card className="login-card">
+        <CardHeader>
+          <CardTitle>Office sign in</CardTitle>
+          <CardDescription>Use your existing staff credentials.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="grid gap-4" onSubmit={submit}>
+            <div className="grid gap-2">
+              <Label htmlFor="identifier">Username or email</Label>
+              <Input
+                id="identifier"
+                autoFocus
+                required
+                value={identifier}
+                onChange={(event) => setIdentifier(event.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </div>
+            <Button type="submit" disabled={busy}>
+              {busy ? 'Connecting…' : 'Sign in'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </main>
   )
 }

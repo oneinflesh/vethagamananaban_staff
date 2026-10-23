@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { toast } from 'react-toastify'
+import { useNotifications } from '../notifications/Notifications'
 import { serverConnected, type Staff } from '../auth/auth'
 
 export default function StatusBar({ staff }: { staff: Staff | null }): React.JSX.Element {
   const [now, setNow] = useState(new Date())
   const [connected, setConnected] = useState<boolean | null>(null)
   const previousConnection = useRef<boolean | null>(null)
+  const notify = useNotifications()
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(timer)
@@ -18,15 +19,15 @@ export default function StatusBar({ staff }: { staff: Staff | null }): React.JSX
           if (!active) return
           setConnected(value)
           if (previousConnection.current !== value) {
-            if (value) toast.success('Server connected')
-            else toast.error('Server unavailable')
+            if (value) notify.success('Server connected')
+            else notify.error('Server unavailable')
             previousConnection.current = value
           }
         })
         .catch(() => {
           if (!active) return
           setConnected(false)
-          if (previousConnection.current !== false) toast.error('Server unavailable')
+          if (previousConnection.current !== false) notify.error('Server unavailable')
           previousConnection.current = false
         })
     }
@@ -36,7 +37,7 @@ export default function StatusBar({ staff }: { staff: Staff | null }): React.JSX
       active = false
       clearInterval(timer)
     }
-  }, [])
+  }, [notify])
   const time = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Asia/Kolkata',
     day: '2-digit',

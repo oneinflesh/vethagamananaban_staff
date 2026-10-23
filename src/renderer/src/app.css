@@ -1,23 +1,73 @@
+@import 'tailwindcss';
+
+:root {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color-scheme: light;
+  --background: oklch(0.985 0 0);
+  --foreground: oklch(0.18 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--foreground);
+  --primary: oklch(0.24 0 0);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.955 0 0);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.955 0 0);
+  --muted-foreground: oklch(0.48 0 0);
+  --accent: oklch(0.93 0 0);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.56 0.22 27);
+  --border: oklch(0.88 0 0);
+  --input: oklch(0.86 0 0);
+  --ring: oklch(0.55 0 0);
+  --radius: 0.5rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
 * {
   box-sizing: border-box;
 }
 body {
   margin: 0;
 }
+#root {
+  height: 100vh;
+}
 .app {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--colorNeutralBackground1);
-  color: var(--colorNeutralForeground1);
+  background: var(--background);
+  color: var(--foreground);
 }
 .titlebar {
   height: 44px;
+  flex: none;
   display: flex;
   align-items: center;
-  flex: none;
-  background: var(--colorNeutralBackground2);
-  border-bottom: 1px solid var(--colorNeutralStroke2);
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
 }
 .title-menu,
 .window-controls {
@@ -32,19 +82,20 @@ body {
   height: 100%;
   -webkit-app-region: drag;
 }
-.window-controls .close:hover {
-  background: var(--colorPaletteRedBackground3);
-  color: var(--colorNeutralForegroundOnBrand);
-}
 .page,
 .login-page {
   flex: 1;
   min-height: 0;
   padding: 30px 36px;
 }
-.page > span {
-  display: block;
-  margin-bottom: 22px;
+.page {
+  overflow: auto;
+}
+.page-heading {
+  margin: 0 0 22px;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
 }
 .page-card {
   max-width: 760px;
@@ -55,21 +106,6 @@ body {
 }
 .login-card {
   width: min(420px, 100%);
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  background: var(--colorNeutralBackground1);
-  border: 1px solid var(--colorNeutralStroke2);
-  border-radius: var(--borderRadiusLarge);
-  box-shadow: var(--shadow8);
-}
-.login-card h1,
-.login-card p {
-  margin: 0;
-}
-.login-card p {
-  color: var(--colorNeutralForeground2);
 }
 .statusbar {
   height: 34px;
@@ -78,8 +114,9 @@ body {
   grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
   padding: 0 15px;
-  background: var(--colorNeutralBackground2);
-  border-top: 1px solid var(--colorNeutralStroke2);
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
   font-size: 12px;
 }
 .statusbar time {
@@ -99,11 +136,25 @@ body {
   border-radius: 50%;
 }
 .server .online {
-  background: var(--colorPaletteGreenForeground1);
+  background: #16a34a;
 }
 .server .pending {
-  background: var(--colorPaletteYellowForeground1);
+  background: #d97706;
 }
 .server .offline {
-  background: var(--colorPaletteRedForeground1);
+  background: #dc2626;
+}
+.notification-stack {
+  position: fixed;
+  right: 20px;
+  top: 56px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(356px, calc(100vw - 40px));
+  pointer-events: none;
+}
+.notification-stack > * {
+  pointer-events: auto;
 }
