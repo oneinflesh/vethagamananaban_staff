@@ -219,10 +219,120 @@ export default function CandidateList({
       />
     </label>
   )
+  const titleActions = section === 'offline' || section === 'online'
+  const actionControls = (
+    <div className={titleActions ? 'course-title-actions' : 'course-list-actions'}>
+      {newOffline && (
+        <Button variant="outline" onClick={visibleSelection} disabled={!visibleKeys.length}>
+          {visibleKeys.length && visibleKeys.every((key) => selected.has(key))
+            ? 'Deselect all'
+            : 'Select all visible'}
+        </Button>
+      )}
+      {newOffline && (
+        <Button
+          variant="outline"
+          disabled={!selected.size || shipping}
+          onClick={() => void shipSelected()}
+        >
+          {shipping ? 'Shipping…' : 'Mark selected shipped'}
+        </Button>
+      )}
+      {addressActions && (
+        <>
+          <Button
+            variant="outline"
+            disabled={!printable.length}
+            onClick={() => exportAddressCsv(printable)}
+          >
+            Export CSV
+          </Button>
+          <Button
+            variant="outline"
+            disabled={!printable.length}
+            onClick={() => printAddressLabels(printable, newOffline, paper)}
+          >
+            Print labels
+          </Button>
+        </>
+      )}
+      <Button variant="outline" onClick={refresh}>
+        Refresh
+      </Button>
+      {addressActions && (
+        <label className="course-list-filter">
+          Paper
+          <select value={paper} onChange={(event) => setPaper(event.target.value as PaperSize)}>
+            <option value="A3">A3</option>
+            <option value="A4">A4</option>
+          </select>
+        </label>
+      )}
+      {showFilters && (
+        <>
+          {showStatusFilter && (
+            <label className="course-list-filter">
+              Status
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
+                <option value="">All statuses</option>
+                {fieldOptions(source, 'status').map((value) => (
+                  <option key={value} value={value}>
+                    {statusLabel(value)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <label className="course-list-filter">
+            State
+            <select
+              value={stateFilter}
+              onChange={(event) => {
+                setStateFilter(event.target.value)
+                setDistrictFilter('')
+              }}
+            >
+              <option value="">All states</option>
+              {fieldOptions(source, 'state').map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="course-list-filter">
+            District
+            <select
+              value={districtFilter}
+              onChange={(event) => setDistrictFilter(event.target.value)}
+            >
+              <option value="">All districts</option>
+              {fieldOptions(
+                source.filter((row) => !stateFilter || row.state === stateFilter),
+                'district'
+              ).map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
+      )}
+      {section !== 'all' && searchControl}
+    </div>
+  )
 
   return (
     <section className="page course-page" onClick={() => menu && setMenu(null)}>
-      <div className="course-toolbar">
+      <div
+        className={
+          titleActions ? 'course-toolbar course-toolbar--candidate-actions' : 'course-toolbar'
+        }
+      >
         <Button variant="outline" onClick={onBack}>
           ← Course
         </Button>
@@ -231,6 +341,7 @@ export default function CandidateList({
           {country} · {data?.length ?? 0} candidates
         </span>
         {section === 'all' && searchControl}
+        {titleActions && actionControls}
       </div>
       {newOffline && (
         <p className="course-selection-note">
@@ -238,109 +349,7 @@ export default function CandidateList({
           selected candidates appear in the output.
         </p>
       )}
-      <div className="course-list-actions">
-        {newOffline && (
-          <Button variant="outline" onClick={visibleSelection} disabled={!visibleKeys.length}>
-            {visibleKeys.length && visibleKeys.every((key) => selected.has(key))
-              ? 'Deselect all'
-              : 'Select all visible'}
-          </Button>
-        )}
-        {newOffline && (
-          <Button
-            variant="outline"
-            disabled={!selected.size || shipping}
-            onClick={() => void shipSelected()}
-          >
-            {shipping ? 'Shipping…' : 'Mark selected shipped'}
-          </Button>
-        )}
-        {addressActions && (
-          <>
-            <Button
-              variant="outline"
-              disabled={!printable.length}
-              onClick={() => exportAddressCsv(printable)}
-            >
-              Export CSV
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!printable.length}
-              onClick={() => printAddressLabels(printable, newOffline, paper)}
-            >
-              Print labels
-            </Button>
-          </>
-        )}
-        <Button variant="outline" onClick={refresh}>
-          Refresh
-        </Button>
-        {addressActions && (
-          <label className="course-list-filter">
-            Paper
-            <select value={paper} onChange={(event) => setPaper(event.target.value as PaperSize)}>
-              <option value="A3">A3</option>
-              <option value="A4">A4</option>
-            </select>
-          </label>
-        )}
-        {showFilters && (
-          <>
-            {showStatusFilter && (
-              <label className="course-list-filter">
-                Status
-                <select
-                  value={statusFilter}
-                  onChange={(event) => setStatusFilter(event.target.value)}
-                >
-                  <option value="">All statuses</option>
-                  {fieldOptions(source, 'status').map((value) => (
-                    <option key={value} value={value}>
-                      {statusLabel(value)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            <label className="course-list-filter">
-              State
-              <select
-                value={stateFilter}
-                onChange={(event) => {
-                  setStateFilter(event.target.value)
-                  setDistrictFilter('')
-                }}
-              >
-                <option value="">All states</option>
-                {fieldOptions(source, 'state').map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="course-list-filter">
-              District
-              <select
-                value={districtFilter}
-                onChange={(event) => setDistrictFilter(event.target.value)}
-              >
-                <option value="">All districts</option>
-                {fieldOptions(
-                  source.filter((row) => !stateFilter || row.state === stateFilter),
-                  'district'
-                ).map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </>
-        )}
-        {section !== 'all' && searchControl}
-      </div>
+      {!titleActions && actionControls}
       {error && (
         <div className="course-error">
           {error}{' '}

@@ -139,6 +139,49 @@
 .course-toolbar {
   flex-wrap: wrap;
 }
+.course-toolbar--candidate-actions {
+  flex-wrap: nowrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.course-toolbar--candidate-actions h1,
+.course-toolbar--candidate-actions > span {
+  white-space: nowrap;
+}
+.course-toolbar--candidate-actions h1 {
+  font-size: 20px;
+}
+.course-title-actions {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: 5px;
+  min-width: 0;
+  margin-left: auto;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.course-title-actions button {
+  padding-inline: 8px;
+}
+.course-title-actions .course-list-filter,
+.course-title-actions .course-list-search {
+  flex: 1 1 auto;
+  gap: 4px;
+  min-width: 0;
+  font-size: 12px;
+}
+.course-title-actions .course-list-filter select {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+.course-title-actions .course-list-search input {
+  width: 100%;
+  min-width: 0;
+}
 .course-toolbar--dispatch {
   gap: 8px;
   margin-bottom: 12px;
