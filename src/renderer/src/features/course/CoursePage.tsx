@@ -4,6 +4,8 @@ import { useCountry } from '../country/CountryContext'
 import CandidateList from './CandidateList'
 import CandidateDetails from './CandidateDetails'
 import CoordinatorDetails from './CoordinatorDetails'
+import CoordinatorCreatePage from './CoordinatorCreatePage'
+import CoordinatorPeoplePage from './CoordinatorPeoplePage'
 import CoordinatorList from './CoordinatorList'
 import ManualRegistrationPage from './ManualRegistrationPage'
 import MonthlyDispatchPage from './MonthlyDispatchPage'
@@ -12,7 +14,8 @@ import {
   getCandidateCounts,
   getCoordinatorCount,
   type Candidate,
-  type CandidateCounts
+  type CandidateCounts,
+  type Coordinator
 } from './courseApi'
 import './course.css'
 
@@ -34,6 +37,9 @@ export default function CoursePage(): React.JSX.Element {
   const [candidateTab, setCandidateTab] = useState<'details' | 'exams'>('details')
   const [coordinatorKey, setCoordinatorKey] = useState<string | null>(null)
   const [coordinatorList, setCoordinatorList] = useState(false)
+  const [creatingCoordinator, setCreatingCoordinator] = useState(false)
+  const [peopleCoordinator, setPeopleCoordinator] = useState<Coordinator | null>(null)
+  const [coordinatorRefresh, setCoordinatorRefresh] = useState(0)
   const [manualRegistration, setManualRegistration] = useState(false)
   const [monthlyDispatch, setMonthlyDispatch] = useState(false)
   const [bookCandidate, setBookCandidate] = useState<Candidate | null>(null)
@@ -49,6 +55,8 @@ export default function CoursePage(): React.JSX.Element {
       candidateKey ||
       coordinatorKey ||
       coordinatorList ||
+      creatingCoordinator ||
+      peopleCoordinator ||
       manualRegistration ||
       monthlyDispatch ||
       bookCandidate
@@ -77,18 +85,44 @@ export default function CoursePage(): React.JSX.Element {
     candidateKey,
     coordinatorKey,
     coordinatorList,
+    creatingCoordinator,
+    peopleCoordinator,
     manualRegistration,
     monthlyDispatch,
     bookCandidate,
     retry
   ])
   const visibleCounts = counts?.country === country ? counts.values : null
+  const peoplePage = peopleCoordinator && (
+    <CoordinatorPeoplePage
+      key={peopleCoordinator.coordinator_key}
+      coordinator={peopleCoordinator}
+      onBack={() => setPeopleCoordinator(null)}
+      onSaved={() => {
+        setPeopleCoordinator(null)
+        setCoordinatorRefresh((value) => value + 1)
+      }}
+    />
+  )
+  if (peoplePage && !section) return peoplePage
+  if (creatingCoordinator)
+    return (
+      <CoordinatorCreatePage
+        country={country}
+        onBack={() => setCreatingCoordinator(false)}
+        onCreated={(key) => {
+          setCreatingCoordinator(false)
+          setCoordinatorKey(key)
+          setCounts(null)
+        }}
+      />
+    )
   if (section)
     return (
       <>
         <div
           className={
-            bookCandidate || candidateKey || coordinatorKey
+            bookCandidate || candidateKey || coordinatorKey || peopleCoordinator
               ? 'course-list-host course-list-host--hidden'
               : 'course-list-host'
           }
@@ -113,39 +147,42 @@ export default function CoursePage(): React.JSX.Element {
             onSendReleasedBooks={setBookCandidate}
           />
         </div>
-        {coordinatorKey ? (
-          <CoordinatorDetails
-            key={coordinatorKey}
-            coordinatorKey={coordinatorKey}
-            onBack={() => setCoordinatorKey(null)}
-            onCandidate={(key) => {
-              setCoordinatorKey(null)
-              setCandidateKey(key)
-            }}
-          />
-        ) : candidateKey ? (
-          <CandidateDetails
-            key={candidateKey}
-            candidateKey={candidateKey}
-            initialTab={candidateTab}
-            onBack={() => setCandidateKey(null)}
-            onCoordinator={setCoordinatorKey}
-          />
-        ) : bookCandidate ? (
-          <SendReleasedBooksPage
-            key={bookCandidate.enrollment_key}
-            candidate={bookCandidate}
-            onBack={() => setBookCandidate(null)}
-          />
-        ) : null}
+        {peoplePage ||
+          (coordinatorKey ? (
+            <CoordinatorDetails
+              key={`${coordinatorKey}:${coordinatorRefresh}`}
+              coordinatorKey={coordinatorKey}
+              onBack={() => setCoordinatorKey(null)}
+              onManagePeople={setPeopleCoordinator}
+              onCandidate={(key) => {
+                setCoordinatorKey(null)
+                setCandidateKey(key)
+              }}
+            />
+          ) : candidateKey ? (
+            <CandidateDetails
+              key={candidateKey}
+              candidateKey={candidateKey}
+              initialTab={candidateTab}
+              onBack={() => setCandidateKey(null)}
+              onCoordinator={setCoordinatorKey}
+            />
+          ) : bookCandidate ? (
+            <SendReleasedBooksPage
+              key={bookCandidate.enrollment_key}
+              candidate={bookCandidate}
+              onBack={() => setBookCandidate(null)}
+            />
+          ) : null)}
       </>
     )
   if (coordinatorKey)
     return (
       <CoordinatorDetails
-        key={coordinatorKey}
+        key={`${coordinatorKey}:${coordinatorRefresh}`}
         coordinatorKey={coordinatorKey}
         onBack={() => setCoordinatorKey(null)}
+        onManagePeople={setPeopleCoordinator}
         onCandidate={(key) => {
           setCoordinatorKey(null)
           setCandidateKey(key)
@@ -166,6 +203,8 @@ export default function CoursePage(): React.JSX.Element {
     return (
       <CoordinatorList
         country={country}
+        onCreate={() => setCreatingCoordinator(true)}
+        onManagePeople={setPeopleCoordinator}
         onBack={() => {
           setCoordinatorList(false)
           setCounts(null)

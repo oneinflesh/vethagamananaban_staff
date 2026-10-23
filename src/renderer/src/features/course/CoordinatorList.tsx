@@ -11,10 +11,14 @@ import { fieldOptions, statusLabel } from './tableFilters'
 export default function CoordinatorList({
   country,
   onBack,
+  onCreate,
+  onManagePeople,
   onCoordinator
 }: {
   country: string
   onBack: () => void
+  onCreate: () => void
+  onManagePeople: (coordinator: Coordinator) => void
   onCoordinator: (key: string) => void
 }): React.JSX.Element {
   const [records, setRecords] = useState<Coordinator[]>([])
@@ -66,6 +70,7 @@ export default function CoordinatorList({
         <span>
           {country} · {records.length} coordinators
         </span>
+        <Button onClick={onCreate}>Create coordinator</Button>
       </div>
       <div className="course-list-actions">
         <Button
@@ -173,13 +178,18 @@ export default function CoordinatorList({
           <Column title="People" data="member_count" />
           <Column title="Details" data="coordinator_key" options={{ orderable: false }}>
             {(_value, _type, row: Coordinator) => (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onCoordinator(row.coordinator_key)}
-              >
-                View people
-              </Button>
+              <div className="course-inline-actions">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onCoordinator(row.coordinator_key)}
+                >
+                  Details
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => onManagePeople(row)}>
+                  Add people
+                </Button>
+              </div>
             )}
           </Column>
         </DataTable>

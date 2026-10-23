@@ -9,6 +9,7 @@ import {
   getCoordinator,
   getCoordinatorMembers,
   updateCoordinator,
+  uploadCoordinatorPhoto,
   type Coordinator,
   type CoordinatorMember
 } from './courseApi'
@@ -18,11 +19,13 @@ import { resizeColumns } from './resizeColumns'
 export default function CoordinatorDetails({
   coordinatorKey,
   onBack,
-  onCandidate
+  onCandidate,
+  onManagePeople
 }: {
   coordinatorKey: string
   onBack: () => void
   onCandidate: (key: string) => void
+  onManagePeople: (coordinator: Coordinator) => void
 }): React.JSX.Element {
   const [coordinator, setCoordinator] = useState<Coordinator | null>(null)
   const [members, setMembers] = useState<CoordinatorMember[]>([])
@@ -62,9 +65,11 @@ export default function CoordinatorDetails({
         email: coordinator.email,
         address_line1: coordinator.address_line1,
         address_line2: coordinator.address_line2,
+        address_line3: coordinator.address_line3,
         address: [
           coordinator.address_line1,
           coordinator.address_line2,
+          coordinator.address_line3,
           coordinator.district,
           coordinator.state,
           coordinator.postal_code
@@ -79,6 +84,17 @@ export default function CoordinatorDetails({
       notify.success('Coordinator updated')
     } catch (cause) {
       notify.error(cause instanceof Error ? cause.message : 'Could not update coordinator')
+    } finally {
+      setSaving(false)
+    }
+  }
+  async function changePhoto(file: File): Promise<void> {
+    setSaving(true)
+    try {
+      setCoordinator(await uploadCoordinatorPhoto(coordinatorKey, file))
+      notify.success('Coordinator photo updated')
+    } catch (cause) {
+      notify.error(cause instanceof Error ? cause.message : 'Could not upload photo')
     } finally {
       setSaving(false)
     }
@@ -112,6 +128,7 @@ export default function CoordinatorDetails({
                 'email',
                 'address_line1',
                 'address_line2',
+                'address_line3',
                 'district',
                 'state',
                 'postal_code'
@@ -131,9 +148,35 @@ export default function CoordinatorDetails({
           <Button disabled={saving} onClick={() => void save()}>
             {saving ? 'Saving…' : 'Save coordinator'}
           </Button>
+          <aside className="candidate-photo">
+            {coordinator.photo_url ? (
+              <img src={coordinator.photo_url} alt={`${coordinator.name} profile`} />
+            ) : (
+              <div className="candidate-photo__empty">No coordinator photo</div>
+            )}
+            <label className="candidate-photo__upload">
+              Change photo
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                disabled={saving}
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  if (file) void changePhoto(file)
+                }}
+              />
+            </label>
+          </aside>
         </div>
       )}
       <div className="course-list-actions">
+        <Button
+          variant="outline"
+          disabled={!coordinator}
+          onClick={() => coordinator && onManagePeople(coordinator)}
+        >
+          Add people
+        </Button>
         <label className="course-list-search">
           Search
           <input

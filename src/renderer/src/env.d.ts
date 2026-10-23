@@ -61,12 +61,24 @@ interface Window {
     courseAllocationScore(key: string, score: number | null): Promise<unknown>
     courseCandidate(key: string): Promise<import('./features/course/courseApi').CandidateSummary>
     courseCoordinator(key: string): Promise<import('./features/course/courseApi').Coordinator>
+    courseCreateCoordinator(
+      data: unknown
+    ): Promise<import('./features/course/courseApi').Coordinator>
     courseUpdateCoordinator(
       key: string,
       data: unknown
     ): Promise<import('./features/course/courseApi').Coordinator>
+    courseUploadCoordinatorPhoto(
+      key: string,
+      bytes: Uint8Array,
+      name: string
+    ): Promise<import('./features/course/courseApi').Coordinator>
     courseCoordinatorMembers(
       key: string
+    ): Promise<import('./features/course/courseApi').CoordinatorMember[]>
+    courseSetCoordinatorMembers(
+      key: string,
+      keys: string[]
     ): Promise<import('./features/course/courseApi').CoordinatorMember[]>
     courseUpdateCandidate(
       key: string,

@@ -3,15 +3,18 @@ import type { Candidate } from './courseApi'
 export type PaperSize = 'A3' | 'A4'
 
 function labelLines(candidate: Candidate): string[] {
+  const delivery = candidate.postal_delivery
   return [
     candidate.bbs_identifier,
-    candidate.full_name,
-    candidate.address_line1,
-    candidate.address_line2,
-    candidate.address_line3,
-    candidate.district,
-    [candidate.state, candidate.postal_code].filter(Boolean).join(' - '),
-    candidate.phone
+    delivery?.recipient_name ?? candidate.full_name,
+    delivery?.line1 ?? candidate.address_line1,
+    delivery?.line2 ?? candidate.address_line2,
+    delivery?.landmark ?? candidate.address_line3,
+    delivery?.city ?? candidate.district,
+    [delivery?.state ?? candidate.state, delivery?.postal_code ?? candidate.postal_code]
+      .filter(Boolean)
+      .join(' - '),
+    delivery?.phone ?? candidate.phone
   ].filter(Boolean)
 }
 
@@ -74,22 +77,36 @@ export function printAddressLabels(
 }
 
 export function exportAddressCsv(candidates: Candidate[]): void {
-  const columns: (keyof Candidate)[] = [
-    'bbs_identifier',
-    'full_name',
-    'address_line1',
-    'address_line2',
-    'address_line3',
-    'district',
-    'state',
-    'postal_code',
-    'phone',
-    'phone2'
+  const columns = [
+    'BBS number',
+    'Name',
+    'Address 1',
+    'Address 2',
+    'Address 3',
+    'District',
+    'State',
+    'Pincode',
+    'Phone'
   ]
   const quote = (value: unknown): string => `"${String(value ?? '').replaceAll('"', '""')}"`
   const csv = [
     columns.map(quote).join(','),
-    ...candidates.map((candidate) => columns.map((column) => quote(candidate[column])).join(','))
+    ...candidates.map((candidate) => {
+      const address = candidate.postal_delivery
+      return [
+        candidate.bbs_identifier,
+        address?.recipient_name ?? candidate.full_name,
+        address?.line1 ?? candidate.address_line1,
+        address?.line2 ?? candidate.address_line2,
+        address?.landmark ?? candidate.address_line3,
+        address?.city ?? candidate.district,
+        address?.state ?? candidate.state,
+        address?.postal_code ?? candidate.postal_code,
+        address?.phone ?? candidate.phone
+      ]
+        .map(quote)
+        .join(',')
+    })
   ].join('\r\n')
   const url = URL.createObjectURL(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }))
   const anchor = document.createElement('a')

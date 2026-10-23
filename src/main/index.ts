@@ -17,8 +17,11 @@ import {
   updateAllocationScore,
   getCandidate,
   getCoordinator,
+  createCoordinator,
   updateCoordinator,
+  uploadCoordinatorPhoto,
   getCoordinatorMembers,
+  setCoordinatorMembers,
   updateCandidate,
   uploadCandidatePhoto
 } from './features/course/course'
@@ -118,8 +121,15 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('course:candidate', (_event, key) => getCandidate(key))
   ipcMain.handle('course:coordinator', (_event, key) => getCoordinator(key))
+  ipcMain.handle('course:create-coordinator', (_event, data) => createCoordinator(data))
   ipcMain.handle('course:update-coordinator', (_event, key, data) => updateCoordinator(key, data))
+  ipcMain.handle('course:upload-coordinator-photo', (_event, key, bytes, name) =>
+    uploadCoordinatorPhoto(key, bytes, name)
+  )
   ipcMain.handle('course:coordinator-members', (_event, key) => getCoordinatorMembers(key))
+  ipcMain.handle('course:set-coordinator-members', (_event, key, keys) =>
+    setCoordinatorMembers(key, keys)
+  )
   ipcMain.handle('course:update-candidate', (_event, key, data) => updateCandidate(key, data))
   ipcMain.handle('course:upload-photo', (_event, key, bytes, name) =>
     uploadCandidatePhoto(key, bytes, name)

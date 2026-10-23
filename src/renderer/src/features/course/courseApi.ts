@@ -6,6 +6,7 @@ export type Candidate = {
   email: string
   phone: string
   phone2: string
+  address: string
   address_line1: string
   address_line2: string
   address_line3: string
@@ -23,6 +24,17 @@ export type Candidate = {
   education: string
   photo_url: string
   coordinator: CoordinatorLink | null
+  postal_delivery: {
+    recipient_name: string
+    phone: string
+    line1: string
+    line2: string
+    landmark: string
+    city: string
+    state: string
+    postal_code: string
+    country: string
+  } | null
   paid_books: number
   remaining_books: number
   wallet_balance: string
@@ -143,11 +155,13 @@ export type Coordinator = {
   email: string
   address_line1: string
   address_line2: string
+  address_line3: string
   district: string
   state: string
   postal_code: string
   country: string
   member_count: number
+  photo_url: string
 }
 export type CoordinatorMember = {
   enrollment_key: string
@@ -240,10 +254,21 @@ export const getCandidate = (key: string): Promise<CandidateSummary> =>
   window.office.courseCandidate(key)
 export const getCoordinator = (key: string): Promise<Coordinator> =>
   window.office.courseCoordinator(key)
+export const createCoordinator = (data: unknown): Promise<Coordinator> =>
+  window.office.courseCreateCoordinator(data)
 export const updateCoordinator = (key: string, data: unknown): Promise<Coordinator> =>
   window.office.courseUpdateCoordinator(key, data)
+export async function uploadCoordinatorPhoto(key: string, file: File): Promise<Coordinator> {
+  return window.office.courseUploadCoordinatorPhoto(
+    key,
+    new Uint8Array(await file.arrayBuffer()),
+    file.name
+  )
+}
 export const getCoordinatorMembers = (key: string): Promise<CoordinatorMember[]> =>
   window.office.courseCoordinatorMembers(key)
+export const setCoordinatorMembers = (key: string, keys: string[]): Promise<CoordinatorMember[]> =>
+  window.office.courseSetCoordinatorMembers(key, keys)
 export const getMonthlySummary = (examKey: string, country: string): Promise<MonthlySummary> =>
   window.office.courseMonthlySummary(examKey, country)
 export const getMonthlyAllocations = (

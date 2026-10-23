@@ -32,9 +32,14 @@ const api = {
     ipcRenderer.invoke('course:allocation-score', key, score),
   courseCandidate: (key: string) => ipcRenderer.invoke('course:candidate', key),
   courseCoordinator: (key: string) => ipcRenderer.invoke('course:coordinator', key),
+  courseCreateCoordinator: (data: unknown) => ipcRenderer.invoke('course:create-coordinator', data),
   courseUpdateCoordinator: (key: string, data: unknown) =>
     ipcRenderer.invoke('course:update-coordinator', key, data),
+  courseUploadCoordinatorPhoto: (key: string, bytes: Uint8Array, name: string) =>
+    ipcRenderer.invoke('course:upload-coordinator-photo', key, bytes, name),
   courseCoordinatorMembers: (key: string) => ipcRenderer.invoke('course:coordinator-members', key),
+  courseSetCoordinatorMembers: (key: string, keys: string[]) =>
+    ipcRenderer.invoke('course:set-coordinator-members', key, keys),
   courseUpdateCandidate: (key: string, data: unknown) =>
     ipcRenderer.invoke('course:update-candidate', key, data),
   courseUploadPhoto: (key: string, bytes: Uint8Array, name: string) =>

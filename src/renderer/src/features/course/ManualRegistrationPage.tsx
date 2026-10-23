@@ -6,8 +6,10 @@ import FullScreenLoader from '../shell/FullScreenLoader'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
 import {
   createManualRegistration,
+  getCoordinators,
   getRegistrationOptions,
   type Candidate,
+  type Coordinator,
   type RegistrationOptions
 } from './courseApi'
 
@@ -19,6 +21,7 @@ type Form = {
   email: string
   phone: string
   phone2: string
+  coordinator_key: string
   address_line1: string
   address_line2: string
   address_line3: string
@@ -36,6 +39,7 @@ const initial: Form = {
   email: '',
   phone: '',
   phone2: '',
+  coordinator_key: '',
   address_line1: '',
   address_line2: '',
   address_line3: '',
@@ -69,6 +73,7 @@ export default function ManualRegistrationPage({
   onCandidate: (key: string) => void
 }): React.JSX.Element {
   const [options, setOptions] = useState<RegistrationOptions | null>(null)
+  const [coordinators, setCoordinators] = useState<Coordinator[]>([])
   const [form, setForm] = useState<Form>(initial)
   const [created, setCreated] = useState<Candidate | null>(null)
   const [error, setError] = useState('')
@@ -78,10 +83,11 @@ export default function ManualRegistrationPage({
 
   useEffect(() => {
     let active = true
-    getRegistrationOptions()
-      .then((result) => {
+    Promise.all([getRegistrationOptions(), getCoordinators(country)])
+      .then(([result, coordinatorPage]) => {
         if (active) {
           setOptions(result)
+          setCoordinators(coordinatorPage.results)
           setForm((current) => ({
             ...current,
             language:
@@ -99,7 +105,7 @@ export default function ManualRegistrationPage({
     return () => {
       active = false
     }
-  }, [finish])
+  }, [country, finish])
 
   async function submit(event: React.FormEvent): Promise<void> {
     event.preventDefault()
@@ -190,12 +196,26 @@ export default function ManualRegistrationPage({
                     {label}
                     <Input
                       type={type ?? 'text'}
-                      required={required}
+                      required={required && (key !== 'address_line1' || !form.coordinator_key)}
                       value={form[key]}
                       onChange={(event) => setForm({ ...form, [key]: event.target.value })}
                     />
                   </label>
                 ))}
+                <label>
+                  Coordinator
+                  <select
+                    value={form.coordinator_key}
+                    onChange={(event) => setForm({ ...form, coordinator_key: event.target.value })}
+                  >
+                    <option value="">Individual candidate</option>
+                    {coordinators.map((coordinator) => (
+                      <option key={coordinator.coordinator_key} value={coordinator.coordinator_key}>
+                        {coordinator.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <label>
                   Gender
                   <select

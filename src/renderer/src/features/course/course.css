@@ -489,6 +489,17 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
+.course-people-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  overflow: auto;
+  padding-bottom: 12px;
+}
+.course-inline-actions {
+  display: flex;
+  gap: 6px;
+}
 .course-list-host {
   display: flex;
   flex: 1;
@@ -503,10 +514,20 @@
   pointer-events: none;
 }
 @media (max-width: 900px) {
-  .course-book-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .course-book-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .course-people-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width: 560px) {
-  .course-book-grid { grid-template-columns: minmax(0, 1fr); }
+  .course-book-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .course-people-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .course-book-option {
   display: flex;

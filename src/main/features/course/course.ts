@@ -147,14 +147,43 @@ export const updateAllocationScore = (key: string, score: number | null): Promis
   })
 export const getCoordinator = (key: string): Promise<unknown> =>
   authorizedGet(`staff/course-coordinators/${encodeURIComponent(key)}/`)
+export const createCoordinator = (data: unknown): Promise<unknown> =>
+  authorizedRequest('staff/course-coordinators/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
 export const updateCoordinator = (key: string, data: unknown): Promise<unknown> =>
   authorizedRequest(`staff/course-coordinators/${encodeURIComponent(key)}/`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   })
+export function uploadCoordinatorPhoto(
+  key: string,
+  bytes: Uint8Array,
+  name: string
+): Promise<unknown> {
+  const form = new FormData()
+  const mimeType = name.toLowerCase().endsWith('.png')
+    ? 'image/png'
+    : name.toLowerCase().endsWith('.webp')
+      ? 'image/webp'
+      : 'image/jpeg'
+  form.append('photo', new Blob([new Uint8Array(bytes)], { type: mimeType }), name)
+  return authorizedRequest(`staff/course-coordinators/${encodeURIComponent(key)}/photo/`, {
+    method: 'POST',
+    body: form
+  })
+}
 export const getCoordinatorMembers = (key: string): Promise<unknown> =>
   authorizedGet(`staff/course-coordinators/${encodeURIComponent(key)}/members/`)
+export const setCoordinatorMembers = (key: string, enrollmentKeys: string[]): Promise<unknown> =>
+  authorizedRequest(`staff/course-coordinators/${encodeURIComponent(key)}/members/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enrollment_keys: enrollmentKeys })
+  })
 export const updateCandidate = (key: string, data: unknown): Promise<unknown> =>
   authorizedRequest(`staff/course-enrollments/${encodeURIComponent(key)}/update-details/`, {
     method: 'POST',
