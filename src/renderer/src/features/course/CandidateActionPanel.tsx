@@ -30,6 +30,7 @@ export default function CandidateActionPanel({
   const [options, setOptions] = useState<RegistrationOptions | null>(null)
   const [summary, setSummary] = useState<CandidateSummary | null>(null)
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
+  const [months, setMonths] = useState(1)
   const [includeIdCard, setIncludeIdCard] = useState(false)
   const [parcelOperation, setParcelOperation] = useState<'send' | 'tracking' | 'undo'>('send')
   const [tracking, setTracking] = useState('')
@@ -66,12 +67,6 @@ export default function CandidateActionPanel({
     }
   }, [action, candidate.enrollment_key])
 
-  const purchased = new Set(
-    summary?.results.filter((item) => item.mode === 'OFFLINE').map((item) => item.exam_key) ?? []
-  )
-  const available =
-    options?.exams.filter((item) => item.is_active && !purchased.has(item.exam_key)) ?? []
-
   async function submit(): Promise<void> {
     setSaving(true)
     setError('')
@@ -100,10 +95,10 @@ export default function CandidateActionPanel({
               }
         )
       } else {
-        if (selected.size === 0) throw new Error('Select at least one unpaid book.')
+        if (!Number.isInteger(months) || months < 1 || months > 50)
+          throw new Error('Choose a valid number of books to fund.')
         await candidateAction('manual-purchase', candidate.enrollment_key, {
-          months: selected.size,
-          exam_keys: [...selected],
+          months,
           payment_method: paymentMethod
         })
       }
@@ -159,7 +154,10 @@ export default function CandidateActionPanel({
           (dispatch ? (
             <>
               <div className="course-tabs">
-                {(['send', 'tracking', 'undo'] as const).map((operation) => (
+                {(dispatch.wallet_funded
+                  ? (['send'] as const)
+                  : (['send', 'tracking', 'undo'] as const)
+                ).map((operation) => (
                   <Button
                     key={operation}
                     variant={parcelOperation === operation ? 'secondary' : 'outline'}
@@ -198,7 +196,7 @@ export default function CandidateActionPanel({
                       checked={selected.has(item.allocation_key)}
                       disabled={
                         parcelOperation === 'send'
-                          ? item.dispatched
+                          ? item.dispatched || item.status === 'UNFUNDED'
                           : parcelOperation === 'tracking'
                             ? !item.dispatched
                             : item.status !== 'SHIPPED'
@@ -216,6 +214,12 @@ export default function CandidateActionPanel({
                   </label>
                 ))}
               </div>
+              {dispatch.wallet_funded && (
+                <p>
+                  Rupee balance: ₹{dispatch.wallet_balance}. Only the current month’s book is
+                  eligible for this parcel.
+                </p>
+              )}
               {parcelOperation !== 'undo' && (
                 <label className="course-dialog__field">
                   Tracking number {parcelOperation === 'tracking' ? '' : '(optional)'}
@@ -230,29 +234,20 @@ export default function CandidateActionPanel({
           (options && summary ? (
             <>
               <p>
-                Registration fee: {options.course.offline_registration_fee} · Price per book:{' '}
-                {options.course.offline_month_fee}
+                Wallet balance: ₹{summary.candidate.wallet_balance} · Locked price for this payment:
+                ₹{options.course.offline_month_fee} per book
               </p>
-              <div className="course-choice-list">
-                {available.map((exam) => (
-                  <label className="course-choice" key={exam.exam_key}>
-                    <input
-                      type="checkbox"
-                      checked={selected.has(exam.exam_key)}
-                      onChange={(event) =>
-                        setSelected((current) => {
-                          const next = new Set(current)
-                          if (event.target.checked) next.add(exam.exam_key)
-                          else next.delete(exam.exam_key)
-                          return next
-                        })
-                      }
-                    />{' '}
-                    {exam.sequence}. {exam.title}
-                  </label>
-                ))}
-              </div>
-              <p>Total: {Number(options.course.offline_month_fee) * selected.size}</p>
+              <label className="course-dialog__field">
+                Number of books to fund
+                <Input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={months}
+                  onChange={(event) => setMonths(Number(event.target.value))}
+                />
+              </label>
+              <p>Amount to add: ₹{Number(options.course.offline_month_fee) * months}</p>
               <label className="course-dialog__field">
                 Payment method
                 <select

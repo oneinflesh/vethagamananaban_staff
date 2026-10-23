@@ -26,6 +26,7 @@ type Form = {
   state: string
   postal_code: string
   payment_method: string
+  offline_months: number
 }
 const initial: Form = {
   full_name: '',
@@ -41,7 +42,8 @@ const initial: Form = {
   district: '',
   state: '',
   postal_code: '',
-  payment_method: 'CASH'
+  payment_method: 'CASH',
+  offline_months: 1
 }
 const fields: { key: keyof Form; label: string; required?: boolean; type?: string }[] = [
   { key: 'full_name', label: 'Name', required: true },
@@ -68,7 +70,6 @@ export default function ManualRegistrationPage({
 }): React.JSX.Element {
   const [options, setOptions] = useState<RegistrationOptions | null>(null)
   const [form, setForm] = useState<Form>(initial)
-  const [books, setBooks] = useState<Set<string>>(() => new Set())
   const [created, setCreated] = useState<Candidate | null>(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -86,10 +87,6 @@ export default function ManualRegistrationPage({
             language:
               result.languages.find((item) => item.is_active && item.offline_enabled)?.code ?? ''
           }))
-          const currentBook = result.exams.find(
-            (item) => item.sequence === result.course.current_sequence && item.is_active
-          )
-          if (currentBook) setBooks(new Set([currentBook.exam_key]))
         }
       })
       .catch((cause) => {
@@ -107,8 +104,12 @@ export default function ManualRegistrationPage({
   async function submit(event: React.FormEvent): Promise<void> {
     event.preventDefault()
     if (!options) return
-    if (books.size === 0) {
-      setError('Select at least one registration book.')
+    if (
+      !Number.isInteger(form.offline_months) ||
+      form.offline_months < 1 ||
+      form.offline_months > 50
+    ) {
+      setError('Choose a valid number of books to fund.')
       return
     }
     setSaving(true)
@@ -120,8 +121,7 @@ export default function ManualRegistrationPage({
         country,
         account_phone: form.phone,
         payment_note: 'Manual registration',
-        exam_keys: [...books],
-        offline_months: books.size,
+        offline_months: form.offline_months,
         address: [
           form.address_line1,
           form.address_line2,
@@ -144,7 +144,7 @@ export default function ManualRegistrationPage({
 
   const total = options
     ? Number(options.course.offline_registration_fee) +
-      Number(options.course.offline_month_fee) * books.size
+      Number(options.course.offline_month_fee) * form.offline_months
     : 0
   return (
     <section className="page course-page">
@@ -175,7 +175,6 @@ export default function ManualRegistrationPage({
                   options?.languages.find((item) => item.is_active && item.offline_enabled)?.code ??
                   ''
               })
-              setBooks(new Set())
             }}
           >
             Register another
@@ -241,31 +240,23 @@ export default function ManualRegistrationPage({
               </div>
             </div>
             <aside className="candidate-form">
-              <h2>Books paid at registration</h2>
-              <div className="course-choice-list">
-                {options.exams
-                  .filter((item) => item.is_active)
-                  .map((exam) => (
-                    <label className="course-choice" key={exam.exam_key}>
-                      <input
-                        type="checkbox"
-                        checked={books.has(exam.exam_key)}
-                        onChange={(event) =>
-                          setBooks((current) => {
-                            const next = new Set(current)
-                            if (event.target.checked) next.add(exam.exam_key)
-                            else next.delete(exam.exam_key)
-                            return next
-                          })
-                        }
-                      />{' '}
-                      {exam.sequence}. {exam.title}
-                    </label>
-                  ))}
-              </div>
+              <h2>Fund books in rupees</h2>
+              <label>
+                Number of books to fund
+                <Input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={form.offline_months}
+                  onChange={(event) =>
+                    setForm({ ...form, offline_months: Number(event.target.value) })
+                  }
+                  required
+                />
+              </label>
               <p>
-                Registration {options.course.offline_registration_fee} + {books.size} book(s) ={' '}
-                {total}
+                Registration {options.course.offline_registration_fee} + {form.offline_months}{' '}
+                book(s) = {total}
               </p>
               <Button type="submit" disabled={saving}>
                 {saving ? 'Registering…' : 'Register and record payment'}

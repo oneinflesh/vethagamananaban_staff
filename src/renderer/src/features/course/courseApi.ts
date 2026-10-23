@@ -25,6 +25,8 @@ export type Candidate = {
   coordinator: CoordinatorLink | null
   paid_books: number
   remaining_books: number
+  wallet_balance: string
+  available_funded_books: number
   initial_dispatch_status: string
   registered_at: string
   book_allocations: {
@@ -75,6 +77,8 @@ export type InitialDispatch = {
   id_card_dispatched: boolean
   id_card_tracking_number: string
   completed: boolean
+  wallet_funded?: boolean
+  wallet_balance?: string
   items: DispatchItem[]
 }
 export type Payment = {
@@ -85,6 +89,9 @@ export type Payment = {
   method: string
   amount: string
   status: string
+  months: number
+  wallet_topup: boolean
+  locked_book_price: string
 }
 export type ExamResult = {
   exam_key: string

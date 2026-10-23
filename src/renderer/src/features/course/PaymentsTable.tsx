@@ -9,7 +9,8 @@ export default function PaymentsTable({
   return (
     <div className="course-table-wrap">
       <div className="candidate-metrics">
-        <span>Total paid: {summary.total_paid}</span>
+        <span>Total paid: ₹{summary.total_paid}</span>
+        <span>Rupee balance: ₹{summary.candidate.wallet_balance}</span>
         <span>Payments: {summary.payment_count}</span>
         <span>Books paid: {summary.candidate.paid_books}</span>
         <span>Books remaining: {summary.candidate.remaining_books}</span>
@@ -25,6 +26,10 @@ export default function PaymentsTable({
         <Column title="Purpose" data="purpose" />
         <Column title="Method" data="method" />
         <Column title="Amount" data="amount" />
+        <Column title="Books funded" data="months" />
+        <Column title="Locked book price" data="locked_book_price">
+          {(_value, _type, row) => (row.wallet_topup ? `₹${row.locked_book_price}` : '—')}
+        </Column>
         <Column title="Status" data="status" />
       </DataTable>
     </div>

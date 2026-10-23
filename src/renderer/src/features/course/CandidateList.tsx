@@ -3,7 +3,8 @@ import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
 import FullScreenLoader from '../shell/FullScreenLoader'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
-import { getAllCandidates, type Candidate } from './courseApi'
+import { useNotifications } from '../notifications/Notifications'
+import { candidateAction, getAllCandidates, getInitialDispatch, type Candidate } from './courseApi'
 import { DataTable, Column } from './dataTable'
 import { resizeColumns } from './resizeColumns'
 import CandidateActionPanel, { type CandidateAction } from './CandidateActionPanel'
@@ -40,11 +41,13 @@ export default function CandidateList({
   const [date, setDate] = useState('')
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
   const [visibleKeys, setVisibleKeys] = useState<string[]>([])
+  const [shipping, setShipping] = useState(false)
   const [menu, setMenu] = useState<{ x: number; y: number; candidate: Candidate } | null>(null)
   const [action, setAction] = useState<{ kind: CandidateAction; candidate: Candidate } | null>(null)
   const table = useRef<DataTableRef>(null)
   const tableWrap = useRef<HTMLDivElement>(null)
   const { loading, leaving, start, finish } = useSmoothLoading()
+  const notify = useNotifications()
   useEffect(() => {
     tableWrap.current
       ?.querySelectorAll<HTMLInputElement>('input[data-candidate-key]')
@@ -124,6 +127,50 @@ export default function CandidateList({
     })
   }
 
+  async function shipSelected(): Promise<void> {
+    if (
+      !selected.size ||
+      !window.confirm(
+        `Mark the current book and ID card shipped for ${selected.size} selected candidates?`
+      )
+    )
+      return
+    setShipping(true)
+    let shipped = 0
+    const failures: string[] = []
+    for (const candidate of (data ?? []).filter((item) => selected.has(item.enrollment_key))) {
+      try {
+        const dispatch = await getInitialDispatch(candidate.enrollment_key)
+        if (!dispatch.wallet_funded)
+          throw new Error(
+            'This candidate has an older paid-book record; open the candidate to dispatch it.'
+          )
+        const current = dispatch.items[0]
+        if (!current) throw new Error('No current book is released.')
+        if (!current.dispatched || !dispatch.id_card_dispatched) {
+          await candidateAction('initial-dispatch', candidate.enrollment_key, {
+            include_id_card: !dispatch.id_card_dispatched,
+            allocation_keys: current.dispatched ? [] : [current.allocation_key]
+          })
+        }
+        shipped += 1
+      } catch (cause) {
+        failures.push(
+          `${candidate.bbs_identifier}: ${cause instanceof Error ? cause.message : 'Could not ship'}`
+        )
+      }
+    }
+    setShipping(false)
+    if (shipped)
+      notify.success(`${shipped} candidate parcel${shipped === 1 ? '' : 's'} marked shipped`)
+    if (failures.length)
+      notify.error(
+        failures.slice(0, 3).join('; ') +
+          (failures.length > 3 ? `; and ${failures.length - 3} more` : '')
+      )
+    refresh()
+  }
+
   const printable = newOffline
     ? (data ?? []).filter((candidate) => selected.has(candidate.enrollment_key))
     : (data ?? [])
@@ -158,6 +205,15 @@ export default function CandidateList({
             {visibleKeys.length && visibleKeys.every((key) => selected.has(key))
               ? 'Deselect all'
               : 'Select all visible'}
+          </Button>
+        )}
+        {newOffline && (
+          <Button
+            variant="outline"
+            disabled={!selected.size || shipping}
+            onClick={() => void shipSelected()}
+          >
+            {shipping ? 'Shipping…' : 'Mark selected shipped'}
           </Button>
         )}
         {addressActions && (
@@ -362,7 +418,12 @@ export default function CandidateList({
           }}
         />
       )}
-      {loading && <FullScreenLoader message="Loading candidates" leaving={leaving} />}
+      {(loading || shipping) && (
+        <FullScreenLoader
+          message={shipping ? 'Shipping selected parcels' : 'Loading candidates'}
+          leaving={loading && leaving}
+        />
+      )}
     </section>
   )
 }
