@@ -28,10 +28,10 @@ export function printCoordinatorLabels(coordinators: Coordinator[]): void {
     article.a4 { width: 200mm; height: 287mm; padding: 12mm; font-size: 24pt; }
     p { margin: 0 0 0.35em; }
     p.address-name { font-weight: 700; line-height: 1.15; margin-bottom: 0.6em; }
-    article.normal p.address-name { font-size: 14pt; }
-    article.a6 p.address-name { font-size: 21pt; }
-    article.a5 p.address-name { font-size: 28pt; }
-    article.a4 p.address-name { font-size: 36pt; }
+    article.normal p.address-name { font-size: 12pt; }
+    article.a6 p.address-name { font-size: 18pt; }
+    article.a5 p.address-name { font-size: 24pt; }
+    article.a4 p.address-name { font-size: 30pt; }
     @media screen { body { padding: 5mm; background: #ddd; } section { background: white; margin: 0 auto 5mm; } }
   `
   page.head.append(style)
@@ -40,8 +40,16 @@ export function printCoordinatorLabels(coordinators: Coordinator[]): void {
     const sheet = page.createElement('section')
     const label = page.createElement('article')
     label.className = labelSize(coordinator.member_count)
+    if (coordinator.enrollment_key && coordinator.bbs_number) {
+      const bbsNumber = page.createElement('p')
+      bbsNumber.textContent = coordinator.bbs_number
+      label.append(bbsNumber)
+    }
+    const name = page.createElement('p')
+    name.className = 'address-name'
+    name.textContent = coordinator.name
+    label.append(name)
     const lines = [
-      coordinator.name,
       coordinator.address_line1,
       coordinator.address_line2,
       coordinator.address_line3,
@@ -49,10 +57,9 @@ export function printCoordinatorLabels(coordinators: Coordinator[]): void {
       [coordinator.state, coordinator.postal_code].filter(Boolean).join(' - '),
       coordinator.phone
     ]
-    lines.forEach((line, index) => {
+    lines.forEach((line) => {
       if (!line) return
       const paragraph = page.createElement('p')
-      if (index === 0) paragraph.className = 'address-name'
       paragraph.textContent = line
       label.append(paragraph)
     })
