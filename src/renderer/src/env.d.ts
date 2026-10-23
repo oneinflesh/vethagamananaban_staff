@@ -24,6 +24,9 @@ interface Window {
       status: string,
       search: string
     ): Promise<import('./features/course/courseApi').CandidatePage>
+    courseCandidateCounts(
+      country: string
+    ): Promise<import('./features/course/courseApi').CandidateCounts>
     courseCandidate(key: string): Promise<import('./features/course/courseApi').CandidateSummary>
     courseCoordinator(key: string): Promise<import('./features/course/courseApi').Coordinator>
     courseCoordinatorMembers(

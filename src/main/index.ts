@@ -5,6 +5,7 @@ import { login, logout, restoreSession } from './features/auth/auth'
 import { getEnrolmentSummary } from './features/dashboard/dashboard'
 import {
   getCandidates,
+  getCandidateCounts,
   getCandidate,
   getCoordinator,
   getCoordinatorMembers,
@@ -80,6 +81,7 @@ app.whenReady().then(() => {
   ipcMain.handle('course:candidates', (_event, country, page, mode, status, search) =>
     getCandidates(country, page, mode, status, search)
   )
+  ipcMain.handle('course:candidate-counts', (_event, country) => getCandidateCounts(country))
   ipcMain.handle('course:candidate', (_event, key) => getCandidate(key))
   ipcMain.handle('course:coordinator', (_event, key) => getCoordinator(key))
   ipcMain.handle('course:coordinator-members', (_event, key) => getCoordinatorMembers(key))

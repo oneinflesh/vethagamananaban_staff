@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from 'react'
+import { useEffect, useState, type MouseEvent, type PointerEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import FullScreenLoader from '../shell/FullScreenLoader'
@@ -14,6 +14,7 @@ const names: Record<CourseSection, string> = {
   discontinued: 'Discontinued candidates',
   finished: 'Course finished candidates'
 }
+const pageSize = 20
 
 export default function CandidateList({
   section,
@@ -72,6 +73,35 @@ export default function CandidateList({
     })
   }
 
+  function resizeColumn(event: PointerEvent<HTMLDivElement>): void {
+    const header = (event.target as HTMLElement).closest('th')
+    const table = header?.closest('table')
+    if (!header || !table || header.getBoundingClientRect().right - event.clientX > 12) return
+    event.preventDefault()
+    const headers = Array.from(table.querySelectorAll<HTMLTableCellElement>('thead th'))
+    const widths = headers.map((item) => item.getBoundingClientRect().width)
+    headers.forEach((item, index) => {
+      item.style.width = `${widths[index]}px`
+      item.style.minWidth = `${widths[index]}px`
+    })
+    const index = headers.indexOf(header)
+    const startX = event.clientX
+    const initialWidth = widths[index]
+    const initialTableWidth = widths.reduce((sum, width) => sum + width, 0)
+    const move = (pointer: globalThis.PointerEvent): void => {
+      const width = Math.max(70, initialWidth + pointer.clientX - startX)
+      header.style.width = `${width}px`
+      header.style.minWidth = `${width}px`
+      table.style.setProperty('width', `${initialTableWidth + width - initialWidth}px`, 'important')
+    }
+    const stop = (): void => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', stop)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', stop, { once: true })
+  }
+
   return (
     <section className="page course-page" onClick={() => menu && setMenu(null)}>
       <div className="course-toolbar">
@@ -114,7 +144,11 @@ export default function CandidateList({
           </Button>
         </div>
       )}
-      <div className="course-table-wrap" onContextMenu={openMenu}>
+      <div
+        className="course-table-wrap course-table-wrap--candidates"
+        onContextMenu={openMenu}
+        onPointerDown={resizeColumn}
+      >
         <DataTable
           data={data?.results ?? []}
           className="display course-table"
@@ -122,6 +156,7 @@ export default function CandidateList({
             paging: false,
             searching: false,
             info: false,
+            autoWidth: false,
             order: [],
             rowId: 'enrollment_key'
           }}
@@ -159,6 +194,11 @@ export default function CandidateList({
         </DataTable>
       </div>
       <div className="course-pagination">
+        <span>
+          {data && data.count > 0
+            ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, data.count)} of ${data.count}`
+            : '0 candidates'}
+        </span>
         <Button
           variant="outline"
           disabled={page <= 1}
@@ -169,10 +209,12 @@ export default function CandidateList({
         >
           Previous
         </Button>
-        <span>Page {page}</span>
+        <span>
+          Page {page} of {Math.max(1, Math.ceil((data?.count ?? 0) / pageSize))}
+        </span>
         <Button
           variant="outline"
-          disabled={!data || page * 100 >= data.count}
+          disabled={!data || page * pageSize >= data.count}
           onClick={() => {
             start()
             setPage(page + 1)

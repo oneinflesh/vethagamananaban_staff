@@ -14,6 +14,8 @@ const api = {
     ipcRenderer.invoke('office:enrolment-summary', startDate, endDate, country),
   courseCandidates: (country: string, page: number, mode: string, status: string, search: string) =>
     ipcRenderer.invoke('course:candidates', country, page, mode, status, search),
+  courseCandidateCounts: (country: string) =>
+    ipcRenderer.invoke('course:candidate-counts', country),
   courseCandidate: (key: string) => ipcRenderer.invoke('course:candidate', key),
   courseCoordinator: (key: string) => ipcRenderer.invoke('course:coordinator', key),
   courseCoordinatorMembers: (key: string) => ipcRenderer.invoke('course:coordinator-members', key),

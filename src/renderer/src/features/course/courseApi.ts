@@ -27,6 +27,10 @@ export type Candidate = {
   remaining_books: number
 }
 export type CandidatePage = { count: number; results: Candidate[] }
+export type CandidateCounts = Record<
+  'all' | 'online' | 'offline' | 'discontinued' | 'finished',
+  number
+>
 export type Payment = {
   payment_key: string
   paid_at: string | null
@@ -80,6 +84,8 @@ export const getCandidates = (
   status: string,
   search: string
 ): Promise<CandidatePage> => window.office.courseCandidates(country, page, mode, status, search)
+export const getCandidateCounts = (country: string): Promise<CandidateCounts> =>
+  window.office.courseCandidateCounts(country)
 export const getCandidate = (key: string): Promise<CandidateSummary> =>
   window.office.courseCandidate(key)
 export const getCoordinator = (key: string): Promise<Coordinator> =>

@@ -10,7 +10,7 @@ export function getCandidates(
   const params = new URLSearchParams({
     country,
     page: String(page),
-    page_size: '100',
+    page_size: '20',
     scope: 'course'
   })
   if (mode) params.set('mode', mode)
@@ -18,6 +18,9 @@ export function getCandidates(
   if (search) params.set('search', search)
   return authorizedGet(`staff/course-enrollments/?${params}`)
 }
+
+export const getCandidateCounts = (country: string): Promise<unknown> =>
+  authorizedGet(`staff/course-enrollments/candidate-counts/?country=${encodeURIComponent(country)}`)
 
 export const getCandidate = (key: string): Promise<unknown> =>
   authorizedGet(`staff/course-enrollments/${encodeURIComponent(key)}/summary/`)

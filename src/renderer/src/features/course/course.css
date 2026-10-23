@@ -2,6 +2,7 @@
   background: #faf8f5;
   overflow: auto;
   color: #34261e;
+  min-width: 0;
 }
 .course-heading,
 .course-toolbar {
@@ -23,16 +24,17 @@
 }
 .course-card-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
 }
 .course-nav-card {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  min-height: 160px;
-  padding: 22px;
+  min-height: 152px;
+  min-width: 0;
+  padding: 16px;
   border: 1px solid #eaded2;
   border-radius: 18px;
   background: linear-gradient(145deg, #fff, #fff8ef);
@@ -52,9 +54,16 @@
   font-weight: 700;
   letter-spacing: 0.1em;
 }
+.course-nav-card__count {
+  margin-top: 10px;
+  color: #994414;
+  font-size: 28px;
+  font-weight: 750;
+  line-height: 1;
+}
 .course-nav-card strong {
-  margin-top: 20px;
-  font-size: 17px;
+  margin-top: 9px;
+  font-size: 14px;
 }
 .course-nav-card small {
   margin-top: 4px;
@@ -63,8 +72,8 @@
 }
 .course-nav-card__arrow {
   position: absolute;
-  right: 22px;
-  bottom: 21px;
+  right: 14px;
+  bottom: 12px;
   color: #b36029;
   font-size: 22px;
 }
@@ -82,6 +91,8 @@
 }
 .course-table-wrap {
   overflow: auto;
+  width: 100%;
+  min-width: 0;
   max-height: calc(100vh - 230px);
   border: 1px solid #e7ddd3;
   border-radius: 12px;
@@ -126,7 +137,20 @@
   background: #fffaf4;
 }
 .course-table-wrap .dt-container {
-  min-width: max-content;
+  min-width: 0;
+}
+.course-table-wrap--candidates table.dataTable {
+  min-width: 1250px;
+  table-layout: fixed;
+}
+.course-table-wrap--candidates table.dataTable th,
+.course-table-wrap--candidates table.dataTable td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.course-table-wrap--candidates table.dataTable thead th {
+  position: relative;
+  cursor: col-resize;
 }
 .course-link {
   padding: 0;
@@ -248,7 +272,7 @@
 }
 @media (max-width: 1000px) {
   .course-card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 810px;
   }
   .candidate-form__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
