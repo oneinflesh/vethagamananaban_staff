@@ -159,25 +159,26 @@ export default function ShippingPage(): React.JSX.Element {
     <section className="page shipping-page" onClick={() => menu && setMenu(null)}>
       <div className="shipping-toolbar">
         <h1>Shipping</h1>
-        <div className="shipping-source-filter" aria-label="Shipment source">
-          {(['all', 'course', 'store'] as const).map((item) => (
-            <Button
-              key={item}
-              size="sm"
-              variant={source === item ? 'secondary' : 'outline'}
-              onClick={() => {
-                setSource(item)
+        <div className="shipping-filters">
+          <label>
+            Source
+            <select
+              className="shipping-source-filter"
+              aria-label="Shipment source"
+              value={source}
+              onChange={(event) => {
+                setSource(event.target.value as SourceFilter)
                 setState('')
                 setDistrict('')
                 setBook('')
                 setStatus('')
               }}
             >
-              {item === 'store' ? 'Book Store' : item === 'all' ? 'All' : 'Course'}
-            </Button>
-          ))}
-        </div>
-        <div className="shipping-filters">
+              <option value="all">All</option>
+              <option value="course">Course</option>
+              <option value="store">Book Store</option>
+            </select>
+          </label>
           <label>
             State
             <select

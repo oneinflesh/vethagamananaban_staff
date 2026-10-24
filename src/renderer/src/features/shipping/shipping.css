@@ -1,31 +1,27 @@
 .shipping-page {
   min-width: 0;
+  padding-top: 12px;
 }
 .shipping-toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 0;
   white-space: nowrap;
 }
 .shipping-toolbar h1 {
   margin: 0;
   flex: none;
   font-size: 24px;
-}
-.shipping-source-filter {
-  display: flex;
-  gap: 4px;
-  flex: none;
+  line-height: 34px;
 }
 .shipping-filters {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
   flex: 1;
   overflow-x: auto;
-  padding-bottom: 3px;
 }
 .shipping-filters label {
   display: flex;
@@ -38,16 +34,22 @@
 .shipping-filters select,
 .shipping-filters input {
   height: 34px;
-  max-width: 135px;
+  max-width: 110px;
   padding: 0 7px;
   border: 1px solid #ded1c4;
   border-radius: 7px;
   background: white;
   color: #34261e;
 }
+.shipping-filters .shipping-source-filter {
+  width: 100px;
+}
+.shipping-filters input[type='date'] {
+  max-width: 125px;
+}
 .shipping-filters .shipping-search input {
-  width: 165px;
-  max-width: 165px;
+  width: 140px;
+  max-width: 140px;
 }
 .shipping-table-wrap {
   overflow: auto;
@@ -56,14 +58,32 @@
   border-radius: 12px;
   background: white;
 }
+.shipping-table-wrap div.dt-container div.dt-layout-row {
+  margin: 0;
+  padding: 0;
+}
+.shipping-table-wrap div.dt-container div.dt-layout-row:last-child:not(.dt-layout-table) {
+  padding: 6px 10px;
+}
 .shipping-table-wrap table.dataTable {
   width: 100% !important;
   border-collapse: collapse;
   white-space: nowrap;
 }
 .shipping-table-wrap table.dataTable thead th {
+  position: relative;
   background: #fff4e8;
   color: #694a36;
+}
+.shipping-table-wrap table.dataTable thead th::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 20%;
+  width: 10px;
+  height: 60%;
+  border-right: 2px solid #d6ad86;
+  cursor: col-resize;
 }
 .shipping-table-wrap table.dataTable tbody td {
   border-bottom: 1px solid #f0e8df;
