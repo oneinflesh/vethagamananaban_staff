@@ -39,6 +39,7 @@ export type CourseBookTranslation = {
   id: number
   exam: string
   language: string
+  catalog_book: string | null
   title: string
   description: string
   cover_image: string

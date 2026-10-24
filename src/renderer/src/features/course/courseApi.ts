@@ -79,6 +79,10 @@ export type ExamInfo = {
   is_released: boolean
   course_price_tn: string
   course_price_other: string
+  editions: Record<
+    string,
+    { vn_code: string; name: string; course_price_tn: string; course_price_other: string }
+  >
 }
 export type RegistrationOptions = {
   course: CourseInfo

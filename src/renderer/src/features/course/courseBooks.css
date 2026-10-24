@@ -64,6 +64,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 13px;
+  font-family: 'Anek Tamil', 'Nirmala UI', sans-serif;
 }
 .course-books-field-wide {
   grid-column: 1 / -1;
@@ -85,12 +86,6 @@
   grid-template-columns: minmax(300px, 1.2fr) minmax(300px, 1fr);
   align-items: start;
   gap: 14px;
-}
-.course-books-language-column {
-  display: grid;
-  align-content: start;
-  gap: 14px;
-  min-width: 0;
 }
 .course-books-panel--tamil input:not([type='checkbox']):not([type='file']),
 .course-books-panel--tamil textarea {
@@ -143,6 +138,10 @@
   border: 1px solid #ded1c4;
   border-radius: 7px;
   font: inherit;
+}
+.course-books-panel input:not([type='checkbox']):not([type='file']),
+.course-books-panel textarea {
+  font-family: 'Anek Tamil', 'Nirmala UI', sans-serif;
 }
 .course-books-panel button {
   justify-self: start;

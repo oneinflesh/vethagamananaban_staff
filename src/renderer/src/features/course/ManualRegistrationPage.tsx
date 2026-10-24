@@ -151,10 +151,10 @@ export default function ManualRegistrationPage({
     ? Number(options.course.offline_registration_fee) +
       options.exams
         .filter((exam) => form.exam_keys.includes(exam.exam_key))
-        .reduce(
-          (sum, exam) => sum + Number(priceState ? exam.course_price_tn : exam.course_price_other),
-          0
-        )
+        .reduce((sum, exam) => {
+          const edition = exam.editions[form.language]
+          return sum + Number(priceState ? edition?.course_price_tn : edition?.course_price_other)
+        }, 0)
     : 0
   return (
     <section className="page course-page">
@@ -282,8 +282,10 @@ export default function ManualRegistrationPage({
                           }))
                         }
                       />
-                      {exam.sequence}. {exam.catalog_book_name} · ₹
-                      {priceState ? exam.course_price_tn : exam.course_price_other}
+                      {exam.sequence}. {exam.editions[form.language]?.name || exam.title} · ₹
+                      {priceState
+                        ? exam.editions[form.language]?.course_price_tn
+                        : exam.editions[form.language]?.course_price_other}
                     </label>
                   ))}
               </div>

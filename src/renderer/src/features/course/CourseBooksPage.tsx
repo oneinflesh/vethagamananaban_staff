@@ -46,10 +46,6 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
   const [languageKey, setLanguageKey] = useState('')
   const [examKey, setExamKey] = useState('')
   const [shared, setShared] = useState<SharedDraft | null>(null)
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [cover, setCover] = useState<{ bytes: Uint8Array; name: string } | null>(null)
-  const [coverPreview, setCoverPreview] = useState('')
   const [sharedCover, setSharedCover] = useState<{ bytes: Uint8Array; name: string } | null>(null)
   const [sharedCoverPreview, setSharedCoverPreview] = useState('')
   const [busy, setBusy] = useState(false)
@@ -57,9 +53,11 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
 
   function fillDrafts(result: CourseBooksData, nextExamKey: string, nextLanguageKey: string): void {
     const selectedExam = result.exams.find((item) => item.exam_key === nextExamKey)
-    const selectedBook = result.books.find((item) => item.vn_code === selectedExam?.catalog_book)
     const selectedTranslation = result.translations.find(
       (item) => item.exam === nextExamKey && item.language === nextLanguageKey
+    )
+    const selectedBook = result.books.find(
+      (item) => item.vn_code === (selectedTranslation?.catalog_book || selectedExam?.catalog_book)
     )
     setShared(
       selectedBook
@@ -81,10 +79,6 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
           }
         : null
     )
-    setTitle(selectedTranslation?.title ?? selectedExam?.title ?? '')
-    setDescription(selectedTranslation?.description ?? '')
-    setCover(null)
-    setCoverPreview(coverUrl(selectedTranslation?.cover_image ?? ''))
     setSharedCover(null)
     setSharedCoverPreview(coverUrl(selectedBook?.primary_image ?? ''))
   }
@@ -136,19 +130,18 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
     [data]
   )
   const exam = exams.find((item) => item.exam_key === examKey)
-  const book = data?.books.find((item) => item.vn_code === exam?.catalog_book)
   const translation = data?.translations.find(
     (item) => item.exam === examKey && item.language === languageKey
+  )
+  const book = data?.books.find(
+    (item) => item.vn_code === (translation?.catalog_book || exam?.catalog_book)
   )
   const selectedLanguage = data?.languages.find((item) => item.language_key === languageKey)
   const tamilLanguage =
     selectedLanguage?.code?.toLowerCase().startsWith('ta') ||
     selectedLanguage?.name.toLowerCase().includes('tamil')
 
-  async function selectCover(
-    event: ChangeEvent<HTMLInputElement>,
-    kind: 'shared' | 'language'
-  ): Promise<void> {
+  async function selectCover(event: ChangeEvent<HTMLInputElement>): Promise<void> {
     const file = event.target.files?.[0]
     if (!file) return
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
@@ -157,18 +150,13 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
       return
     }
     const selected = { bytes: new Uint8Array(await file.arrayBuffer()), name: file.name }
-    if (kind === 'shared') {
-      setSharedCover(selected)
-      setSharedCoverPreview(URL.createObjectURL(file))
-    } else {
-      setCover(selected)
-      setCoverPreview(URL.createObjectURL(file))
-    }
+    setSharedCover(selected)
+    setSharedCoverPreview(URL.createObjectURL(file))
     event.target.value = ''
   }
 
   async function saveShared(): Promise<void> {
-    if (!book || !shared) return
+    if (!book || !shared || !exam || !languageKey) return
     const weight = Number(shared.weight)
     const stock = Number(shared.stock)
     const priceTn = shared.priceTn.trim() === '' ? null : Number(shared.priceTn)
@@ -192,7 +180,7 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
       (priceTn !== null && (!Number.isFinite(priceTn) || priceTn < 0)) ||
       (priceOther !== null && (!Number.isFinite(priceOther) || priceOther < 0))
     ) {
-      notify.error('Enter a common English name and valid prices, weight, and stock')
+      notify.error('Enter a book name and valid prices, weight, and stock')
       return
     }
     if (stock !== book.stock && !shared.stockReason.trim()) {
@@ -219,37 +207,19 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
         await adjustCourseBookStock(book.vn_code, stock, shared.stockReason.trim())
       }
       if (sharedCover) await uploadCourseBookCover(book.vn_code, sharedCover)
-      await reload()
-      notify.success('Shared book details saved')
-    } catch (cause) {
-      notify.error(cause instanceof Error ? cause.message : 'Could not save shared details')
-      void reload()
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function saveLanguage(): Promise<void> {
-    if (!exam || !languageKey || !book) return
-    if (!title.trim()) {
-      notify.error('Enter the book title in this language')
-      return
-    }
-    setBusy(true)
-    try {
       await saveCourseBookTranslation(
         translation?.id ?? null,
         exam.exam_key,
         languageKey,
-        title.trim(),
-        description.trim(),
-        cover
+        shared.name.trim(),
+        shared.description.trim(),
+        null
       )
       await reload()
-      setCover(null)
-      notify.success('Language details saved')
+      notify.success('Book edition saved')
     } catch (cause) {
-      notify.error(cause instanceof Error ? cause.message : 'Could not save language details')
+      notify.error(cause instanceof Error ? cause.message : 'Could not save shared details')
+      void reload()
     } finally {
       setBusy(false)
     }
@@ -307,19 +277,17 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
                   }}
                 >
                   <span>{String(item.sequence).padStart(2, '0')}</span>
-                  <strong>
-                    {data.books.find((value) => value.vn_code === item.catalog_book)?.name ||
-                      item.catalog_book_name ||
-                      item.title}
-                  </strong>
+                  <strong>{item.title}</strong>
                 </button>
               )
             })}
           </nav>
           {exam && book ? (
             <div className="course-books-editors">
-              <section className="course-books-panel">
-                <h2>Common book details</h2>
+              <section
+                className={`course-books-panel${tamilLanguage ? ' course-books-panel--tamil' : ''}`}
+              >
+                <h2>{selectedLanguage?.name} book details</h2>
                 <div className="course-books-fields">
                   <label>
                     VN code
@@ -330,7 +298,7 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
                     <Input value={book.category} readOnly />
                   </label>
                   <label className="course-books-field-wide">
-                    Common book name (English)
+                    Book name
                     <Input
                       value={shared?.name ?? ''}
                       onChange={(event) =>
@@ -339,7 +307,7 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
                     />
                   </label>
                   <label className="course-books-field-wide">
-                    Common description (English)
+                    Description
                     <textarea
                       value={shared?.description ?? ''}
                       onChange={(event) =>
@@ -514,72 +482,33 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
                   </label>
                 )}
                 <Button disabled={busy || !shared} onClick={() => void saveShared()}>
-                  Save shared details
+                  Save book details
                 </Button>
               </section>
-              <div className="course-books-language-column">
-                <section
-                  className={`course-books-panel${tamilLanguage ? ' course-books-panel--tamil' : ''}`}
-                >
-                  <h2>Selected language: {selectedLanguage?.name}</h2>
+              <section className="course-books-panel course-books-panel--covers">
+                <h2>Covers</h2>
+                <div className="course-books-cover">
+                  {sharedCoverPreview && (
+                    <img src={sharedCoverPreview} alt={`${selectedLanguage?.name} book cover`} />
+                  )}
                   <label>
-                    Book title
-                    <Input value={title} onChange={(event) => setTitle(event.target.value)} />
-                  </label>
-                  <label>
-                    Description
-                    <textarea
-                      value={description}
-                      onChange={(event) => setDescription(event.target.value)}
-                      rows={4}
+                    {selectedLanguage?.name} cover
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(event) => void selectCover(event)}
                     />
+                    {sharedCover?.name && <span>{sharedCover.name}</span>}
                   </label>
-                  <Button disabled={busy} onClick={() => void saveLanguage()}>
-                    Save language details
-                  </Button>
-                </section>
-                <section className="course-books-panel course-books-panel--covers">
-                  <h2>Covers</h2>
-                  <div className="course-books-cover">
-                    {sharedCoverPreview && <img src={sharedCoverPreview} alt="Common book cover" />}
-                    <label>
-                      Common English cover
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        onChange={(event) => void selectCover(event, 'shared')}
-                      />
-                      {sharedCover?.name && <span>{sharedCover.name}</span>}
-                    </label>
-                  </div>
-                  <Button
-                    variant="outline"
-                    disabled={busy || !sharedCover}
-                    onClick={() => void saveShared()}
-                  >
-                    Save common cover
-                  </Button>
-                  <div className="course-books-cover">
-                    {coverPreview && <img src={coverPreview} alt="Selected language cover" />}
-                    <label>
-                      Language cover
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        onChange={(event) => void selectCover(event, 'language')}
-                      />
-                      {cover?.name && <span>{cover.name}</span>}
-                    </label>
-                  </div>
-                  <Button
-                    variant="outline"
-                    disabled={busy || !cover}
-                    onClick={() => void saveLanguage()}
-                  >
-                    Save language cover
-                  </Button>
-                </section>
-              </div>
+                </div>
+                <Button
+                  variant="outline"
+                  disabled={busy || !sharedCover}
+                  onClick={() => void saveShared()}
+                >
+                  Save cover
+                </Button>
+              </section>
             </div>
           ) : (
             <p className="course-error">This course month has no matching catalog book.</p>

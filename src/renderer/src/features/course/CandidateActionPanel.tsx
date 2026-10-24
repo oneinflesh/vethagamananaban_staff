@@ -269,8 +269,13 @@ export default function CandidateActionPanel({
                           })
                         }
                       />
-                      {exam.sequence}. {exam.catalog_book_name} · ₹
-                      {tamilNaduDelivery ? exam.course_price_tn : exam.course_price_other}
+                      {exam.sequence}.{' '}
+                      {exam.editions[summary.candidate.language.toLowerCase()]?.name || exam.title}{' '}
+                      · ₹
+                      {tamilNaduDelivery
+                        ? exam.editions[summary.candidate.language.toLowerCase()]?.course_price_tn
+                        : exam.editions[summary.candidate.language.toLowerCase()]
+                            ?.course_price_other}
                     </label>
                   ))}
               </div>
@@ -281,7 +286,12 @@ export default function CandidateActionPanel({
                   .reduce(
                     (sum, exam) =>
                       sum +
-                      Number(tamilNaduDelivery ? exam.course_price_tn : exam.course_price_other),
+                      Number(
+                        tamilNaduDelivery
+                          ? exam.editions[summary.candidate.language.toLowerCase()]?.course_price_tn
+                          : exam.editions[summary.candidate.language.toLowerCase()]
+                              ?.course_price_other
+                      ),
                     0
                   )
                   .toFixed(2)}
