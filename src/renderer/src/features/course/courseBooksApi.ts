@@ -30,6 +30,7 @@ export type CourseBookExam = {
 
 export type CourseBookLanguage = {
   language_key: string
+  code: string
   name: string
   is_active: boolean
 }

@@ -140,6 +140,10 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
   const translation = data?.translations.find(
     (item) => item.exam === examKey && item.language === languageKey
   )
+  const selectedLanguage = data?.languages.find((item) => item.language_key === languageKey)
+  const tamilLanguage =
+    selectedLanguage?.code?.toLowerCase().startsWith('ta') ||
+    selectedLanguage?.name.toLowerCase().includes('tamil')
 
   async function selectCover(
     event: ChangeEvent<HTMLInputElement>,
@@ -288,9 +292,6 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
         <div className="course-books-layout">
           <nav className="course-books-list" aria-label="Course books">
             {exams.map((item) => {
-              const translated = data.translations.find(
-                (value) => value.exam === item.exam_key && value.language === languageKey
-              )
               return (
                 <button
                   type="button"
@@ -307,8 +308,9 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
                 >
                   <span>{String(item.sequence).padStart(2, '0')}</span>
                   <strong>
-                    {item.catalog_book_name || item.title}
-                    {translated?.title && <small>{translated.title}</small>}
+                    {data.books.find((value) => value.vn_code === item.catalog_book)?.name ||
+                      item.catalog_book_name ||
+                      item.title}
                   </strong>
                 </button>
               )
@@ -318,10 +320,6 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
             <div className="course-books-editors">
               <section className="course-books-panel">
                 <h2>Common book details</h2>
-                <p>
-                  The English name, catalog details, cover, and stock stay the same for every
-                  language.
-                </p>
                 <div className="course-books-fields">
                   <label>
                     VN code
@@ -502,20 +500,6 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
                     New arrival in Book Store
                   </label>
                 </div>
-                <div className="course-books-cover">
-                  {sharedCoverPreview && (
-                    <img src={sharedCoverPreview} alt="Common English book cover" />
-                  )}
-                  <label>
-                    Common book cover
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={(event) => void selectCover(event, 'shared')}
-                    />
-                    {sharedCover?.name && <span>{sharedCover.name}</span>}
-                  </label>
-                </div>
                 {shared && Number(shared.stock) !== book.stock && (
                   <label className="course-books-stock-reason">
                     Stock adjustment reason
@@ -533,15 +517,10 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
                   Save shared details
                 </Button>
               </section>
-              <section className="course-books-panel">
-                <h2>
-                  Selected language:{' '}
-                  {data.languages.find((item) => item.language_key === languageKey)?.name}
-                </h2>
-                <p>
-                  Changing the language above loads its saved book name, description, and cover
-                  automatically. It does not change the common English details.
-                </p>
+              <section
+                className={`course-books-panel${tamilLanguage ? ' course-books-panel--tamil' : ''}`}
+              >
+                <h2>Selected language: {selectedLanguage?.name}</h2>
                 <label>
                   Book title
                   <Input value={title} onChange={(event) => setTitle(event.target.value)} />
@@ -554,8 +533,33 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
                     rows={4}
                   />
                 </label>
+                <Button disabled={busy} onClick={() => void saveLanguage()}>
+                  Save language details
+                </Button>
+              </section>
+              <section className="course-books-panel course-books-panel--covers">
+                <h2>Covers</h2>
                 <div className="course-books-cover">
-                  {coverPreview && <img src={coverPreview} alt="Selected book cover" />}
+                  {sharedCoverPreview && <img src={sharedCoverPreview} alt="Common book cover" />}
+                  <label>
+                    Common English cover
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(event) => void selectCover(event, 'shared')}
+                    />
+                    {sharedCover?.name && <span>{sharedCover.name}</span>}
+                  </label>
+                </div>
+                <Button
+                  variant="outline"
+                  disabled={busy || !sharedCover}
+                  onClick={() => void saveShared()}
+                >
+                  Save common cover
+                </Button>
+                <div className="course-books-cover">
+                  {coverPreview && <img src={coverPreview} alt="Selected language cover" />}
                   <label>
                     Language cover
                     <input
@@ -566,8 +570,12 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
                     {cover?.name && <span>{cover.name}</span>}
                   </label>
                 </div>
-                <Button disabled={busy} onClick={() => void saveLanguage()}>
-                  Save language details
+                <Button
+                  variant="outline"
+                  disabled={busy || !cover}
+                  onClick={() => void saveLanguage()}
+                >
+                  Save language cover
                 </Button>
               </section>
             </div>
