@@ -16,6 +16,19 @@ const api = {
     ipcRenderer.invoke('course:candidates', country, page, mode, status, search),
   courseCandidateCounts: (country: string) =>
     ipcRenderer.invoke('course:candidate-counts', country),
+  courseBooks: () => ipcRenderer.invoke('course:books'),
+  courseBookUpdate: (code: string, changes: unknown) =>
+    ipcRenderer.invoke('course:book-update', code, changes),
+  courseBookStock: (code: string, stock: number, note: string) =>
+    ipcRenderer.invoke('course:book-stock', code, stock, note),
+  courseBookTranslation: (
+    id: number | null,
+    exam: string,
+    language: string,
+    title: string,
+    description: string,
+    cover: { bytes: Uint8Array; name: string } | null
+  ) => ipcRenderer.invoke('course:book-translation', id, exam, language, title, description, cover),
   shippingList: (country: string) => ipcRenderer.invoke('shipping:list', country),
   shippingTracking: (row: unknown, trackingNumber: string) =>
     ipcRenderer.invoke('shipping:tracking', row, trackingNumber),

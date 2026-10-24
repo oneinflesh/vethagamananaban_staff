@@ -1,0 +1,400 @@
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { useNotifications } from '../notifications/Notifications'
+import FullScreenLoader from '../shell/FullScreenLoader'
+import { useSmoothLoading } from '../shell/useSmoothLoading'
+import {
+  adjustCourseBookStock,
+  getCourseBooks,
+  saveCourseBookTranslation,
+  updateCourseBook,
+  type CourseBooksData
+} from './courseBooksApi'
+import './courseBooks.css'
+
+type SharedDraft = {
+  isbn: string
+  priceTn: string
+  priceOther: string
+  weight: string
+  stock: string
+  stockReason: string
+}
+
+function coverUrl(path: string): string {
+  if (!path) return ''
+  return /^https?:\/\//i.test(path)
+    ? path
+    : `https://media.v2.bible2bible.com/${path.replace(/^\/+/, '')}`
+}
+
+export default function CourseBooksPage({ onBack }: { onBack: () => void }): React.JSX.Element {
+  const notify = useNotifications()
+  const { loading, leaving, start, finish } = useSmoothLoading()
+  const [data, setData] = useState<CourseBooksData | null>(null)
+  const [error, setError] = useState('')
+  const [languageKey, setLanguageKey] = useState('')
+  const [examKey, setExamKey] = useState('')
+  const [shared, setShared] = useState<SharedDraft | null>(null)
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [cover, setCover] = useState<{ bytes: Uint8Array; name: string } | null>(null)
+  const [coverPreview, setCoverPreview] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [retry, setRetry] = useState(0)
+
+  function fillDrafts(result: CourseBooksData, nextExamKey: string, nextLanguageKey: string): void {
+    const selectedExam = result.exams.find((item) => item.exam_key === nextExamKey)
+    const selectedBook = result.books.find((item) => item.vn_code === selectedExam?.catalog_book)
+    const selectedTranslation = result.translations.find(
+      (item) => item.exam === nextExamKey && item.language === nextLanguageKey
+    )
+    setShared(
+      selectedBook
+        ? {
+            isbn: selectedBook.isbn ?? '',
+            priceTn: selectedBook.course_price_tn ?? '',
+            priceOther: selectedBook.course_price_other ?? '',
+            weight: String(selectedBook.weight_grams),
+            stock: String(selectedBook.stock),
+            stockReason: ''
+          }
+        : null
+    )
+    setTitle(selectedTranslation?.title ?? selectedExam?.title ?? '')
+    setDescription(selectedTranslation?.description ?? '')
+    setCover(null)
+    setCoverPreview(coverUrl(selectedTranslation?.cover_image ?? ''))
+  }
+
+  async function reload(): Promise<void> {
+    const result = await getCourseBooks()
+    setData(result)
+    const nextLanguage = result.languages.some(
+      (item) => item.language_key === languageKey && item.is_active
+    )
+      ? languageKey
+      : (result.languages.find((item) => item.is_active)?.language_key ?? '')
+    const nextExam = result.exams.some((item) => item.exam_key === examKey)
+      ? examKey
+      : ([...result.exams].sort((a, b) => a.sequence - b.sequence)[0]?.exam_key ?? '')
+    setLanguageKey(nextLanguage)
+    setExamKey(nextExam)
+    fillDrafts(result, nextExam, nextLanguage)
+  }
+
+  useEffect(() => {
+    let active = true
+    start()
+    getCourseBooks()
+      .then((result) => {
+        if (!active) return
+        setData(result)
+        const firstLanguage = result.languages.find((item) => item.is_active)?.language_key ?? ''
+        const firstExam =
+          [...result.exams].sort((a, b) => a.sequence - b.sequence)[0]?.exam_key ?? ''
+        setLanguageKey(firstLanguage)
+        setExamKey(firstExam)
+        fillDrafts(result, firstExam, firstLanguage)
+        setError('')
+      })
+      .catch((cause) => {
+        if (active) setError(cause instanceof Error ? cause.message : 'Could not load course books')
+      })
+      .finally(() => {
+        if (active) finish()
+      })
+    return () => {
+      active = false
+    }
+  }, [retry, start, finish])
+
+  const exams = useMemo(
+    () => [...(data?.exams ?? [])].sort((a, b) => a.sequence - b.sequence),
+    [data]
+  )
+  const exam = exams.find((item) => item.exam_key === examKey)
+  const book = data?.books.find((item) => item.vn_code === exam?.catalog_book)
+  const translation = data?.translations.find(
+    (item) => item.exam === examKey && item.language === languageKey
+  )
+
+  async function selectCover(event: ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      notify.error('Choose a JPG, PNG, or WebP cover')
+      event.target.value = ''
+      return
+    }
+    setCover({ bytes: new Uint8Array(await file.arrayBuffer()), name: file.name })
+    setCoverPreview(URL.createObjectURL(file))
+    event.target.value = ''
+  }
+
+  async function saveShared(): Promise<void> {
+    if (!book || !shared) return
+    const weight = Number(shared.weight)
+    const stock = Number(shared.stock)
+    const priceTn = shared.priceTn.trim() === '' ? null : Number(shared.priceTn)
+    const priceOther = shared.priceOther.trim() === '' ? null : Number(shared.priceOther)
+    if (
+      !Number.isInteger(weight) ||
+      weight < 1 ||
+      !Number.isInteger(stock) ||
+      stock < 0 ||
+      (priceTn !== null && (!Number.isFinite(priceTn) || priceTn < 0)) ||
+      (priceOther !== null && (!Number.isFinite(priceOther) || priceOther < 0))
+    ) {
+      notify.error('Enter valid prices, weight, and stock')
+      return
+    }
+    if (stock !== book.stock && !shared.stockReason.trim()) {
+      notify.error('Enter a reason for the stock adjustment')
+      return
+    }
+    setBusy(true)
+    try {
+      await updateCourseBook(book.vn_code, {
+        isbn: shared.isbn.trim(),
+        course_price_tn: priceTn,
+        course_price_other: priceOther,
+        weight_grams: weight
+      })
+      if (stock !== book.stock) {
+        await adjustCourseBookStock(book.vn_code, stock, shared.stockReason.trim())
+      }
+      await reload()
+      notify.success('Shared book details saved')
+    } catch (cause) {
+      notify.error(cause instanceof Error ? cause.message : 'Could not save shared details')
+      void reload()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function saveLanguage(): Promise<void> {
+    if (!exam || !languageKey || !book) return
+    if (!title.trim()) {
+      notify.error('Enter the book title in this language')
+      return
+    }
+    setBusy(true)
+    try {
+      await saveCourseBookTranslation(
+        translation?.id ?? null,
+        exam.exam_key,
+        languageKey,
+        title.trim(),
+        description.trim(),
+        cover
+      )
+      await reload()
+      setCover(null)
+      notify.success('Language details saved')
+    } catch (cause) {
+      notify.error(cause instanceof Error ? cause.message : 'Could not save language details')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className="page course-page course-books-page">
+      <div className="course-books-heading">
+        <Button variant="outline" size="sm" onClick={onBack}>
+          ← Course
+        </Button>
+        <h1>Course books</h1>
+        <label>
+          Language
+          <select
+            value={languageKey}
+            onChange={(event) => {
+              setLanguageKey(event.target.value)
+              if (data) fillDrafts(data, examKey, event.target.value)
+            }}
+          >
+            {data?.languages
+              .filter((item) => item.is_active)
+              .map((item) => (
+                <option key={item.language_key} value={item.language_key}>
+                  {item.name}
+                </option>
+              ))}
+          </select>
+        </label>
+        <Button variant="outline" size="sm" onClick={() => setRetry((value) => value + 1)}>
+          Refresh
+        </Button>
+      </div>
+      {error && <p className="course-error">{error}</p>}
+      {!error && data && !languageKey && (
+        <p className="course-error">No active course language is configured.</p>
+      )}
+      {data && languageKey && (
+        <div className="course-books-layout">
+          <nav className="course-books-list" aria-label="Course books">
+            {exams.map((item) => {
+              const translated = data.translations.find(
+                (value) => value.exam === item.exam_key && value.language === languageKey
+              )
+              return (
+                <button
+                  type="button"
+                  key={item.exam_key}
+                  className={
+                    item.exam_key === examKey
+                      ? 'course-books-list-item is-selected'
+                      : 'course-books-list-item'
+                  }
+                  onClick={() => {
+                    setExamKey(item.exam_key)
+                    fillDrafts(data, item.exam_key, languageKey)
+                  }}
+                >
+                  <span>{String(item.sequence).padStart(2, '0')}</span>
+                  <strong>{translated?.title || item.catalog_book_name || item.title}</strong>
+                </button>
+              )
+            })}
+          </nav>
+          {exam && book ? (
+            <div className="course-books-editors">
+              <section className="course-books-panel">
+                <h2>Shared book details</h2>
+                <p>These values and stock are shared by every language.</p>
+                <div className="course-books-fields">
+                  <label>
+                    VN code
+                    <Input value={book.vn_code} readOnly />
+                  </label>
+                  <label>
+                    ISBN
+                    <Input
+                      value={shared?.isbn ?? ''}
+                      onChange={(event) =>
+                        setShared((current) => current && { ...current, isbn: event.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Course price · Tamil Nadu (₹)
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={shared?.priceTn ?? ''}
+                      onChange={(event) =>
+                        setShared(
+                          (current) => current && { ...current, priceTn: event.target.value }
+                        )
+                      }
+                    />
+                  </label>
+                  <label>
+                    Course price · Other (₹)
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={shared?.priceOther ?? ''}
+                      onChange={(event) =>
+                        setShared(
+                          (current) => current && { ...current, priceOther: event.target.value }
+                        )
+                      }
+                    />
+                  </label>
+                  <label>
+                    Net weight (g)
+                    <Input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={shared?.weight ?? ''}
+                      onChange={(event) =>
+                        setShared(
+                          (current) => current && { ...current, weight: event.target.value }
+                        )
+                      }
+                    />
+                  </label>
+                  <label>
+                    Current stock
+                    <Input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={shared?.stock ?? ''}
+                      onChange={(event) =>
+                        setShared((current) => current && { ...current, stock: event.target.value })
+                      }
+                    />
+                  </label>
+                </div>
+                <p>
+                  Reserved: {book.reserved_stock} · Available: {book.available_stock}
+                </p>
+                {shared && Number(shared.stock) !== book.stock && (
+                  <label className="course-books-stock-reason">
+                    Stock adjustment reason
+                    <Input
+                      value={shared.stockReason}
+                      onChange={(event) =>
+                        setShared(
+                          (current) => current && { ...current, stockReason: event.target.value }
+                        )
+                      }
+                    />
+                  </label>
+                )}
+                <Button disabled={busy || !shared} onClick={() => void saveShared()}>
+                  Save shared details
+                </Button>
+              </section>
+              <section className="course-books-panel">
+                <h2>Selected language</h2>
+                <p>Title, description, and cover apply only to the selected language.</p>
+                <label>
+                  Book title
+                  <Input value={title} onChange={(event) => setTitle(event.target.value)} />
+                </label>
+                <label>
+                  Description
+                  <textarea
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    rows={4}
+                  />
+                </label>
+                <div className="course-books-cover">
+                  {coverPreview && <img src={coverPreview} alt="Selected book cover" />}
+                  <label>
+                    Language cover
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(event) => void selectCover(event)}
+                    />
+                    {cover?.name && <span>{cover.name}</span>}
+                  </label>
+                </div>
+                <Button disabled={busy} onClick={() => void saveLanguage()}>
+                  Save language details
+                </Button>
+              </section>
+            </div>
+          ) : (
+            <p className="course-error">This course month has no matching catalog book.</p>
+          )}
+        </div>
+      )}
+      {loading && (
+        <FullScreenLoader message="Loading course books" leaving={leaving} showProgress={false} />
+      )}
+    </section>
+  )
+}

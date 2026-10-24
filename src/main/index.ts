@@ -4,6 +4,12 @@ import { is } from '@electron-toolkit/utils'
 import { login, logout, restoreSession } from './features/auth/auth'
 import { getEnrolmentSummary } from './features/dashboard/dashboard'
 import {
+  getCourseBooks,
+  updateCourseBook,
+  adjustCourseBookStock,
+  saveCourseBookTranslation
+} from './features/course/courseBooks'
+import {
   getShipments,
   updateShipmentTracking,
   markCoursePaperReceived
@@ -107,6 +113,16 @@ app.whenReady().then(() => {
     getCandidates(country, page, mode, status, search)
   )
   ipcMain.handle('course:candidate-counts', (_event, country) => getCandidateCounts(country))
+  ipcMain.handle('course:books', () => getCourseBooks())
+  ipcMain.handle('course:book-update', (_event, code, changes) => updateCourseBook(code, changes))
+  ipcMain.handle('course:book-stock', (_event, code, stock, note) =>
+    adjustCourseBookStock(code, stock, note)
+  )
+  ipcMain.handle(
+    'course:book-translation',
+    (_event, id, exam, language, title, description, cover) =>
+      saveCourseBookTranslation(id, exam, language, title, description, cover)
+  )
   ipcMain.handle('shipping:list', (_event, country) => getShipments(country))
   ipcMain.handle('shipping:tracking', (_event, row, trackingNumber) =>
     updateShipmentTracking(row, trackingNumber)

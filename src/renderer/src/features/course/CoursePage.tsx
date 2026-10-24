@@ -10,6 +10,7 @@ import CoordinatorList from './CoordinatorList'
 import ManualRegistrationPage from './ManualRegistrationPage'
 import MonthlyDispatchPage from './MonthlyDispatchPage'
 import SendReleasedBooksPage from './SendReleasedBooksPage'
+import CourseBooksPage from './CourseBooksPage'
 import {
   getCandidateCounts,
   getCoordinatorCount,
@@ -42,6 +43,7 @@ export default function CoursePage(): React.JSX.Element {
   const [coordinatorRefresh, setCoordinatorRefresh] = useState(0)
   const [manualRegistration, setManualRegistration] = useState(false)
   const [monthlyDispatch, setMonthlyDispatch] = useState(false)
+  const [courseBooks, setCourseBooks] = useState(false)
   const [bookCandidate, setBookCandidate] = useState<Candidate | null>(null)
   const [counts, setCounts] = useState<{
     country: string
@@ -59,6 +61,7 @@ export default function CoursePage(): React.JSX.Element {
       peopleCoordinator ||
       manualRegistration ||
       monthlyDispatch ||
+      courseBooks ||
       bookCandidate
     )
       return
@@ -89,6 +92,7 @@ export default function CoursePage(): React.JSX.Element {
     peopleCoordinator,
     manualRegistration,
     monthlyDispatch,
+    courseBooks,
     bookCandidate,
     retry
   ])
@@ -228,6 +232,7 @@ export default function CoursePage(): React.JSX.Element {
         }}
       />
     )
+  if (courseBooks) return <CourseBooksPage onBack={() => setCourseBooks(false)} />
   if (monthlyDispatch)
     return (
       <>
@@ -359,6 +364,16 @@ export default function CoursePage(): React.JSX.Element {
           >
             <strong>Monthly book dispatch</strong>
             <small>Open month, ship books, view unpaid candidates, and print addresses</small>
+            <span className="course-nav-card__arrow" aria-hidden="true">
+              →
+            </span>
+          </button>
+          <button
+            className="course-nav-card course-nav-card--monthly"
+            onClick={() => setCourseBooks(true)}
+          >
+            <strong>Course books</strong>
+            <small>Edit shared book details, stock, and language-specific content</small>
             <span className="course-nav-card__arrow" aria-hidden="true">
               →
             </span>
