@@ -82,9 +82,15 @@
   min-width: 0;
   overflow: auto;
   display: grid;
-  grid-template-columns: minmax(300px, 1.2fr) minmax(260px, 1fr) minmax(220px, 0.8fr);
+  grid-template-columns: minmax(300px, 1.2fr) minmax(300px, 1fr);
   align-items: start;
   gap: 14px;
+}
+.course-books-language-column {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
 }
 .course-books-panel--tamil input:not([type='checkbox']):not([type='file']),
 .course-books-panel--tamil textarea {
@@ -160,23 +166,9 @@
   .course-books-editors {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .course-books-panel--covers {
-    grid-column: 1 / -1;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .course-books-panel--covers h2 {
-    grid-column: 1 / -1;
-  }
 }
 @media (max-width: 1050px) {
   .course-books-editors {
     grid-template-columns: 1fr;
-  }
-  .course-books-panel--covers {
-    grid-column: auto;
-    grid-template-columns: 1fr;
-  }
-  .course-books-panel--covers h2 {
-    grid-column: auto;
   }
 }

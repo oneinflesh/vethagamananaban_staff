@@ -517,67 +517,69 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
                   Save shared details
                 </Button>
               </section>
-              <section
-                className={`course-books-panel${tamilLanguage ? ' course-books-panel--tamil' : ''}`}
-              >
-                <h2>Selected language: {selectedLanguage?.name}</h2>
-                <label>
-                  Book title
-                  <Input value={title} onChange={(event) => setTitle(event.target.value)} />
-                </label>
-                <label>
-                  Description
-                  <textarea
-                    value={description}
-                    onChange={(event) => setDescription(event.target.value)}
-                    rows={4}
-                  />
-                </label>
-                <Button disabled={busy} onClick={() => void saveLanguage()}>
-                  Save language details
-                </Button>
-              </section>
-              <section className="course-books-panel course-books-panel--covers">
-                <h2>Covers</h2>
-                <div className="course-books-cover">
-                  {sharedCoverPreview && <img src={sharedCoverPreview} alt="Common book cover" />}
-                  <label>
-                    Common English cover
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={(event) => void selectCover(event, 'shared')}
-                    />
-                    {sharedCover?.name && <span>{sharedCover.name}</span>}
-                  </label>
-                </div>
-                <Button
-                  variant="outline"
-                  disabled={busy || !sharedCover}
-                  onClick={() => void saveShared()}
+              <div className="course-books-language-column">
+                <section
+                  className={`course-books-panel${tamilLanguage ? ' course-books-panel--tamil' : ''}`}
                 >
-                  Save common cover
-                </Button>
-                <div className="course-books-cover">
-                  {coverPreview && <img src={coverPreview} alt="Selected language cover" />}
+                  <h2>Selected language: {selectedLanguage?.name}</h2>
                   <label>
-                    Language cover
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={(event) => void selectCover(event, 'language')}
-                    />
-                    {cover?.name && <span>{cover.name}</span>}
+                    Book title
+                    <Input value={title} onChange={(event) => setTitle(event.target.value)} />
                   </label>
-                </div>
-                <Button
-                  variant="outline"
-                  disabled={busy || !cover}
-                  onClick={() => void saveLanguage()}
-                >
-                  Save language cover
-                </Button>
-              </section>
+                  <label>
+                    Description
+                    <textarea
+                      value={description}
+                      onChange={(event) => setDescription(event.target.value)}
+                      rows={4}
+                    />
+                  </label>
+                  <Button disabled={busy} onClick={() => void saveLanguage()}>
+                    Save language details
+                  </Button>
+                </section>
+                <section className="course-books-panel course-books-panel--covers">
+                  <h2>Covers</h2>
+                  <div className="course-books-cover">
+                    {sharedCoverPreview && <img src={sharedCoverPreview} alt="Common book cover" />}
+                    <label>
+                      Common English cover
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={(event) => void selectCover(event, 'shared')}
+                      />
+                      {sharedCover?.name && <span>{sharedCover.name}</span>}
+                    </label>
+                  </div>
+                  <Button
+                    variant="outline"
+                    disabled={busy || !sharedCover}
+                    onClick={() => void saveShared()}
+                  >
+                    Save common cover
+                  </Button>
+                  <div className="course-books-cover">
+                    {coverPreview && <img src={coverPreview} alt="Selected language cover" />}
+                    <label>
+                      Language cover
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={(event) => void selectCover(event, 'language')}
+                      />
+                      {cover?.name && <span>{cover.name}</span>}
+                    </label>
+                  </div>
+                  <Button
+                    variant="outline"
+                    disabled={busy || !cover}
+                    onClick={() => void saveLanguage()}
+                  >
+                    Save language cover
+                  </Button>
+                </section>
+              </div>
             </div>
           ) : (
             <p className="course-error">This course month has no matching catalog book.</p>
