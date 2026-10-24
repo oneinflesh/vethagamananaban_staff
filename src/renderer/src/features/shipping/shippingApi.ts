@@ -8,6 +8,7 @@ export type ShipmentRow = {
   state: string
   book_names: string
   books: string[]
+  items: { name: string; quantity: number }[]
   status: string
   tracking_number: string
   shipped_at: string | null

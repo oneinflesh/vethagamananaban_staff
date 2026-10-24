@@ -45,6 +45,7 @@ export default function ShippingPage(): React.JSX.Element {
   const [search, setSearch] = useState('')
   const [menu, setMenu] = useState<{ x: number; y: number; row: ShipmentRow } | null>(null)
   const [editing, setEditing] = useState<ShipmentRow | null>(null)
+  const [showingItems, setShowingItems] = useState<ShipmentRow | null>(null)
   const [tracking, setTracking] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -117,6 +118,13 @@ export default function ShippingPage(): React.JSX.Element {
       y: Math.min(event.clientY, window.innerHeight - 140),
       row
     })
+  }
+
+  function openItems(event: MouseEvent<HTMLDivElement>): void {
+    if (!(event.target as HTMLElement).closest('[data-shipping-items]')) return
+    const rowId = (event.target as HTMLElement).closest('tr')?.id
+    const row = rows.find((item) => item.key === rowId)
+    if (row) setShowingItems(row)
   }
 
   async function reload(): Promise<void> {
@@ -253,7 +261,35 @@ export default function ShippingPage(): React.JSX.Element {
         </div>
       </div>
       {error && <p className="shipping-error">{error}</p>}
-      <ShippingTable rows={visibleRows} table={table} onContextMenu={openMenu} />
+      <ShippingTable
+        rows={visibleRows}
+        table={table}
+        onContextMenu={openMenu}
+        onItemsClick={openItems}
+      />
+      {showingItems && (
+        <div className="shipping-dialog-backdrop" onClick={() => setShowingItems(null)}>
+          <div className="shipping-dialog" onClick={(event) => event.stopPropagation()}>
+            <h2>Items sent</h2>
+            <p>
+              {showingItems.reference} · {showingItems.recipient}
+            </p>
+            <ol className="shipping-items-list">
+              {showingItems.items.map((item, index) => (
+                <li key={`${item.name}-${index}`}>
+                  <span>{item.name}</span>
+                  <strong>× {item.quantity}</strong>
+                </li>
+              ))}
+            </ol>
+            <div className="shipping-dialog-actions">
+              <Button type="button" onClick={() => setShowingItems(null)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       {menu && (
         <div
           className="shipping-context-menu"

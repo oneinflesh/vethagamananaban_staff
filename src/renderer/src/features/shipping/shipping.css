@@ -88,6 +88,16 @@
 .shipping-table-wrap table.dataTable tbody td {
   border-bottom: 1px solid #f0e8df;
 }
+.shipping-items-button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #ad4a08;
+  font: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+  cursor: pointer;
+}
 .shipping-table-wrap table.dataTable tbody tr.shipping-row--store > * {
   background: #e5f6e8 !important;
 }
@@ -154,6 +164,19 @@
 .shipping-dialog p {
   margin: 0;
   color: #755d4e;
+}
+.shipping-items-list {
+  margin: 0;
+  padding-left: 24px;
+  max-height: min(50vh, 360px);
+  overflow-y: auto;
+}
+.shipping-items-list li {
+  padding: 7px 0;
+}
+.shipping-items-list li strong {
+  float: right;
+  margin-left: 16px;
 }
 .shipping-dialog-actions {
   display: flex;

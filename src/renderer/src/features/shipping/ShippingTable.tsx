@@ -15,16 +15,19 @@ function displayDate(value: string | null): string {
 export default function ShippingTable({
   rows,
   table,
-  onContextMenu
+  onContextMenu,
+  onItemsClick
 }: {
   rows: ShipmentRow[]
   table: RefObject<DataTableRef | null>
   onContextMenu: (event: MouseEvent<HTMLDivElement>) => void
+  onItemsClick: (event: MouseEvent<HTMLDivElement>) => void
 }): React.JSX.Element {
   return (
     <div
       className="shipping-table-wrap"
       onContextMenu={onContextMenu}
+      onClick={onItemsClick}
       onPointerDown={resizeColumns}
     >
       <DataTable
@@ -55,7 +58,14 @@ export default function ShippingTable({
         <Column title="Phone" data="phone" />
         <Column title="District" data="district" />
         <Column title="State" data="state" />
-        <Column title="Items sent" data="book_names" />
+        <Column title="Items sent" data="items">
+          {(_value, type, row: ShipmentRow) => {
+            const count = row.items.reduce((total, item) => total + item.quantity, 0)
+            return type === 'display'
+              ? `<button type="button" class="shipping-items-button" data-shipping-items>${count} ${count === 1 ? 'item' : 'items'}</button>`
+              : count
+          }}
+        </Column>
         <Column title="Status" data="status">
           {(_value, _type, row: ShipmentRow) => row.status.replaceAll('_', ' ')}
         </Column>

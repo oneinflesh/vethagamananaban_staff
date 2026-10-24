@@ -37,6 +37,7 @@ type StoreOrder = {
   state: string
   book_names: string
   book_titles: string[]
+  book_items?: { name: string; quantity: number }[]
   status: string
   tracking_number: string
   shipped_at: string | null
@@ -52,6 +53,7 @@ export type ShipmentRow = {
   state: string
   book_names: string
   books: string[]
+  items: { name: string; quantity: number }[]
   status: string
   tracking_number: string
   shipped_at: string | null
@@ -104,6 +106,7 @@ export async function getShipments(country: string): Promise<ShipmentRow[]> {
         state: allocation.delivery_address?.state || allocation.student_state,
         book_names: '',
         books: [],
+        items: [],
         status: allocation.status,
         tracking_number: tracking,
         shipped_at: allocation.dispatched_at,
@@ -120,6 +123,7 @@ export async function getShipments(country: string): Promise<ShipmentRow[]> {
       .filter(Boolean)
       .join(', ')
     parcel.books.push(allocation.book_name || allocation.exam_title)
+    parcel.items.push({ name: allocation.book_name || allocation.exam_title, quantity: 1 })
     parcel.allocation_keys.push(allocation.allocation_key)
     if (allocation.status === 'SHIPPED') {
       parcel.can_mark_received = true
@@ -158,6 +162,7 @@ export async function getShipments(country: string): Promise<ShipmentRow[]> {
         state: candidate.postal_delivery?.state || candidate.state,
         book_names: '',
         books: [],
+        items: [],
         status: 'SHIPPED',
         tracking_number: tracking,
         shipped_at: candidate.id_card_dispatched_at,
@@ -172,6 +177,7 @@ export async function getShipments(country: string): Promise<ShipmentRow[]> {
     }
     parcel.book_names = ['ID card', parcel.book_names].filter(Boolean).join(', ')
     parcel.books.unshift('ID card')
+    parcel.items.unshift({ name: 'ID card', quantity: 1 })
     parcel.includes_id_card = true
   }
   const store: ShipmentRow[] = storeOrders.map((order) => ({
@@ -184,6 +190,7 @@ export async function getShipments(country: string): Promise<ShipmentRow[]> {
     state: order.state,
     book_names: order.book_names,
     books: order.book_titles,
+    items: order.book_items ?? order.book_titles.map((name) => ({ name, quantity: 1 })),
     status: order.status,
     tracking_number: order.tracking_number,
     shipped_at: order.shipped_at,
