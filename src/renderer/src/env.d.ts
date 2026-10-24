@@ -32,6 +32,7 @@ interface Window {
       row: import('./features/shipping/shippingApi').ShipmentRow,
       trackingNumber: string
     ): Promise<unknown>
+    shippingOpenTracking(trackingNumber: string): Promise<void>
     shippingPaperReceived(
       row: import('./features/shipping/shippingApi').ShipmentRow
     ): Promise<unknown>

@@ -269,6 +269,21 @@ export default function ShippingPage(): React.JSX.Element {
           >
             Edit tracking ID
           </button>
+          {menu.row.tracking_number.trim() && (
+            <button
+              onClick={() => {
+                const trackingNumber = menu.row.tracking_number
+                setMenu(null)
+                void window.office
+                  .shippingOpenTracking(trackingNumber)
+                  .catch((cause) =>
+                    notify.error(cause instanceof Error ? cause.message : 'Could not open tracking')
+                  )
+              }}
+            >
+              View on courier website
+            </button>
+          )}
           {menu.row.can_mark_received ? (
             <button onClick={() => void receivePaper(menu.row)}>Mark course book received</button>
           ) : (

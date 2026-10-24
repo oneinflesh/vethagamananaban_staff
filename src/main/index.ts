@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import { login, logout, restoreSession } from './features/auth/auth'
@@ -111,6 +111,13 @@ app.whenReady().then(() => {
   ipcMain.handle('shipping:tracking', (_event, row, trackingNumber) =>
     updateShipmentTracking(row, trackingNumber)
   )
+  ipcMain.handle('shipping:open-tracking', (_event, trackingNumber: string) => {
+    const number = trackingNumber?.trim()
+    if (!number || number.length > 100) throw new Error('A valid tracking ID is required')
+    return shell.openExternal(
+      `https://trackcourier.io/track-and-trace/professional-courier/${encodeURIComponent(number)}`
+    )
+  })
   ipcMain.handle('shipping:paper-received', (_event, row) => markCoursePaperReceived(row))
   ipcMain.handle('course:all-candidates', (_event, country, mode, status, pending) =>
     getAllCandidates(country, mode, status, pending)
