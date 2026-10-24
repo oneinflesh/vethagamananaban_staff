@@ -16,6 +16,10 @@ const api = {
     ipcRenderer.invoke('course:candidates', country, page, mode, status, search),
   courseCandidateCounts: (country: string) =>
     ipcRenderer.invoke('course:candidate-counts', country),
+  shippingList: (country: string) => ipcRenderer.invoke('shipping:list', country),
+  shippingTracking: (row: unknown, trackingNumber: string) =>
+    ipcRenderer.invoke('shipping:tracking', row, trackingNumber),
+  shippingPaperReceived: (row: unknown) => ipcRenderer.invoke('shipping:paper-received', row),
   courseAllCandidates: (country: string, mode: string, status: string, pending: boolean) =>
     ipcRenderer.invoke('course:all-candidates', country, mode, status, pending),
   courseCoordinators: (country: string) => ipcRenderer.invoke('course:coordinators', country),

@@ -27,6 +27,14 @@ interface Window {
     courseCandidateCounts(
       country: string
     ): Promise<import('./features/course/courseApi').CandidateCounts>
+    shippingList(country: string): Promise<import('./features/shipping/shippingApi').ShipmentRow[]>
+    shippingTracking(
+      row: import('./features/shipping/shippingApi').ShipmentRow,
+      trackingNumber: string
+    ): Promise<unknown>
+    shippingPaperReceived(
+      row: import('./features/shipping/shippingApi').ShipmentRow
+    ): Promise<unknown>
     courseAllCandidates(
       country: string,
       mode: string,

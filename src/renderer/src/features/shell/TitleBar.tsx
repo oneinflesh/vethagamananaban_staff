@@ -3,7 +3,7 @@ import { Minus, Square, X } from 'lucide-react'
 import { useState } from 'react'
 import { useNotifications } from '../notifications/Notifications'
 import { countries, useCountry } from '../country/CountryContext'
-export type Page = 'dashboard' | 'store' | 'course'
+export type Page = 'dashboard' | 'store' | 'course' | 'shipping'
 export default function TitleBar({
   page,
   onPage,
@@ -35,7 +35,7 @@ export default function TitleBar({
     <header className="titlebar">
       <nav className="title-menu">
         {showNavigation &&
-          (['dashboard', 'store', 'course'] as const).map((item) => (
+          (['dashboard', 'store', 'course', 'shipping'] as const).map((item) => (
             <Button
               key={item}
               variant={page === item ? 'secondary' : 'ghost'}

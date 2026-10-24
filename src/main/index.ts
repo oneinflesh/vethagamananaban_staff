@@ -4,6 +4,11 @@ import { is } from '@electron-toolkit/utils'
 import { login, logout, restoreSession } from './features/auth/auth'
 import { getEnrolmentSummary } from './features/dashboard/dashboard'
 import {
+  getShipments,
+  updateShipmentTracking,
+  markCoursePaperReceived
+} from './features/shipping/shipping'
+import {
   getCandidates,
   getAllCandidates,
   getCandidateCounts,
@@ -102,6 +107,11 @@ app.whenReady().then(() => {
     getCandidates(country, page, mode, status, search)
   )
   ipcMain.handle('course:candidate-counts', (_event, country) => getCandidateCounts(country))
+  ipcMain.handle('shipping:list', (_event, country) => getShipments(country))
+  ipcMain.handle('shipping:tracking', (_event, row, trackingNumber) =>
+    updateShipmentTracking(row, trackingNumber)
+  )
+  ipcMain.handle('shipping:paper-received', (_event, row) => markCoursePaperReceived(row))
   ipcMain.handle('course:all-candidates', (_event, country, mode, status, pending) =>
     getAllCandidates(country, mode, status, pending)
   )

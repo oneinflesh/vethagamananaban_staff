@@ -4,6 +4,7 @@ import { logout, restoreSession, type AuthSession } from './features/auth/auth'
 import CoursePage from './features/course/CoursePage'
 import DashboardPage from './features/dashboard/DashboardPage'
 import StorePage from './features/store/StorePage'
+import ShippingPage from './features/shipping/ShippingPage'
 import StatusBar from './features/shell/StatusBar'
 import TitleBar, { type Page } from './features/shell/TitleBar'
 import SplashScreen from './features/shell/SplashScreen'
@@ -64,6 +65,8 @@ export default function App(): React.JSX.Element {
               <DashboardPage />
             ) : page === 'store' ? (
               <StorePage />
+            ) : page === 'shipping' ? (
+              <ShippingPage />
             ) : (
               <CoursePage />
             )
