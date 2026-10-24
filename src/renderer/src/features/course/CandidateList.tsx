@@ -10,6 +10,7 @@ import { resizeColumns } from './resizeColumns'
 import CandidateActionPanel, { type CandidateAction } from './CandidateActionPanel'
 import type { CourseSection } from './CoursePage'
 import { exportAddressCsv, printAddressLabels, type PaperSize } from './addressLabels'
+import { splitOfflineLabels } from './offlineLabelGroups'
 import { fieldOptions, statusLabel } from './tableFilters'
 
 const names: Record<CourseSection, string> = {
@@ -204,6 +205,7 @@ export default function CandidateList({
   const printable = newOffline
     ? (data ?? []).filter((candidate) => selected.has(candidate.enrollment_key))
     : filteredData
+  const offlineLabels = addressActions ? splitOfflineLabels(printable) : null
   const searchControl = (
     <label className="course-list-search">
       <span>Search</span>
@@ -249,10 +251,35 @@ export default function CandidateList({
           </Button>
           <Button
             variant="outline"
-            disabled={!printable.length}
-            onClick={() => printAddressLabels(printable, newOffline, paper)}
+            disabled={!offlineLabels?.individual.length}
+            onClick={() =>
+              printAddressLabels(
+                offlineLabels?.individual ?? [],
+                newOffline,
+                paper,
+                newOffline
+                  ? 'Individual new registration address labels'
+                  : 'Individual offline candidate address labels'
+              )
+            }
           >
-            Print labels
+            PDF In
+          </Button>
+          <Button
+            variant="outline"
+            disabled={!offlineLabels?.underCoordinator.length}
+            onClick={() =>
+              printAddressLabels(
+                offlineLabels?.underCoordinator ?? [],
+                newOffline,
+                paper,
+                newOffline
+                  ? 'Coordinator group new registration address labels'
+                  : 'Coordinator group offline candidate address labels'
+              )
+            }
+          >
+            PDF Co
           </Button>
         </>
       )}
@@ -330,16 +357,29 @@ export default function CandidateList({
     <section className="page course-page" onClick={() => menu && setMenu(null)}>
       <div
         className={
-          titleActions ? 'course-toolbar course-toolbar--candidate-actions' : 'course-toolbar'
+          titleActions
+            ? `course-toolbar course-toolbar--candidate-actions${section === 'offline' ? ' course-toolbar--offline' : ''}`
+            : 'course-toolbar'
         }
       >
         <Button variant="outline" onClick={onBack}>
           ← Course
         </Button>
-        <h1>{names[section]}</h1>
-        <span>
-          {country} · {data?.length ?? 0} candidates
-        </span>
+        {section === 'offline' ? (
+          <div className="course-candidate-title">
+            <h1>{names[section]}</h1>
+            <span>
+              {country} · {data?.length ?? 0} candidates
+            </span>
+          </div>
+        ) : (
+          <>
+            <h1>{names[section]}</h1>
+            <span>
+              {country} · {data?.length ?? 0} candidates
+            </span>
+          </>
+        )}
         {section === 'all' && searchControl}
         {titleActions && actionControls}
       </div>

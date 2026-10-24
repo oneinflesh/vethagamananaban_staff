@@ -72,11 +72,12 @@ function printSheets(
 export function printAddressLabels(
   candidates: Candidate[],
   newRegistrations: boolean,
-  paper: PaperSize = newRegistrations ? 'A4' : 'A3'
+  paper: PaperSize = newRegistrations ? 'A4' : 'A3',
+  title = newRegistrations ? 'New registration address labels' : 'Offline candidate address labels'
 ): void {
   printSheets(
     candidates.map(labelLines),
-    newRegistrations ? 'New registration address labels' : 'Offline candidate address labels',
+    title,
     paper,
     paper === 'A3' ? 5 : 3,
     paper === 'A3' ? 8 : 7,

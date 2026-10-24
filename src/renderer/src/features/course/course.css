@@ -151,6 +151,20 @@
 .course-toolbar--candidate-actions h1 {
   font-size: 20px;
 }
+.course-toolbar--offline {
+  flex-wrap: nowrap;
+}
+.course-candidate-title {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+  white-space: nowrap;
+}
+.course-candidate-title > span {
+  color: #876d5d;
+  font-size: 13px;
+}
 .course-title-actions {
   display: flex;
   align-items: center;
