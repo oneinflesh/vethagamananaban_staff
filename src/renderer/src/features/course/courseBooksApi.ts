@@ -1,12 +1,23 @@
 export type CourseBook = {
   vn_code: string
+  name: string
+  description: string
+  category: string
   isbn: string
+  price: string
+  discount_price: string | null
   course_price_tn: string | null
   course_price_other: string | null
+  primary_image: string
   weight_grams: number
   stock: number
   reserved_stock: number
   available_stock: number
+  backordered_stock: number
+  low_stock_threshold: number
+  is_trending: boolean
+  is_new_arrival: boolean
+  is_active: boolean
 }
 
 export type CourseBookExam = {
@@ -43,6 +54,11 @@ export const getCourseBooks = (): Promise<CourseBooksData> => window.office.cour
 
 export const updateCourseBook = (code: string, changes: unknown): Promise<unknown> =>
   window.office.courseBookUpdate(code, changes)
+
+export const uploadCourseBookCover = (
+  code: string,
+  cover: { bytes: Uint8Array; name: string }
+): Promise<unknown> => window.office.courseBookCover(code, cover)
 
 export const adjustCourseBookStock = (
   code: string,

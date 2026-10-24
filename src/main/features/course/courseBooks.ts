@@ -34,6 +34,24 @@ export function updateCourseBook(code: string, changes: unknown): Promise<unknow
   })
 }
 
+export function uploadCourseBookCover(
+  code: string,
+  cover: { bytes: Uint8Array; name: string }
+): Promise<unknown> {
+  const lower = cover.name.toLowerCase()
+  const mimeType = lower.endsWith('.png')
+    ? 'image/png'
+    : lower.endsWith('.webp')
+      ? 'image/webp'
+      : 'image/jpeg'
+  const form = new FormData()
+  form.append('image', new Blob([new Uint8Array(cover.bytes)], { type: mimeType }), cover.name)
+  return authorizedRequest(`staff/books/${encodeURIComponent(code)}/cover/`, {
+    method: 'POST',
+    body: form
+  })
+}
+
 export function adjustCourseBookStock(code: string, stock: number, note: string): Promise<unknown> {
   return authorizedRequest(`staff/books/${encodeURIComponent(code)}/adjust-stock/`, {
     method: 'POST',

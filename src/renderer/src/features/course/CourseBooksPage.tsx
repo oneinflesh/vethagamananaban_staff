@@ -9,17 +9,26 @@ import {
   getCourseBooks,
   saveCourseBookTranslation,
   updateCourseBook,
+  uploadCourseBookCover,
   type CourseBooksData
 } from './courseBooksApi'
 import './courseBooks.css'
 
 type SharedDraft = {
+  name: string
+  description: string
   isbn: string
+  storePrice: string
+  discountPrice: string
   priceTn: string
   priceOther: string
   weight: string
   stock: string
   stockReason: string
+  lowStockThreshold: string
+  isTrending: boolean
+  isNewArrival: boolean
+  isActive: boolean
 }
 
 function coverUrl(path: string): string {
@@ -41,6 +50,8 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
   const [description, setDescription] = useState('')
   const [cover, setCover] = useState<{ bytes: Uint8Array; name: string } | null>(null)
   const [coverPreview, setCoverPreview] = useState('')
+  const [sharedCover, setSharedCover] = useState<{ bytes: Uint8Array; name: string } | null>(null)
+  const [sharedCoverPreview, setSharedCoverPreview] = useState('')
   const [busy, setBusy] = useState(false)
   const [retry, setRetry] = useState(0)
 
@@ -53,12 +64,20 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
     setShared(
       selectedBook
         ? {
+            name: selectedBook.name ?? '',
+            description: selectedBook.description ?? '',
             isbn: selectedBook.isbn ?? '',
+            storePrice: selectedBook.price ?? '',
+            discountPrice: selectedBook.discount_price ?? '',
             priceTn: selectedBook.course_price_tn ?? '',
             priceOther: selectedBook.course_price_other ?? '',
             weight: String(selectedBook.weight_grams),
             stock: String(selectedBook.stock),
-            stockReason: ''
+            stockReason: '',
+            lowStockThreshold: String(selectedBook.low_stock_threshold),
+            isTrending: selectedBook.is_trending,
+            isNewArrival: selectedBook.is_new_arrival,
+            isActive: selectedBook.is_active
           }
         : null
     )
@@ -66,6 +85,8 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
     setDescription(selectedTranslation?.description ?? '')
     setCover(null)
     setCoverPreview(coverUrl(selectedTranslation?.cover_image ?? ''))
+    setSharedCover(null)
+    setSharedCoverPreview(coverUrl(selectedBook?.primary_image ?? ''))
   }
 
   async function reload(): Promise<void> {
@@ -120,7 +141,10 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
     (item) => item.exam === examKey && item.language === languageKey
   )
 
-  async function selectCover(event: ChangeEvent<HTMLInputElement>): Promise<void> {
+  async function selectCover(
+    event: ChangeEvent<HTMLInputElement>,
+    kind: 'shared' | 'language'
+  ): Promise<void> {
     const file = event.target.files?.[0]
     if (!file) return
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
@@ -128,8 +152,14 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
       event.target.value = ''
       return
     }
-    setCover({ bytes: new Uint8Array(await file.arrayBuffer()), name: file.name })
-    setCoverPreview(URL.createObjectURL(file))
+    const selected = { bytes: new Uint8Array(await file.arrayBuffer()), name: file.name }
+    if (kind === 'shared') {
+      setSharedCover(selected)
+      setSharedCoverPreview(URL.createObjectURL(file))
+    } else {
+      setCover(selected)
+      setCoverPreview(URL.createObjectURL(file))
+    }
     event.target.value = ''
   }
 
@@ -139,15 +169,26 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
     const stock = Number(shared.stock)
     const priceTn = shared.priceTn.trim() === '' ? null : Number(shared.priceTn)
     const priceOther = shared.priceOther.trim() === '' ? null : Number(shared.priceOther)
+    const storePrice = Number(shared.storePrice)
+    const discountPrice = shared.discountPrice.trim() === '' ? null : Number(shared.discountPrice)
+    const lowStockThreshold = Number(shared.lowStockThreshold)
     if (
+      !shared.name.trim() ||
       !Number.isInteger(weight) ||
       weight < 1 ||
       !Number.isInteger(stock) ||
       stock < 0 ||
+      !Number.isInteger(lowStockThreshold) ||
+      lowStockThreshold < 1 ||
+      lowStockThreshold > 100 ||
+      !Number.isFinite(storePrice) ||
+      storePrice < 0 ||
+      (discountPrice !== null &&
+        (!Number.isFinite(discountPrice) || discountPrice < 0 || discountPrice >= storePrice)) ||
       (priceTn !== null && (!Number.isFinite(priceTn) || priceTn < 0)) ||
       (priceOther !== null && (!Number.isFinite(priceOther) || priceOther < 0))
     ) {
-      notify.error('Enter valid prices, weight, and stock')
+      notify.error('Enter a common English name and valid prices, weight, and stock')
       return
     }
     if (stock !== book.stock && !shared.stockReason.trim()) {
@@ -157,14 +198,23 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
     setBusy(true)
     try {
       await updateCourseBook(book.vn_code, {
+        name: shared.name.trim(),
+        description: shared.description.trim(),
         isbn: shared.isbn.trim(),
+        price: storePrice,
+        discount_price: discountPrice,
         course_price_tn: priceTn,
         course_price_other: priceOther,
-        weight_grams: weight
+        weight_grams: weight,
+        low_stock_threshold: lowStockThreshold,
+        is_trending: shared.isTrending,
+        is_new_arrival: shared.isNewArrival,
+        is_active: shared.isActive
       })
       if (stock !== book.stock) {
         await adjustCourseBookStock(book.vn_code, stock, shared.stockReason.trim())
       }
+      if (sharedCover) await uploadCourseBookCover(book.vn_code, sharedCover)
       await reload()
       notify.success('Shared book details saved')
     } catch (cause) {
@@ -256,7 +306,10 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
                   }}
                 >
                   <span>{String(item.sequence).padStart(2, '0')}</span>
-                  <strong>{translated?.title || item.catalog_book_name || item.title}</strong>
+                  <strong>
+                    {item.catalog_book_name || item.title}
+                    {translated?.title && <small>{translated.title}</small>}
+                  </strong>
                 </button>
               )
             })}
@@ -264,12 +317,40 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
           {exam && book ? (
             <div className="course-books-editors">
               <section className="course-books-panel">
-                <h2>Shared book details</h2>
-                <p>These values and stock are shared by every language.</p>
+                <h2>Common book details</h2>
+                <p>
+                  The English name, catalog details, cover, and stock stay the same for every
+                  language.
+                </p>
                 <div className="course-books-fields">
                   <label>
                     VN code
                     <Input value={book.vn_code} readOnly />
+                  </label>
+                  <label>
+                    Category
+                    <Input value={book.category} readOnly />
+                  </label>
+                  <label className="course-books-field-wide">
+                    Common book name (English)
+                    <Input
+                      value={shared?.name ?? ''}
+                      onChange={(event) =>
+                        setShared((current) => current && { ...current, name: event.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="course-books-field-wide">
+                    Common description (English)
+                    <textarea
+                      value={shared?.description ?? ''}
+                      onChange={(event) =>
+                        setShared(
+                          (current) => current && { ...current, description: event.target.value }
+                        )
+                      }
+                      rows={3}
+                    />
                   </label>
                   <label>
                     ISBN
@@ -277,6 +358,34 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
                       value={shared?.isbn ?? ''}
                       onChange={(event) =>
                         setShared((current) => current && { ...current, isbn: event.target.value })
+                      }
+                    />
+                  </label>
+                  <label>
+                    Book Store price (₹)
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={shared?.storePrice ?? ''}
+                      onChange={(event) =>
+                        setShared(
+                          (current) => current && { ...current, storePrice: event.target.value }
+                        )
+                      }
+                    />
+                  </label>
+                  <label>
+                    Book Store discount price (₹)
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={shared?.discountPrice ?? ''}
+                      onChange={(event) =>
+                        setShared(
+                          (current) => current && { ...current, discountPrice: event.target.value }
+                        )
                       }
                     />
                   </label>
@@ -334,10 +443,79 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
                       }
                     />
                   </label>
+                  <label>
+                    Low-stock alert threshold
+                    <Input
+                      type="number"
+                      min="1"
+                      max="100"
+                      step="1"
+                      value={shared?.lowStockThreshold ?? ''}
+                      onChange={(event) =>
+                        setShared(
+                          (current) =>
+                            current && { ...current, lowStockThreshold: event.target.value }
+                        )
+                      }
+                    />
+                  </label>
                 </div>
                 <p>
-                  Reserved: {book.reserved_stock} · Available: {book.available_stock}
+                  Reserved: {book.reserved_stock} · Available: {book.available_stock} · Backordered:{' '}
+                  {book.backordered_stock}
                 </p>
+                <div className="course-books-options">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={shared?.isActive ?? false}
+                      onChange={(event) =>
+                        setShared(
+                          (current) => current && { ...current, isActive: event.target.checked }
+                        )
+                      }
+                    />{' '}
+                    Active in catalog
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={shared?.isTrending ?? false}
+                      onChange={(event) =>
+                        setShared(
+                          (current) => current && { ...current, isTrending: event.target.checked }
+                        )
+                      }
+                    />{' '}
+                    Trending in Book Store
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={shared?.isNewArrival ?? false}
+                      onChange={(event) =>
+                        setShared(
+                          (current) => current && { ...current, isNewArrival: event.target.checked }
+                        )
+                      }
+                    />{' '}
+                    New arrival in Book Store
+                  </label>
+                </div>
+                <div className="course-books-cover">
+                  {sharedCoverPreview && (
+                    <img src={sharedCoverPreview} alt="Common English book cover" />
+                  )}
+                  <label>
+                    Common book cover
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(event) => void selectCover(event, 'shared')}
+                    />
+                    {sharedCover?.name && <span>{sharedCover.name}</span>}
+                  </label>
+                </div>
                 {shared && Number(shared.stock) !== book.stock && (
                   <label className="course-books-stock-reason">
                     Stock adjustment reason
@@ -356,8 +534,14 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
                 </Button>
               </section>
               <section className="course-books-panel">
-                <h2>Selected language</h2>
-                <p>Title, description, and cover apply only to the selected language.</p>
+                <h2>
+                  Selected language:{' '}
+                  {data.languages.find((item) => item.language_key === languageKey)?.name}
+                </h2>
+                <p>
+                  Changing the language above loads its saved book name, description, and cover
+                  automatically. It does not change the common English details.
+                </p>
                 <label>
                   Book title
                   <Input value={title} onChange={(event) => setTitle(event.target.value)} />
@@ -377,7 +561,7 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
-                      onChange={(event) => void selectCover(event)}
+                      onChange={(event) => void selectCover(event, 'language')}
                     />
                     {cover?.name && <span>{cover.name}</span>}
                   </label>

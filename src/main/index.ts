@@ -6,6 +6,7 @@ import { getEnrolmentSummary } from './features/dashboard/dashboard'
 import {
   getCourseBooks,
   updateCourseBook,
+  uploadCourseBookCover,
   adjustCourseBookStock,
   saveCourseBookTranslation
 } from './features/course/courseBooks'
@@ -115,6 +116,7 @@ app.whenReady().then(() => {
   ipcMain.handle('course:candidate-counts', (_event, country) => getCandidateCounts(country))
   ipcMain.handle('course:books', () => getCourseBooks())
   ipcMain.handle('course:book-update', (_event, code, changes) => updateCourseBook(code, changes))
+  ipcMain.handle('course:book-cover', (_event, code, cover) => uploadCourseBookCover(code, cover))
   ipcMain.handle('course:book-stock', (_event, code, stock, note) =>
     adjustCourseBookStock(code, stock, note)
   )

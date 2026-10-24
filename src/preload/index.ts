@@ -19,6 +19,8 @@ const api = {
   courseBooks: () => ipcRenderer.invoke('course:books'),
   courseBookUpdate: (code: string, changes: unknown) =>
     ipcRenderer.invoke('course:book-update', code, changes),
+  courseBookCover: (code: string, cover: { bytes: Uint8Array; name: string }) =>
+    ipcRenderer.invoke('course:book-cover', code, cover),
   courseBookStock: (code: string, stock: number, note: string) =>
     ipcRenderer.invoke('course:book-stock', code, stock, note),
   courseBookTranslation: (

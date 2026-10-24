@@ -29,6 +29,7 @@ interface Window {
     ): Promise<import('./features/course/courseApi').CandidateCounts>
     courseBooks(): Promise<import('./features/course/courseBooksApi').CourseBooksData>
     courseBookUpdate(code: string, changes: unknown): Promise<unknown>
+    courseBookCover(code: string, cover: { bytes: Uint8Array; name: string }): Promise<unknown>
     courseBookStock(code: string, stock: number, note: string): Promise<unknown>
     courseBookTranslation(
       id: number | null,
