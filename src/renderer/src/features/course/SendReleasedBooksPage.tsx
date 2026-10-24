@@ -48,14 +48,20 @@ export default function SendReleasedBooksPage({
   }, [candidate.enrollment_key, reload])
 
   const selectedBooks = options?.books.filter((book) => selected.has(book.exam_key)) ?? []
-  const newBookCount = selectedBooks.filter((book) => !book.preassigned).length
+  const newBooks = selectedBooks.filter((book) => !book.preassigned)
+  const legacyBooks = newBooks.filter((book) => !options?.funded_book_prices?.[book.exam_key])
   const selectedCost =
     selectedBooks.reduce((sum, book) => sum + Number(book.pending_price ?? 0), 0) +
+    newBooks.reduce(
+      (sum, book) => sum + Number(options?.funded_book_prices?.[book.exam_key] ?? 0),
+      0
+    ) +
     (options?.funded_prices ?? [])
-      .slice(0, newBookCount)
+      .slice(0, legacyBooks.length)
       .reduce((sum, price) => sum + Number(price), 0)
   const remainingBalance = Number(balance) - selectedCost
-  const canFund = newBookCount <= (options?.funded_prices.length ?? 0) && remainingBalance >= 0
+  const canFund =
+    legacyBooks.length <= (options?.funded_prices.length ?? 0) && remainingBalance >= 0
 
   async function ship(): Promise<void> {
     if (!selected.size || !tracking.trim() || !canFund || busy) return
@@ -121,7 +127,7 @@ export default function SendReleasedBooksPage({
       )}
       <div className="course-book-grid">
         {(options?.books ?? []).map((book) => {
-          const available = book.active && !book.assigned
+          const available = book.active && book.released && !book.assigned
           return (
             <label
               className={`course-book-option${available ? '' : ' course-book-option--disabled'}`}

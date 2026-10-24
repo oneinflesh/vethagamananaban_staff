@@ -29,7 +29,7 @@ type Form = {
   state: string
   postal_code: string
   payment_method: string
-  offline_months: number
+  exam_keys: string[]
 }
 const initial: Form = {
   full_name: '',
@@ -47,7 +47,7 @@ const initial: Form = {
   state: '',
   postal_code: '',
   payment_method: 'CASH',
-  offline_months: 1
+  exam_keys: []
 }
 const fields: { key: keyof Form; label: string; required?: boolean; type?: string }[] = [
   { key: 'full_name', label: 'Name', required: true },
@@ -110,12 +110,8 @@ export default function ManualRegistrationPage({
   async function submit(event: React.FormEvent): Promise<void> {
     event.preventDefault()
     if (!options) return
-    if (
-      !Number.isInteger(form.offline_months) ||
-      form.offline_months < 1 ||
-      form.offline_months > 50
-    ) {
-      setError('Choose a valid number of books to fund.')
+    if (!form.exam_keys.length) {
+      setError('Select released books to fund.')
       return
     }
     setSaving(true)
@@ -127,7 +123,7 @@ export default function ManualRegistrationPage({
         country,
         account_phone: form.phone,
         payment_note: 'Manual registration',
-        offline_months: form.offline_months,
+        exam_keys: form.exam_keys,
         address: [
           form.address_line1,
           form.address_line2,
@@ -148,9 +144,17 @@ export default function ManualRegistrationPage({
     }
   }
 
+  const deliveryState =
+    coordinators.find((item) => item.coordinator_key === form.coordinator_key)?.state || form.state
+  const priceState = deliveryState.replace(/\s/g, '').toLowerCase() === 'tamilnadu'
   const total = options
     ? Number(options.course.offline_registration_fee) +
-      Number(options.course.offline_month_fee) * form.offline_months
+      options.exams
+        .filter((exam) => form.exam_keys.includes(exam.exam_key))
+        .reduce(
+          (sum, exam) => sum + Number(priceState ? exam.course_price_tn : exam.course_price_other),
+          0
+        )
     : 0
   return (
     <section className="page course-page">
@@ -261,22 +265,31 @@ export default function ManualRegistrationPage({
             </div>
             <aside className="candidate-form">
               <h2>Fund books in rupees</h2>
-              <label>
-                Number of books to fund
-                <Input
-                  type="number"
-                  min={1}
-                  max={50}
-                  value={form.offline_months}
-                  onChange={(event) =>
-                    setForm({ ...form, offline_months: Number(event.target.value) })
-                  }
-                  required
-                />
-              </label>
+              <div className="course-choice-list">
+                {options.exams
+                  .filter((exam) => exam.is_active && exam.is_released)
+                  .map((exam) => (
+                    <label key={exam.exam_key} className="course-choice">
+                      <input
+                        type="checkbox"
+                        checked={form.exam_keys.includes(exam.exam_key)}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            exam_keys: event.target.checked
+                              ? [...current.exam_keys, exam.exam_key]
+                              : current.exam_keys.filter((key) => key !== exam.exam_key)
+                          }))
+                        }
+                      />
+                      {exam.sequence}. {exam.catalog_book_name} · ₹
+                      {priceState ? exam.course_price_tn : exam.course_price_other}
+                    </label>
+                  ))}
+              </div>
               <p>
-                Registration {options.course.offline_registration_fee} + {form.offline_months}{' '}
-                book(s) = {total}
+                Registration ₹{options.course.offline_registration_fee} + {form.exam_keys.length}{' '}
+                book(s) = ₹{total}
               </p>
               <Button type="submit" disabled={saving}>
                 {saving ? 'Registering…' : 'Register and record payment'}

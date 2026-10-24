@@ -31,7 +31,7 @@ export default function CandidateActionPanel({
   const [options, setOptions] = useState<RegistrationOptions | null>(null)
   const [summary, setSummary] = useState<CandidateSummary | null>(null)
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
-  const [months, setMonths] = useState(1)
+  const [paymentBooks, setPaymentBooks] = useState<Set<string>>(() => new Set())
   const [includeIdCard, setIncludeIdCard] = useState(false)
   const [parcelOperation, setParcelOperation] = useState<'send' | 'tracking' | 'undo'>('send')
   const [tracking, setTracking] = useState('')
@@ -96,10 +96,9 @@ export default function CandidateActionPanel({
               }
         )
       } else {
-        if (!Number.isInteger(months) || months < 1 || months > 50)
-          throw new Error('Choose a valid number of books to fund.')
+        if (!paymentBooks.size) throw new Error('Select released books to fund.')
         await candidateAction('manual-purchase', candidate.enrollment_key, {
-          months,
+          exam_keys: [...paymentBooks],
           payment_method: paymentMethod
         })
       }
@@ -120,6 +119,8 @@ export default function CandidateActionPanel({
     dropout: 'Dropout candidate',
     restore: 'Activate candidate'
   }[action]
+  const deliveryState = candidate.postal_delivery?.state || candidate.state
+  const tamilNaduDelivery = deliveryState.replace(/\s/g, '').toLowerCase() === 'tamilnadu'
   return (
     <div className="course-dialog-backdrop" onClick={onClose}>
       <section
@@ -238,21 +239,53 @@ export default function CandidateActionPanel({
         {action === 'payment' &&
           (options && summary ? (
             <>
+              <p>Wallet balance: ₹{summary.candidate.wallet_balance}</p>
+              <div className="course-choice-list">
+                {options.exams
+                  .filter(
+                    (exam) =>
+                      exam.is_active &&
+                      exam.is_released &&
+                      !summary.payments.some(
+                        (payment) =>
+                          ['CAPTURED', 'MANUAL'].includes(payment.status) &&
+                          payment.locked_book_prices?.[exam.exam_key]
+                      ) &&
+                      !summary.candidate.book_allocations.some(
+                        (allocation) => allocation.exam_number === exam.sequence
+                      )
+                  )
+                  .map((exam) => (
+                    <label className="course-choice" key={exam.exam_key}>
+                      <input
+                        type="checkbox"
+                        checked={paymentBooks.has(exam.exam_key)}
+                        onChange={(event) =>
+                          setPaymentBooks((current) => {
+                            const next = new Set(current)
+                            if (event.target.checked) next.add(exam.exam_key)
+                            else next.delete(exam.exam_key)
+                            return next
+                          })
+                        }
+                      />
+                      {exam.sequence}. {exam.catalog_book_name} · ₹
+                      {tamilNaduDelivery ? exam.course_price_tn : exam.course_price_other}
+                    </label>
+                  ))}
+              </div>
               <p>
-                Wallet balance: ₹{summary.candidate.wallet_balance} · Locked price for this payment:
-                ₹{options.course.offline_month_fee} per book
+                Amount to add: ₹
+                {options.exams
+                  .filter((exam) => paymentBooks.has(exam.exam_key))
+                  .reduce(
+                    (sum, exam) =>
+                      sum +
+                      Number(tamilNaduDelivery ? exam.course_price_tn : exam.course_price_other),
+                    0
+                  )
+                  .toFixed(2)}
               </p>
-              <label className="course-dialog__field">
-                Number of books to fund
-                <Input
-                  type="number"
-                  min={1}
-                  max={50}
-                  value={months}
-                  onChange={(event) => setMonths(Number(event.target.value))}
-                />
-              </label>
-              <p>Amount to add: ₹{Number(options.course.offline_month_fee) * months}</p>
               <label className="course-dialog__field">
                 Payment method
                 <select

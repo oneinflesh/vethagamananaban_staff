@@ -76,6 +76,9 @@ export type ExamInfo = {
   scheduled_month: string | null
   is_current: boolean
   is_active: boolean
+  is_released: boolean
+  course_price_tn: string
+  course_price_other: string
 }
 export type RegistrationOptions = {
   course: CourseInfo
@@ -116,6 +119,7 @@ export type OtherBookOption = {
 export type OtherBookOptions = {
   books: OtherBookOption[]
   funded_prices: string[]
+  funded_book_prices: Record<string, string>
 }
 export type Payment = {
   payment_key: string
@@ -128,6 +132,7 @@ export type Payment = {
   months: number
   wallet_topup: boolean
   locked_book_price: string
+  locked_book_prices: Record<string, string>
 }
 export type ExamResult = {
   exam_key: string
