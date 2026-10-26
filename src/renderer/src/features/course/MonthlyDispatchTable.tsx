@@ -1,8 +1,8 @@
-import { useEffect, useRef, type MouseEvent } from 'react'
+import { type MouseEvent, type RefObject } from 'react'
 import type { DataTableRef } from 'datatables.net-react'
 import { DataTable, Column } from './dataTable'
 import { resizeColumns } from './resizeColumns'
-import type { MonthlyAllocation, MonthlyStudent } from './courseApi'
+import type { MonthlyAllocation, MonthlyPage, MonthlyStudent } from './courseApi'
 
 export type DispatchRow = MonthlyAllocation & { kind: 'allocation' | 'funded' }
 export type DispatchView = 'dispatch' | 'previous'
@@ -14,28 +14,37 @@ function dateLabel(value: string | null): string {
 }
 
 export default function MonthlyDispatchTable({
-  rows,
-  unpaid,
+  loadPage,
+  table,
   view,
-  search,
   savingTrackingKey,
   onTrackingSave,
   onCandidate,
   onContextMenu
 }: {
-  rows: DispatchRow[]
-  unpaid: MonthlyStudent[]
+  loadPage: (page: number) => Promise<MonthlyPage>
+  table: RefObject<DataTableRef | null>
   view: DispatchView
-  search: string
   savingTrackingKey: string | null
   onTrackingSave: (row: DispatchRow, value: string) => void
   onCandidate: (key: string) => void
   onContextMenu: (event: MouseEvent<HTMLDivElement>) => void
 }): React.JSX.Element {
-  const table = useRef<DataTableRef>(null)
-  useEffect(() => {
-    table.current?.dt()?.search(search).draw()
-  }, [search, view])
+  const ajax = (
+    request: { start?: number; length?: number; draw?: number },
+    callback: (response: unknown) => void
+  ): void => {
+    void loadPage(Math.floor((request.start ?? 0) / (request.length || 20)) + 1)
+      .then((page) =>
+        callback({
+          draw: request.draw,
+          recordsTotal: page.count,
+          recordsFiltered: page.count,
+          data: page.results
+        })
+      )
+      .catch(() => callback({ draw: request.draw, recordsTotal: 0, recordsFiltered: 0, data: [] }))
+  }
 
   return (
     <div
@@ -47,10 +56,13 @@ export default function MonthlyDispatchTable({
         <DataTable
           key="dispatch"
           ref={table}
-          data={rows}
           className="display course-table"
           options={{
             pageLength: 20,
+            serverSide: true,
+            processing: true,
+            ajax,
+            ordering: false,
             lengthChange: false,
             searching: true,
             paging: true,
@@ -112,10 +124,13 @@ export default function MonthlyDispatchTable({
         <DataTable
           key={view}
           ref={table}
-          data={unpaid}
           className="display course-table"
           options={{
             pageLength: 20,
+            serverSide: true,
+            processing: true,
+            ajax,
+            ordering: false,
             lengthChange: false,
             searching: true,
             paging: true,

@@ -1,27 +1,20 @@
 import { authorizedGet, authorizedRequest } from '../auth/auth'
 
-async function readAll<T>(path: string): Promise<T[]> {
-  const rows: T[] = []
-  let page = 1
-  while (true) {
-    const response = await authorizedGet<{ count: number; results: T[] }>(
-      `${path}${path.includes('?') ? '&' : '?'}page=${page}`
-    )
-    rows.push(...response.results)
-    if (rows.length >= response.count || response.results.length === 0) return rows
-    page += 1
+export function getMonthlyPage(
+  examKey: string,
+  country: string,
+  page: number,
+  filters: {
+    view: string
+    search: string
+    status: string
+    state: string
+    district: string
   }
+): Promise<unknown> {
+  const params = new URLSearchParams({ country, page: String(page), page_size: '20', ...filters })
+  return authorizedGet(`staff/course-exams/${encodeURIComponent(examKey)}/dispatch-page/?${params}`)
 }
-
-export const getMonthlySummary = (examKey: string, country: string): Promise<unknown> =>
-  authorizedGet(
-    `staff/course-exams/${encodeURIComponent(examKey)}/dispatch-summary/?country=${encodeURIComponent(country)}`
-  )
-
-export const getMonthlyAllocations = (examKey: string, country: string): Promise<unknown[]> =>
-  readAll(
-    `staff/course-allocations/?exam=${encodeURIComponent(examKey)}&mode=OFFLINE&active=true&initial_dispatch=completed&country=${encodeURIComponent(country)}`
-  )
 
 export const openMonthlyDispatch = (examKey: string, country: string): Promise<unknown> =>
   authorizedRequest(

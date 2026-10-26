@@ -156,14 +156,12 @@ interface Window {
       bytes: Uint8Array,
       name: string
     ): Promise<import('./features/course/courseApi').Candidate>
-    courseMonthlySummary(
+    courseMonthlyPage(
       examKey: string,
-      country: string
-    ): Promise<import('./features/course/courseApi').MonthlySummary>
-    courseMonthlyAllocations(
-      examKey: string,
-      country: string
-    ): Promise<import('./features/course/courseApi').MonthlyAllocation[]>
+      country: string,
+      page: number,
+      filters: import('./features/course/courseApi').MonthlyFilters
+    ): Promise<import('./features/course/courseApi').MonthlyPage>
     courseMonthlyOpen(examKey: string, country: string): Promise<{ processing: number }>
     courseMonthlyShip(
       allocationKey: string,

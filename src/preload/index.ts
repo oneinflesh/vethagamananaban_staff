@@ -92,10 +92,8 @@ const api = {
     ipcRenderer.invoke('course:update-candidate', key, data),
   courseUploadPhoto: (key: string, bytes: Uint8Array, name: string) =>
     ipcRenderer.invoke('course:upload-photo', key, bytes, name),
-  courseMonthlySummary: (examKey: string, country: string) =>
-    ipcRenderer.invoke('course:monthly-summary', examKey, country),
-  courseMonthlyAllocations: (examKey: string, country: string) =>
-    ipcRenderer.invoke('course:monthly-allocations', examKey, country),
+  courseMonthlyPage: (examKey: string, country: string, page: number, filters: unknown) =>
+    ipcRenderer.invoke('course:monthly-page', examKey, country, page, filters),
   courseMonthlyOpen: (examKey: string, country: string) =>
     ipcRenderer.invoke('course:monthly-open', examKey, country),
   courseMonthlyShip: (allocationKey: string, addressKey: string, trackingNumber: string) =>

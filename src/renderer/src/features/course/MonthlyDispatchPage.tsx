@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, type MouseEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
+import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import FullScreenLoader from '../shell/FullScreenLoader'
@@ -8,15 +9,13 @@ import MonthlyDispatchTable, { type DispatchRow, type DispatchView } from './Mon
 import {
   candidateAction,
   getInitialDispatch,
-  getMonthlyAllocations,
-  getMonthlySummary,
+  getMonthlyPage,
   getRegistrationOptions,
   openMonthlyDispatch,
   saveMonthlyTracking,
   shipMonthlyAllocation,
   type ExamInfo,
-  type MonthlyAllocation,
-  type MonthlySummary,
+  type MonthlyPage,
   type MonthlyStudent,
   type RegistrationOptions
 } from './courseApi'
@@ -38,8 +37,14 @@ export default function MonthlyDispatchPage({
 }): React.JSX.Element {
   const [options, setOptions] = useState<RegistrationOptions | null>(null)
   const [examKey, setExamKey] = useState('')
-  const [summary, setSummary] = useState<MonthlySummary | null>(null)
-  const [allocations, setAllocations] = useState<MonthlyAllocation[]>([])
+  const [summary, setSummary] = useState<MonthlyPage['summary'] | null>(null)
+  const [rows, setRows] = useState<DispatchRow[]>([])
+  const [unpaid, setUnpaid] = useState<MonthlyStudent[]>([])
+  const [filterOptions, setFilterOptions] = useState<MonthlyPage['filters']>({
+    statuses: [],
+    states: [],
+    districts: []
+  })
   const [view, setView] = useState<DispatchView>('dispatch')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('PROCESSING')
@@ -58,6 +63,9 @@ export default function MonthlyDispatchPage({
   const [shipping, setShipping] = useState<DispatchRow | null>(null)
   const [tracking, setTracking] = useState('')
   const [savingTrackingKey, setSavingTrackingKey] = useState<string | null>(null)
+  const table = useRef<DataTableRef>(null)
+  const tableReady = useRef(false)
+  const requestSequence = useRef(0)
   const notify = useNotifications()
   const { loading, leaving, start, finish } = useSmoothLoading()
 
@@ -87,90 +95,57 @@ export default function MonthlyDispatchPage({
     }
   }, [finish])
 
-  useEffect(() => {
-    if (!examKey || !options) return
-    let active = true
-    Promise.all([getMonthlySummary(examKey, country), getMonthlyAllocations(examKey, country)])
-      .then(([nextSummary, nextAllocations]) => {
-        if (!active) return
-        setSummary(nextSummary)
-        setAllocations(nextAllocations)
+  const query = useRef({
+    examKey,
+    country,
+    view,
+    search,
+    statusFilter,
+    stateFilter,
+    districtFilter
+  })
+  useLayoutEffect(() => {
+    query.current = { examKey, country, view, search, statusFilter, stateFilter, districtFilter }
+  }, [examKey, country, view, search, statusFilter, stateFilter, districtFilter])
+  async function loadPage(page: number): Promise<MonthlyPage> {
+    const current = query.current
+    const sequence = ++requestSequence.current
+    try {
+      const result = await getMonthlyPage(current.examKey, current.country, page, {
+        view: current.view,
+        search: current.search,
+        status: current.statusFilter,
+        state: current.stateFilter,
+        district: current.districtFilter
+      })
+      if (sequence === requestSequence.current) {
+        setSummary(result.summary)
+        setFilterOptions(result.filters)
+        if (current.view === 'dispatch') setRows(result.results as DispatchRow[])
+        else setUnpaid(result.results as MonthlyStudent[])
         setError('')
-      })
-      .catch((cause) => {
-        if (active) setError(cause instanceof Error ? cause.message : 'Could not load dispatch')
-      })
-      .finally(() => {
-        if (active) finish()
-      })
-    return () => {
-      active = false
+        finish()
+      }
+      return result
+    } catch (cause) {
+      if (sequence === requestSequence.current) {
+        setError(cause instanceof Error ? cause.message : 'Could not load dispatch')
+        finish()
+      }
+      throw cause
     }
-  }, [examKey, country, options, retry, start, finish])
-
-  const exam = options?.exams.find((item) => item.exam_key === examKey)
-  const rows = useMemo<DispatchRow[]>(() => {
-    const existing = allocations.map((row) => ({ ...row, kind: 'allocation' as const }))
-    if (!exam?.is_current || !summary) return existing
-    const allocated = new Set(allocations.map((row) => row.enrollment_key))
-    const funded = summary.funded_pending
-      .filter((student) => !allocated.has(student.enrollment_key))
-      .map((student) => ({
-        kind: 'funded' as const,
-        allocation_key: `funded:${student.enrollment_key}`,
-        enrollment_key: student.enrollment_key,
-        bbs_number: student.bbs_number,
-        student_name: student.name,
-        student_phone: student.phone,
-        student_state: student.state,
-        student_district: student.district,
-        book_number: exam.catalog_book_name || exam.title,
-        exam_title: exam.title,
-        payment_amount: '—',
-        purchased_at: null,
-        status: 'FUNDED',
-        tracking_number: '',
-        delivery_address_key: null,
-        delivery_address: null
-      }))
-    return [...funded, ...existing]
-  }, [allocations, summary, exam])
-  const statuses = useMemo(() => [...new Set(rows.map((row) => row.status))].sort(), [rows])
-  const allStudents = [...rows, ...(summary?.all_unpaid ?? [])]
-  const states = [
-    ...new Set(
-      allStudents
-        .map((row) => ('student_state' in row ? row.student_state : row.state))
-        .filter(Boolean)
-    )
-  ].sort()
-  const districts = [
-    ...new Set(
-      allStudents
-        .filter(
-          (row) =>
-            !stateFilter || ('student_state' in row ? row.student_state : row.state) === stateFilter
-        )
-        .map((row) => ('student_district' in row ? row.student_district : row.district))
-        .filter(Boolean)
-    )
-  ].sort()
-  const visibleRows = useMemo(
-    () =>
-      rows.filter(
-        (row) =>
-          (!statusFilter || row.status === statusFilter) &&
-          (!stateFilter || row.student_state === stateFilter) &&
-          (!districtFilter || row.student_district === districtFilter)
-      ),
-    [rows, statusFilter, stateFilter, districtFilter]
-  )
-
-  const unpaid: MonthlyStudent[] = (summary?.previous_exam_unpaid ?? []).filter(
-    (row) =>
-      (!stateFilter || row.state === stateFilter) &&
-      (!districtFilter || row.district === districtFilter)
-  )
+  }
+  useEffect(() => {
+    if (!tableReady.current) {
+      tableReady.current = true
+      return
+    }
+    const timer = window.setTimeout(() => table.current?.dt()?.ajax.reload(), search ? 300 : 0)
+    return () => window.clearTimeout(timer)
+  }, [examKey, country, search, statusFilter, stateFilter, districtFilter])
+  useEffect(() => {
+    if (retry) table.current?.dt()?.ajax.reload(undefined, false)
+  }, [retry])
 
   function refresh(): void {
     setRetry((value) => value + 1)
@@ -238,13 +213,10 @@ export default function MonthlyDispatchPage({
     try {
       if (row.status !== 'PROCESSING' && row.status !== 'SHIPPED')
         throw new Error('Open this month before shipping this book.')
-      const updated =
-        row.status === 'PROCESSING'
-          ? await shipMonthlyAllocation(row.allocation_key, row.delivery_address_key ?? '', value)
-          : await saveMonthlyTracking(row.allocation_key, value)
-      setAllocations((current) =>
-        current.map((item) => (item.allocation_key === row.allocation_key ? updated : item))
-      )
+      if (row.status === 'PROCESSING')
+        await shipMonthlyAllocation(row.allocation_key, row.delivery_address_key ?? '', value)
+      else await saveMonthlyTracking(row.allocation_key, value)
+      table.current?.dt()?.ajax.reload(undefined, false)
       notify.success(
         row.status === 'PROCESSING'
           ? `${row.bbs_number} marked shipped`
@@ -261,7 +233,7 @@ export default function MonthlyDispatchPage({
     const rowElement = (event.target as HTMLElement).closest('tr')
     const row =
       view === 'dispatch'
-        ? (visibleRows.find((item) => item.allocation_key === rowElement?.id) ?? null)
+        ? (rows.find((item) => item.allocation_key === rowElement?.id) ?? null)
         : null
     const student =
       view === 'dispatch' ? row : unpaid.find((item) => item.enrollment_key === rowElement?.id)
@@ -319,7 +291,7 @@ export default function MonthlyDispatchPage({
             >
               <option value="">All statuses</option>
               <option value="PROCESSING">Processing</option>
-              {statuses
+              {filterOptions.statuses
                 .filter((status) => status !== 'PROCESSING')
                 .map((status) => (
                   <option key={status} value={status}>
@@ -338,7 +310,7 @@ export default function MonthlyDispatchPage({
               }}
             >
               <option value="">All states</option>
-              {states.map((state) => (
+              {filterOptions.states.map((state) => (
                 <option key={state} value={state}>
                   {state}
                 </option>
@@ -352,7 +324,7 @@ export default function MonthlyDispatchPage({
               onChange={(event) => setDistrictFilter(event.target.value)}
             >
               <option value="">All districts</option>
-              {districts.map((district) => (
+              {filterOptions.districts.map((district) => (
                 <option key={district} value={district}>
                   {district}
                 </option>
@@ -415,16 +387,17 @@ export default function MonthlyDispatchPage({
         </div>
       )}
       {error && <div className="course-error">{error}</div>}
-      <MonthlyDispatchTable
-        rows={visibleRows}
-        unpaid={unpaid}
-        view={view}
-        search={search}
-        savingTrackingKey={savingTrackingKey}
-        onTrackingSave={(row, value) => void saveTracking(row, value)}
-        onCandidate={onCandidate}
-        onContextMenu={openMenu}
-      />
+      {examKey && (
+        <MonthlyDispatchTable
+          loadPage={loadPage}
+          table={table}
+          view={view}
+          savingTrackingKey={savingTrackingKey}
+          onTrackingSave={(row, value) => void saveTracking(row, value)}
+          onCandidate={onCandidate}
+          onContextMenu={openMenu}
+        />
+      )}
       {menu && (
         <div
           className="course-context-menu course-context-menu--actions"

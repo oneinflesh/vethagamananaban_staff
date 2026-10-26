@@ -232,6 +232,26 @@ export type MonthlySummary = {
   all_unpaid: MonthlyStudent[]
   previous_exam_unpaid: MonthlyStudent[]
 }
+export type MonthlyFilters = {
+  view: string
+  search: string
+  status: string
+  state: string
+  district: string
+}
+export type MonthlyPage = {
+  count: number
+  results: (MonthlyAllocation & { kind: 'allocation' | 'funded' })[] | MonthlyStudent[]
+  summary: Pick<
+    MonthlySummary,
+    | 'paid_count'
+    | 'paid_amount'
+    | 'funded_pending_count'
+    | 'unpaid_count'
+    | 'previous_exam_unpaid_count'
+  >
+  filters: { statuses: string[]; states: string[]; districts: string[] }
+}
 export type MonthlyAllocation = {
   allocation_key: string
   enrollment_key: string
@@ -360,12 +380,12 @@ export const updateCoordinatorMembers = (
   window.office.courseCoordinatorUpdateMembers(key, additions, removals)
 export const setCoordinatorMembers = (key: string, keys: string[]): Promise<CoordinatorMember[]> =>
   window.office.courseSetCoordinatorMembers(key, keys)
-export const getMonthlySummary = (examKey: string, country: string): Promise<MonthlySummary> =>
-  window.office.courseMonthlySummary(examKey, country)
-export const getMonthlyAllocations = (
+export const getMonthlyPage = (
   examKey: string,
-  country: string
-): Promise<MonthlyAllocation[]> => window.office.courseMonthlyAllocations(examKey, country)
+  country: string,
+  page: number,
+  filters: MonthlyFilters
+): Promise<MonthlyPage> => window.office.courseMonthlyPage(examKey, country, page, filters)
 export const openMonthlyDispatch = (
   examKey: string,
   country: string

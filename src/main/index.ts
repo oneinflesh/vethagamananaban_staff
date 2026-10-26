@@ -45,8 +45,7 @@ import {
   uploadCandidatePhoto
 } from './features/course/course'
 import {
-  getMonthlySummary,
-  getMonthlyAllocations,
+  getMonthlyPage,
   openMonthlyDispatch,
   shipMonthlyAllocation,
   saveMonthlyTracking
@@ -201,11 +200,8 @@ app.whenReady().then(() => {
   ipcMain.handle('course:upload-photo', (_event, key, bytes, name) =>
     uploadCandidatePhoto(key, bytes, name)
   )
-  ipcMain.handle('course:monthly-summary', (_event, examKey, country) =>
-    getMonthlySummary(examKey, country)
-  )
-  ipcMain.handle('course:monthly-allocations', (_event, examKey, country) =>
-    getMonthlyAllocations(examKey, country)
+  ipcMain.handle('course:monthly-page', (_event, examKey, country, page, filters) =>
+    getMonthlyPage(examKey, country, page, filters)
   )
   ipcMain.handle('course:monthly-open', (_event, examKey, country) =>
     openMonthlyDispatch(examKey, country)
