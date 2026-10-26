@@ -46,7 +46,11 @@ interface Window {
       description: string,
       cover: { bytes: Uint8Array; name: string } | null
     ): Promise<unknown>
-    shippingList(country: string): Promise<import('./features/shipping/shippingApi').ShipmentRow[]>
+    shippingList(
+      country: string,
+      page: number,
+      filters: import('./features/shipping/shippingApi').ShipmentFilters
+    ): Promise<import('./features/shipping/shippingApi').ShipmentPage>
     shippingTracking(
       row: import('./features/shipping/shippingApi').ShipmentRow,
       trackingNumber: string

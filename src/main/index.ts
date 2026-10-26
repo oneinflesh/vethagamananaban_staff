@@ -11,7 +11,7 @@ import {
   saveCourseBookTranslation
 } from './features/course/courseBooks'
 import {
-  getShipments,
+  getShipmentPage,
   updateShipmentTracking,
   markCoursePaperReceived
 } from './features/shipping/shipping'
@@ -130,7 +130,9 @@ app.whenReady().then(() => {
     (_event, id, exam, language, title, description, cover) =>
       saveCourseBookTranslation(id, exam, language, title, description, cover)
   )
-  ipcMain.handle('shipping:list', (_event, country) => getShipments(country))
+  ipcMain.handle('shipping:list', (_event, country, page, filters) =>
+    getShipmentPage(country, page, filters)
+  )
   ipcMain.handle('shipping:tracking', (_event, row, trackingNumber) =>
     updateShipmentTracking(row, trackingNumber)
   )

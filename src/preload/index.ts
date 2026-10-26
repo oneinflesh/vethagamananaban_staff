@@ -39,7 +39,8 @@ const api = {
     description: string,
     cover: { bytes: Uint8Array; name: string } | null
   ) => ipcRenderer.invoke('course:book-translation', id, exam, language, title, description, cover),
-  shippingList: (country: string) => ipcRenderer.invoke('shipping:list', country),
+  shippingList: (country: string, page: number, filters: unknown) =>
+    ipcRenderer.invoke('shipping:list', country, page, filters),
   shippingTracking: (row: unknown, trackingNumber: string) =>
     ipcRenderer.invoke('shipping:tracking', row, trackingNumber),
   shippingOpenTracking: (trackingNumber: string) =>

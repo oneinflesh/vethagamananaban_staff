@@ -2,7 +2,7 @@ import type { MouseEvent, RefObject } from 'react'
 import type { DataTableRef } from 'datatables.net-react'
 import { DataTable, Column } from '../course/dataTable'
 import { resizeColumns } from '../course/resizeColumns'
-import type { ShipmentRow } from './shippingApi'
+import type { ShipmentPage, ShipmentRow } from './shippingApi'
 
 function displayDate(value: string | null): string {
   if (!value) return '—'
@@ -13,12 +13,12 @@ function displayDate(value: string | null): string {
 }
 
 export default function ShippingTable({
-  rows,
+  loadPage,
   table,
   onContextMenu,
   onItemsClick
 }: {
-  rows: ShipmentRow[]
+  loadPage: (page: number, ordering: string) => Promise<ShipmentPage>
   table: RefObject<DataTableRef | null>
   onContextMenu: (event: MouseEvent<HTMLDivElement>) => void
   onItemsClick: (event: MouseEvent<HTMLDivElement>) => void
@@ -32,10 +32,42 @@ export default function ShippingTable({
     >
       <DataTable
         ref={table}
-        data={rows}
         className="display shipping-table"
         options={{
           pageLength: 20,
+          serverSide: true,
+          processing: true,
+          ajax: (request, callback) => {
+            const order = request.order?.[0]
+            const field = order ? request.columns?.[order.column]?.data : ''
+            const allowed = new Set([
+              'shipped_at',
+              'reference',
+              'recipient',
+              'phone',
+              'district',
+              'state',
+              'items',
+              'status',
+              'tracking_number'
+            ])
+            const ordering =
+              typeof field === 'string' && allowed.has(field)
+                ? `${order?.dir === 'desc' ? '-' : ''}${field}`
+                : '-shipped_at'
+            void loadPage(Math.floor((request.start ?? 0) / (request.length || 20)) + 1, ordering)
+              .then((page) =>
+                callback({
+                  draw: request.draw,
+                  recordsTotal: page.count,
+                  recordsFiltered: page.count,
+                  data: page.results
+                })
+              )
+              .catch(() =>
+                callback({ draw: request.draw, recordsTotal: 0, recordsFiltered: 0, data: [] })
+              )
+          },
           lengthChange: false,
           searching: true,
           paging: true,

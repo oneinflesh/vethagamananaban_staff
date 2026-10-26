@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
 import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -6,33 +6,33 @@ import { useCountry } from '../country/CountryContext'
 import { useNotifications } from '../notifications/Notifications'
 import FullScreenLoader from '../shell/FullScreenLoader'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
-import { getShipments, markPaperReceived, updateTracking, type ShipmentRow } from './shippingApi'
+import {
+  getShipmentPage,
+  markPaperReceived,
+  updateTracking,
+  type ShipmentFilters,
+  type ShipmentPage,
+  type ShipmentRow
+} from './shippingApi'
 import ShippingTable from './ShippingTable'
 import './shipping.css'
 
 type SourceFilter = 'all' | 'course' | 'store'
 
-function dateInIndia(value: string | null): string {
-  if (!value) return ''
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-    ? ''
-    : date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Kolkata' })
-}
-
-function options(values: string[]): string[] {
-  return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b)
-  )
-}
-
 export default function ShippingPage(): React.JSX.Element {
   const { country } = useCountry()
   const notify = useNotifications()
   const table = useRef<DataTableRef>(null)
-  const pageToRestore = useRef<number | null>(null)
-  const { loading, leaving, start, finish } = useSmoothLoading()
+  const filterReady = useRef(false)
+  const requestSequence = useRef(0)
+  const { loading, leaving, finish } = useSmoothLoading()
   const [rows, setRows] = useState<ShipmentRow[]>([])
+  const [filterOptions, setFilterOptions] = useState<ShipmentPage['filters']>({
+    states: [],
+    districts: [],
+    books: [],
+    statuses: []
+  })
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
   const [source, setSource] = useState<SourceFilter>('all')
@@ -49,64 +49,70 @@ export default function ShippingPage(): React.JSX.Element {
   const [tracking, setTracking] = useState('')
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    let active = true
-    start()
-    getShipments(country)
-      .then((result) => {
-        if (!active) return
-        setRows(result)
-        setError('')
-      })
-      .catch((cause) => {
-        if (active) setError(cause instanceof Error ? cause.message : 'Could not load shipments')
-      })
-      .finally(() => {
-        if (active) finish()
-      })
-    return () => {
-      active = false
+  const query = useRef<{ country: string; filters: ShipmentFilters }>({
+    country,
+    filters: {
+      source,
+      state,
+      district,
+      book,
+      status,
+      dateFrom,
+      dateTo,
+      search,
+      ordering: '-shipped_at'
     }
-  }, [country, retry, start, finish])
+  })
+  useLayoutEffect(() => {
+    query.current = {
+      country,
+      filters: {
+        source,
+        state,
+        district,
+        book,
+        status,
+        dateFrom,
+        dateTo,
+        search,
+        ordering: '-shipped_at'
+      }
+    }
+  }, [country, source, state, district, book, status, dateFrom, dateTo, search])
+
+  async function loadPage(page: number, ordering: string): Promise<ShipmentPage> {
+    const sequence = ++requestSequence.current
+    try {
+      const current = query.current
+      const result = await getShipmentPage(current.country, page, { ...current.filters, ordering })
+      if (sequence === requestSequence.current) {
+        setRows(result.results)
+        setFilterOptions(result.filters)
+        setError('')
+        finish()
+      }
+      return result
+    } catch (cause) {
+      if (sequence === requestSequence.current) {
+        setError(cause instanceof Error ? cause.message : 'Could not load shipments')
+        finish()
+      }
+      throw cause
+    }
+  }
 
   useEffect(() => {
-    table.current?.dt()?.search(search).draw()
-  }, [search])
+    if (!filterReady.current) {
+      filterReady.current = true
+      return
+    }
+    const timer = window.setTimeout(() => table.current?.dt()?.ajax.reload(), search ? 300 : 0)
+    return () => window.clearTimeout(timer)
+  }, [country, source, state, district, book, status, dateFrom, dateTo, search])
 
   useEffect(() => {
-    if (pageToRestore.current === null) return
-    const page = pageToRestore.current
-    pageToRestore.current = null
-    window.requestAnimationFrame(() => table.current?.dt()?.page(page).draw('page'))
-  }, [rows])
-
-  const sourceRows = useMemo(
-    () => rows.filter((row) => source === 'all' || row.source === source),
-    [rows, source]
-  )
-  const stateOptions = useMemo(() => options(sourceRows.map((row) => row.state)), [sourceRows])
-  const districtOptions = useMemo(
-    () =>
-      options(sourceRows.filter((row) => !state || row.state === state).map((row) => row.district)),
-    [sourceRows, state]
-  )
-  const bookOptions = useMemo(() => options(sourceRows.flatMap((row) => row.books)), [sourceRows])
-  const statusOptions = useMemo(() => options(sourceRows.map((row) => row.status)), [sourceRows])
-  const visibleRows = useMemo(
-    () =>
-      sourceRows.filter((row) => {
-        const date = dateInIndia(row.shipped_at)
-        return (
-          (!state || row.state === state) &&
-          (!district || row.district === district) &&
-          (!book || row.books.includes(book)) &&
-          (!status || row.status === status) &&
-          (!dateFrom || (date && date >= dateFrom)) &&
-          (!dateTo || (date && date <= dateTo))
-        )
-      }),
-    [sourceRows, state, district, book, status, dateFrom, dateTo]
-  )
+    if (retry) table.current?.dt()?.ajax.reload(undefined, false)
+  }, [retry])
 
   function openMenu(event: MouseEvent<HTMLDivElement>): void {
     const rowElement = (event.target as HTMLElement).closest('tr')
@@ -128,9 +134,7 @@ export default function ShippingPage(): React.JSX.Element {
   }
 
   async function reload(): Promise<void> {
-    pageToRestore.current = table.current?.dt()?.page() ?? 0
-    const result = await getShipments(country)
-    setRows(result)
+    await new Promise<void>((resolve) => table.current?.dt()?.ajax.reload(() => resolve(), false))
   }
 
   async function saveTracking(): Promise<void> {
@@ -197,7 +201,7 @@ export default function ShippingPage(): React.JSX.Element {
               }}
             >
               <option value="">All</option>
-              {stateOptions.map((value) => (
+              {filterOptions.states.map((value) => (
                 <option key={value}>{value}</option>
               ))}
             </select>
@@ -206,7 +210,7 @@ export default function ShippingPage(): React.JSX.Element {
             District
             <select value={district} onChange={(event) => setDistrict(event.target.value)}>
               <option value="">All</option>
-              {districtOptions.map((value) => (
+              {filterOptions.districts.map((value) => (
                 <option key={value}>{value}</option>
               ))}
             </select>
@@ -215,7 +219,7 @@ export default function ShippingPage(): React.JSX.Element {
             Book
             <select value={book} onChange={(event) => setBook(event.target.value)}>
               <option value="">All</option>
-              {bookOptions.map((value) => (
+              {filterOptions.books.map((value) => (
                 <option key={value}>{value}</option>
               ))}
             </select>
@@ -224,7 +228,7 @@ export default function ShippingPage(): React.JSX.Element {
             Status
             <select value={status} onChange={(event) => setStatus(event.target.value)}>
               <option value="">All</option>
-              {statusOptions.map((value) => (
+              {filterOptions.statuses.map((value) => (
                 <option key={value}>{value.replaceAll('_', ' ')}</option>
               ))}
             </select>
@@ -262,7 +266,7 @@ export default function ShippingPage(): React.JSX.Element {
       </div>
       {error && <p className="shipping-error">{error}</p>}
       <ShippingTable
-        rows={visibleRows}
+        loadPage={loadPage}
         table={table}
         onContextMenu={openMenu}
         onItemsClick={openItems}

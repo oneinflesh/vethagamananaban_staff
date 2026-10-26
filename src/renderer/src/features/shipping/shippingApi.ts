@@ -28,8 +28,28 @@ export type ShipmentRow = {
   }[]
 }
 
-export const getShipments = (country: string): Promise<ShipmentRow[]> =>
-  window.office.shippingList(country)
+export type ShipmentFilters = {
+  source: 'all' | 'course' | 'store'
+  state: string
+  district: string
+  book: string
+  status: string
+  dateFrom: string
+  dateTo: string
+  search: string
+  ordering: string
+}
+export type ShipmentPage = {
+  count: number
+  results: ShipmentRow[]
+  filters: { states: string[]; districts: string[]; books: string[]; statuses: string[] }
+}
+
+export const getShipmentPage = (
+  country: string,
+  page: number,
+  filters: ShipmentFilters
+): Promise<ShipmentPage> => window.office.shippingList(country, page, filters)
 
 export const updateTracking = (row: ShipmentRow, trackingNumber: string): Promise<unknown> =>
   window.office.shippingTracking(row, trackingNumber)
