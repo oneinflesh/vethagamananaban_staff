@@ -339,6 +339,13 @@ export async function uploadCoordinatorPhoto(key: string, file: File): Promise<C
 }
 export const getCoordinatorMembers = (key: string): Promise<CoordinatorMember[]> =>
   window.office.courseCoordinatorMembers(key)
+export const getCoordinatorMemberPage = (
+  key: string,
+  page: number,
+  search: string,
+  restoreOnly: boolean
+): Promise<{ count: number; results: CoordinatorMember[] }> =>
+  window.office.courseCoordinatorMemberPage(key, page, search, restoreOnly)
 export const getCoordinatorCandidateOptions = (
   key: string,
   search: string,

@@ -124,6 +124,15 @@ interface Window {
     courseCoordinatorMembers(
       key: string
     ): Promise<import('./features/course/courseApi').CoordinatorMember[]>
+    courseCoordinatorMemberPage(
+      key: string,
+      page: number,
+      search: string,
+      restoreOnly: boolean
+    ): Promise<{
+      count: number
+      results: import('./features/course/courseApi').CoordinatorMember[]
+    }>
     courseCoordinatorCandidateOptions(
       key: string,
       search: string,

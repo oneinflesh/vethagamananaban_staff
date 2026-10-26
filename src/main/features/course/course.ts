@@ -239,6 +239,19 @@ export function uploadCoordinatorPhoto(
 }
 export const getCoordinatorMembers = (key: string): Promise<unknown> =>
   authorizedGet(`staff/course-coordinators/${encodeURIComponent(key)}/members/`)
+export const getCoordinatorMemberPage = (
+  key: string,
+  page: number,
+  search: string,
+  restoreOnly: boolean
+): Promise<unknown> => {
+  const params = new URLSearchParams({ page: String(page), page_size: '20' })
+  if (search) params.set('search', search)
+  if (restoreOnly) params.set('restore_only', 'true')
+  return authorizedGet(
+    `staff/course-coordinators/${encodeURIComponent(key)}/member-list/?${params}`
+  )
+}
 export const getCoordinatorCandidateOptions = (
   key: string,
   search: string,

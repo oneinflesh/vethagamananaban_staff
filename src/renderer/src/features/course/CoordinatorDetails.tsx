@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,7 +7,7 @@ import FullScreenLoader from '../shell/FullScreenLoader'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
 import {
   getCoordinator,
-  getCoordinatorMembers,
+  getCoordinatorMemberPage,
   updateCoordinator,
   updateCoordinatorStatus,
   uploadCoordinatorPhoto,
@@ -31,21 +31,26 @@ export default function CoordinatorDetails({
 }): React.JSX.Element {
   const [coordinator, setCoordinator] = useState<Coordinator | null>(null)
   const [members, setMembers] = useState<CoordinatorMember[]>([])
+  const [memberCount, setMemberCount] = useState(0)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [restoreOpen, setRestoreOpen] = useState(false)
   const [restoreKeys, setRestoreKeys] = useState<Set<string>>(new Set())
   const [search, setSearch] = useState('')
   const table = useRef<DataTableRef>(null)
+  const tableReady = useRef(false)
+  const query = useRef({ coordinatorKey, search, restoreOpen })
+  useLayoutEffect(() => {
+    query.current = { coordinatorKey, search, restoreOpen }
+  }, [coordinatorKey, search, restoreOpen])
   const notify = useNotifications()
   const { loading, leaving, finish } = useSmoothLoading()
   useEffect(() => {
     let active = true
-    Promise.all([getCoordinator(coordinatorKey), getCoordinatorMembers(coordinatorKey)])
-      .then(([details, people]) => {
+    getCoordinator(coordinatorKey)
+      .then((details) => {
         if (active) {
           setCoordinator(details)
-          setMembers(people)
         }
       })
       .catch((reason) => {
@@ -59,6 +64,19 @@ export default function CoordinatorDetails({
       active = false
     }
   }, [coordinatorKey, finish])
+  useEffect(() => {
+    if (!tableReady.current) {
+      tableReady.current = true
+      return
+    }
+    const timer = window.setTimeout(() => table.current?.dt()?.ajax.reload(), search ? 300 : 0)
+    return () => window.clearTimeout(timer)
+  }, [coordinatorKey, search, restoreOpen])
+  useEffect(() => {
+    document.querySelectorAll<HTMLInputElement>('input[data-restore-key]').forEach((input) => {
+      input.checked = restoreKeys.has(input.dataset.restoreKey ?? '')
+    })
+  }, [restoreKeys, members])
   async function save(): Promise<void> {
     if (!coordinator) return
     setSaving(true)
@@ -105,37 +123,35 @@ export default function CoordinatorDetails({
   }
   async function changeStatus(status: Coordinator['status']): Promise<void> {
     if (!coordinator) return
-    if (status !== 'ACTIVE' && !window.confirm(
-      `${status === 'SUSPENDED' ? 'Discontinue' : 'Drop out'} C-${coordinator.number} and everyone under this coordinator?`
-    )) return
+    if (
+      status !== 'ACTIVE' &&
+      !window.confirm(
+        `${status === 'SUSPENDED' ? 'Discontinue' : 'Drop out'} C-${coordinator.number} and everyone under this coordinator?`
+      )
+    )
+      return
     setSaving(true)
     try {
       const result = await updateCoordinatorStatus(
-        coordinatorKey, status, status === 'ACTIVE' ? [...restoreKeys] : []
+        coordinatorKey,
+        status,
+        status === 'ACTIVE' ? [...restoreKeys] : []
       )
-      const [details, people] = await Promise.all([
-        getCoordinator(coordinatorKey), getCoordinatorMembers(coordinatorKey)
-      ])
-      setCoordinator(details)
-      setMembers(people)
+      setCoordinator(await getCoordinator(coordinatorKey))
+      table.current?.dt()?.ajax.reload(undefined, false)
       setRestoreOpen(false)
       setRestoreKeys(new Set())
-      notify.success(`${status === 'ACTIVE' ? 'Coordinator restored' : status === 'SUSPENDED' ? 'Coordinator discontinued' : 'Coordinator dropped out'} · ${result.candidates_changed} candidates updated`)
+      notify.success(
+        `${status === 'ACTIVE' ? 'Coordinator restored' : status === 'SUSPENDED' ? 'Coordinator discontinued' : 'Coordinator dropped out'} · ${result.candidates_changed} candidates updated`
+      )
     } catch (cause) {
       notify.error(cause instanceof Error ? cause.message : 'Could not change coordinator status')
     } finally {
       setSaving(false)
     }
   }
-  const restorable = [
-    ...(coordinator?.enrollment_key && coordinator.enrollment_status !== 'ACTIVE' ? [{
-      enrollment_key: coordinator.enrollment_key,
-      bbs_number: coordinator.bbs_number,
-      name: coordinator.name,
-      status: coordinator.enrollment_status || ''
-    }] : []),
-    ...members.filter((member) => member.status !== 'ACTIVE')
-  ]
+  const restorableCoordinator =
+    coordinator?.enrollment_key && coordinator.enrollment_status !== 'ACTIVE' ? coordinator : null
   return (
     <section className="page course-page">
       <div className="course-toolbar">
@@ -143,7 +159,14 @@ export default function CoordinatorDetails({
           ← Coordinators
         </Button>
         <h1>{coordinator ? `C-${coordinator.number} ${coordinator.name}` : 'Coordinator'}</h1>
-        <span>{coordinator?.status === 'SUSPENDED' ? 'Discontinued' : coordinator?.status === 'DROPOUT' ? 'Dropout' : 'Active'} · {coordinator?.member_count ?? 0} people</span>
+        <span>
+          {coordinator?.status === 'SUSPENDED'
+            ? 'Discontinued'
+            : coordinator?.status === 'DROPOUT'
+              ? 'Dropout'
+              : 'Active'}{' '}
+          · {coordinator?.member_count ?? 0} people
+        </span>
         <Button
           variant="outline"
           disabled={!coordinator}
@@ -157,7 +180,14 @@ export default function CoordinatorDetails({
         <div className="candidate-form coordinator-editor">
           <div className="candidate-form__readonly">
             <span>Country: {coordinator.country}</span>
-            <span>Status: {coordinator.status === 'SUSPENDED' ? 'Discontinued' : coordinator.status === 'DROPOUT' ? 'Dropout' : 'Active'}</span>
+            <span>
+              Status:{' '}
+              {coordinator.status === 'SUSPENDED'
+                ? 'Discontinued'
+                : coordinator.status === 'DROPOUT'
+                  ? 'Dropout'
+                  : 'Active'}
+            </span>
             <span>People: {coordinator.member_count}</span>
             {coordinator.enrollment_key && (
               <Button variant="link" onClick={() => onCandidate(coordinator.enrollment_key!)}>
@@ -215,10 +245,30 @@ export default function CoordinatorDetails({
         </div>
       )}
       <div className="course-list-actions">
-        {coordinator?.status === 'ACTIVE' ? <>
-          <Button variant="outline" disabled={saving} onClick={() => void changeStatus('SUSPENDED')}>Discontinue coordinator</Button>
-          <Button variant="outline" disabled={saving} onClick={() => void changeStatus('DROPOUT')}>Dropout coordinator</Button>
-        </> : coordinator && <Button variant="outline" disabled={saving} onClick={() => setRestoreOpen(true)}>Restore coordinator</Button>}
+        {coordinator?.status === 'ACTIVE' ? (
+          <>
+            <Button
+              variant="outline"
+              disabled={saving}
+              onClick={() => void changeStatus('SUSPENDED')}
+            >
+              Discontinue coordinator
+            </Button>
+            <Button
+              variant="outline"
+              disabled={saving}
+              onClick={() => void changeStatus('DROPOUT')}
+            >
+              Dropout coordinator
+            </Button>
+          </>
+        ) : (
+          coordinator && (
+            <Button variant="outline" disabled={saving} onClick={() => setRestoreOpen(true)}>
+              Restore coordinator
+            </Button>
+          )
+        )}
         <Button
           variant="outline"
           disabled={!coordinator || coordinator.status !== 'ACTIVE'}
@@ -234,45 +284,111 @@ export default function CoordinatorDetails({
             placeholder="Search people"
             onChange={(event) => {
               setSearch(event.target.value)
-              table.current?.dt()?.search(event.target.value).draw()
             }}
           />
         </label>
       </div>
-      {restoreOpen && coordinator && <div className="candidate-form">
-        <h2>Restore C-{coordinator.number} {coordinator.name}</h2>
-        <p>Choose which candidates to restore to Active. Unchecked candidates keep their current status.</p>
-        {restorable.map((candidate) => <label key={candidate.enrollment_key}>
-          <input
-            type="checkbox"
-            checked={restoreKeys.has(candidate.enrollment_key)}
-            onChange={(event) => setRestoreKeys((current) => {
-              const next = new Set(current)
-              if (event.target.checked) next.add(candidate.enrollment_key)
-              else next.delete(candidate.enrollment_key)
-              return next
-            })}
-          /> {candidate.bbs_number} {candidate.name} · {candidate.status}
-        </label>)}
-        {!restorable.length && <p>No discontinued or dropout candidates to restore.</p>}
-        <div className="course-inline-actions">
-          <Button disabled={saving} onClick={() => void changeStatus('ACTIVE')}>Restore selected</Button>
-          <Button variant="outline" disabled={saving} onClick={() => setRestoreOpen(false)}>Cancel</Button>
+      {restoreOpen && coordinator && (
+        <div className="candidate-form">
+          <h2>
+            Restore C-{coordinator.number} {coordinator.name}
+          </h2>
+          <p>
+            Choose which candidates to restore to Active. Unchecked candidates keep their current
+            status.
+          </p>
+          {restorableCoordinator && (
+            <label>
+              <input
+                type="checkbox"
+                checked={restoreKeys.has(restorableCoordinator.enrollment_key!)}
+                onChange={(event) =>
+                  setRestoreKeys((current) => {
+                    const next = new Set(current)
+                    if (event.target.checked) next.add(restorableCoordinator.enrollment_key!)
+                    else next.delete(restorableCoordinator.enrollment_key!)
+                    return next
+                  })
+                }
+              />{' '}
+              {restorableCoordinator.bbs_number} {restorableCoordinator.name} ·{' '}
+              {restorableCoordinator.enrollment_status}
+            </label>
+          )}
+          <p>
+            Members available on the table below: {memberCount}. Select their checkboxes across
+            pages.
+          </p>
+          {!restorableCoordinator && !memberCount && (
+            <p>No discontinued or dropout candidates to restore.</p>
+          )}
+          <div className="course-inline-actions">
+            <Button disabled={saving} onClick={() => void changeStatus('ACTIVE')}>
+              Restore selected
+            </Button>
+            <Button variant="outline" disabled={saving} onClick={() => setRestoreOpen(false)}>
+              Cancel
+            </Button>
+          </div>
         </div>
-      </div>}
-      <div className="course-table-wrap" onPointerDown={resizeColumns}>
+      )}
+      <div
+        className="course-table-wrap"
+        onPointerDown={resizeColumns}
+        onChange={(event) => {
+          const target = event.target as HTMLInputElement
+          const key = target.dataset.restoreKey
+          if (!key) return
+          setRestoreKeys((current) => {
+            const next = new Set(current)
+            if (target.checked) next.add(key)
+            else next.delete(key)
+            return next
+          })
+        }}
+      >
         <DataTable
           ref={table}
-          data={members}
           className="display course-table"
           options={{
             pageLength: 20,
+            serverSide: true,
+            processing: true,
+            ajax: (request, callback) => {
+              const current = query.current
+              void getCoordinatorMemberPage(
+                current.coordinatorKey,
+                Math.floor((request.start ?? 0) / (request.length || 20)) + 1,
+                current.search,
+                current.restoreOpen
+              )
+                .then((page) => {
+                  setMembers(page.results)
+                  setMemberCount(page.count)
+                  setError('')
+                  finish()
+                  callback({
+                    draw: request.draw,
+                    recordsTotal: page.count,
+                    recordsFiltered: page.count,
+                    data: page.results
+                  })
+                })
+                .catch((reason) => {
+                  setError(
+                    reason instanceof Error ? reason.message : 'Could not load coordinator people'
+                  )
+                  finish()
+                  callback({ draw: request.draw, recordsTotal: 0, recordsFiltered: 0, data: [] })
+                })
+            },
             lengthChange: false,
             paging: true,
             searching: true,
             info: true,
             autoWidth: false,
             order: [],
+            rowId: 'enrollment_key',
             layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' }
           }}
         >
@@ -287,6 +403,24 @@ export default function CoordinatorDetails({
           <Column title="Status" data="status" />
           <Column title="Phone" data="phone" />
           <Column title="Address" data="address" />
+          <Column
+            title="Restore"
+            data="enrollment_key"
+            options={{ orderable: false, searchable: false }}
+          >
+            {(_value, _type, row: CoordinatorMember) =>
+              row.status !== 'ACTIVE' ? (
+                <input
+                  type="checkbox"
+                  aria-label={`Restore ${row.name}`}
+                  data-restore-key={row.enrollment_key}
+                  defaultChecked={false}
+                />
+              ) : (
+                ''
+              )
+            }
+          </Column>
         </DataTable>
       </div>
       {loading && <FullScreenLoader message="Loading coordinator" leaving={leaving} />}
