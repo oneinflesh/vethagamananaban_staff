@@ -111,7 +111,7 @@ export default function EnrolmentCard({
         </div>
       </Card>
       {showLoader && (
-        <FullScreenLoader message="Loading enrolments" leaving={leaving} showProgress={false} />
+        <FullScreenLoader message="Loading enrolments" leaving={leaving} />
       )}
     </>
   )

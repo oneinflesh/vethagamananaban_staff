@@ -516,7 +516,7 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
         </div>
       )}
       {loading && (
-        <FullScreenLoader message="Loading course books" leaving={leaving} showProgress={false} />
+        <FullScreenLoader message="Loading course books" leaving={leaving} />
       )}
     </section>
   )

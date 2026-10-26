@@ -33,12 +33,7 @@ export function splitOfflineLabels(candidates: Candidate[]): {
 
   const coordinatorCandidates = new Set<string>()
   const underCoordinator = [...groups.values()]
-    .sort((left, right) =>
-      left.coordinator.name.localeCompare(right.coordinator.name, undefined, {
-        numeric: true,
-        sensitivity: 'base'
-      })
-    )
+    .sort((left, right) => left.coordinator.number - right.coordinator.number)
     .flatMap(({ coordinator, members }) => {
       const ownCandidate = coordinator.bbs_number
         ? candidatesByBbs.get(coordinator.bbs_number.toUpperCase())

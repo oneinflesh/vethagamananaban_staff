@@ -50,9 +50,7 @@ export async function getAllCandidates(
   status: string,
   initialDispatch = false
 ): Promise<unknown[]> {
-  const results: unknown[] = []
-  let page = 1
-  while (true) {
+  const readPage = (page: number): Promise<{ count: number; results: unknown[] }> => {
     const params = new URLSearchParams({
       country,
       scope: 'course',
@@ -62,13 +60,18 @@ export async function getAllCandidates(
     if (mode) params.set('mode', mode)
     if (status) params.set('status', status)
     if (initialDispatch) params.set('initial_dispatch', 'pending')
-    const response = await authorizedGet<{ count: number; results: unknown[] }>(
-      `staff/course-enrollments/?${params}`
-    )
-    results.push(...response.results)
-    if (results.length >= response.count || response.results.length === 0) return results
-    page += 1
+    return authorizedGet(`staff/course-enrollments/?${params}`)
   }
+  const first = await readPage(1)
+  const results = [...first.results]
+  const pages = Math.ceil(first.count / 100)
+  for (let start = 2; start <= pages; start += 3) {
+    const batch = await Promise.all(
+      Array.from({ length: Math.min(3, pages - start + 1) }, (_, index) => readPage(start + index))
+    )
+    batch.forEach((response) => results.push(...response.results))
+  }
+  return results
 }
 export async function getCoordinators(
   country: string

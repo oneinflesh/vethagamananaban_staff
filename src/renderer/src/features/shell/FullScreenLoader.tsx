@@ -1,14 +1,11 @@
 import BlurText from '../visuals/BlurText'
-import LoadingProgress from './LoadingProgress'
 
 export default function FullScreenLoader({
   message,
-  leaving = false,
-  showProgress = true
+  leaving = false
 }: {
   message: string
   leaving?: boolean
-  showProgress?: boolean
 }): React.JSX.Element {
   return (
     <div
@@ -26,7 +23,6 @@ export default function FullScreenLoader({
           delay={140}
           className="screen-loading-text"
         />
-        {showProgress && <LoadingProgress complete={leaving} />}
       </div>
     </div>
   )

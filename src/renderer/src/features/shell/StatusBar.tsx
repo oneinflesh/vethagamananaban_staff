@@ -6,6 +6,7 @@ export default function StatusBar({ staff }: { staff: Staff | null }): React.JSX
   const [now, setNow] = useState(new Date())
   const [connected, setConnected] = useState<boolean | null>(null)
   const previousConnection = useRef<boolean | null>(null)
+  const failedChecks = useRef(0)
   const notify = useNotifications()
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000)
@@ -13,23 +14,33 @@ export default function StatusBar({ staff }: { staff: Staff | null }): React.JSX
   }, [])
   useEffect(() => {
     let active = true
+    let checking = false
     const check = (): void => {
+      if (checking) return
+      checking = true
       serverConnected()
         .then((value) => {
           if (!active) return
-          setConnected(value)
-          if (previousConnection.current !== value) {
-            if (value) notify.success('Server connected')
-            else notify.error('Server unavailable')
-            previousConnection.current = value
+          failedChecks.current = value ? 0 : failedChecks.current + 1
+          const confirmed = value || failedChecks.current >= 2 ? value : previousConnection.current
+          if (confirmed === null) return
+          setConnected(confirmed)
+          if (previousConnection.current !== confirmed) {
+            if (confirmed && previousConnection.current === false) notify.success('Server connected')
+            else if (!confirmed) notify.error('Server unavailable')
+            previousConnection.current = confirmed
           }
         })
         .catch(() => {
           if (!active) return
-          setConnected(false)
-          if (previousConnection.current !== false) notify.error('Server unavailable')
-          previousConnection.current = false
+          failedChecks.current += 1
+          if (failedChecks.current >= 2 && previousConnection.current !== false) {
+            setConnected(false)
+            notify.error('Server unavailable')
+            previousConnection.current = false
+          }
         })
+        .finally(() => { checking = false })
     }
     check()
     const timer = setInterval(check, 15000)

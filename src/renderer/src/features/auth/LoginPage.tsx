@@ -81,7 +81,7 @@ export default function LoginPage({
           </form>
         </CardContent>
       </Card>
-      {busy && <FullScreenLoader message="Signing you in" showProgress={false} />}
+      {busy && <FullScreenLoader message="Signing you in" />}
     </main>
   )
 }

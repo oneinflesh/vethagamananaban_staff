@@ -93,7 +93,7 @@ app.whenReady().then(() => {
     try {
       await fetch('https://api.bible2bible.com/api/v1/auth/staff/login/', {
         method: 'GET',
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(10000)
       })
       return true
     } catch {

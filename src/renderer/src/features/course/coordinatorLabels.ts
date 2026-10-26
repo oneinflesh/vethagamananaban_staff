@@ -16,32 +16,25 @@ function labelSize(memberCount: number): LabelSize {
 }
 
 function packSheets(coordinators: Coordinator[]): LabelRow[][] {
-  const bySize: Record<LabelSize, Coordinator[]> = { normal: [], a6: [], a5: [], a4: [] }
-  coordinators.forEach((coordinator) =>
-    bySize[labelSize(coordinator.member_count)].push(coordinator)
-  )
+  const ordered = [...coordinators].sort((left, right) => left.number - right.number)
   const rows: LabelRow[] = []
-  for (const size of ['a4', 'a5', 'a6', 'normal'] as const) {
-    const entries = bySize[size]
-    for (let index = 0; index < entries.length; index += labelsPerRow[size]) {
-      rows.push({
-        size,
-        coordinators: entries.slice(index, index + labelsPerRow[size]),
-        height: rowHeight[size]
-      })
+  for (const coordinator of ordered) {
+    const size = labelSize(coordinator.member_count)
+    const last = rows.at(-1)
+    if (last?.size === size && last.coordinators.length < labelsPerRow[size]) {
+      last.coordinators.push(coordinator)
+    } else {
+      rows.push({ size, coordinators: [coordinator], height: rowHeight[size] })
     }
   }
   const sheets: LabelRow[][] = []
   rows.forEach((row) => {
-    const matchingSheet = sheets.find(
-      (sheet) =>
-        sheet.reduce((height, item) => height + item.height, 0) +
-          sheet.length * rowGap +
-          row.height <=
-        sheetHeight
-    )
-    if (matchingSheet) matchingSheet.push(row)
-    else sheets.push([row])
+    const last = sheets.at(-1)
+    if (last && last.reduce((height, item) => height + item.height, 0) + last.length * rowGap + row.height <= sheetHeight) {
+      last.push(row)
+    } else {
+      sheets.push([row])
+    }
   })
   return sheets
 }
