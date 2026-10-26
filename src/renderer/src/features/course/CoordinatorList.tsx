@@ -171,6 +171,9 @@ export default function CoordinatorList({
             layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' }
           }}
         >
+          <Column title="Coordinator no." data="number">
+            {(_value, _type, row: Coordinator) => `C-${row.number}`}
+          </Column>
           <Column title="BBS number" data="bbs_number" options={{ defaultContent: '' }} />
           <Column title="Coordinator" data="name">
             {(_value, _type, row: Coordinator) => (

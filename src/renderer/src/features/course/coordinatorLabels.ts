@@ -56,7 +56,7 @@ function createLabel(page: Document, coordinator: Coordinator): HTMLElement {
   }
   const name = page.createElement('p')
   name.className = 'address-name'
-  name.textContent = coordinator.name
+  name.textContent = `C-${coordinator.number} ${coordinator.name}`
   label.append(name)
   const lines = [
     coordinator.address_line1,

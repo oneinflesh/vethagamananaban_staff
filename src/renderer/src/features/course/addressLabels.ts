@@ -2,10 +2,10 @@ import type { Candidate } from './courseApi'
 
 export type PaperSize = 'A3' | 'A4'
 
-function careOfLine(candidate: Candidate): string {
+function coordinatorLine(candidate: Candidate): string {
   const coordinator = candidate.coordinator
   if (!coordinator) return ''
-  return `c/o ${coordinator.name}${coordinator.bbs_number ? ` (${coordinator.bbs_number})` : ''}`
+  return `C-${coordinator.number} ${coordinator.name}${coordinator.bbs_number ? ` (${coordinator.bbs_number})` : ''}`
 }
 
 function labelLines(candidate: Candidate): string[] {
@@ -18,7 +18,7 @@ function labelLines(candidate: Candidate): string[] {
     candidate.district,
     [candidate.state, candidate.postal_code].filter(Boolean).join(' - '),
     candidate.phone,
-    careOfLine(candidate)
+    coordinatorLine(candidate)
   ].filter(Boolean)
 }
 
@@ -45,6 +45,7 @@ function printSheets(
     p { margin: 0; }
     p:first-child { font-weight: 700; }
     p.address-name { font-size: ${paper === 'A4' ? '12pt' : '14pt'}; font-weight: 700; line-height: 1.15; margin-bottom: 1mm; }
+    p.coordinator-line { font-weight: 700; }
     @media screen { body { padding: 5mm; background: #ddd; } section { background: white; width: ${paper === 'A3' ? '287mm' : '200mm'}; margin: 0 auto 5mm; } }
   `
   page.head.append(style)
@@ -59,6 +60,7 @@ function printSheets(
     address.forEach((line, lineIndex) => {
       const paragraph = page.createElement('p')
       if (lineIndex === nameIndex) paragraph.className = 'address-name'
+      if (lineIndex === address.length - 1 && line.startsWith('C-')) paragraph.className = 'coordinator-line'
       paragraph.textContent = line
       label.append(paragraph)
     })
@@ -96,7 +98,7 @@ export function exportAddressCsv(candidates: Candidate[]): void {
     'State',
     'Pincode',
     'Phone',
-    'Care of'
+    'Coordinator'
   ]
   const quote = (value: unknown): string => `"${String(value ?? '').replaceAll('"', '""')}"`
   const csv = [
@@ -112,7 +114,7 @@ export function exportAddressCsv(candidates: Candidate[]): void {
         candidate.state,
         candidate.postal_code,
         candidate.phone,
-        careOfLine(candidate)
+        coordinatorLine(candidate)
       ]
         .map(quote)
         .join(',')

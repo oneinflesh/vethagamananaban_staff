@@ -106,7 +106,7 @@ export default function CoordinatorDetails({
         <Button variant="outline" onClick={onBack}>
           ← Coordinators
         </Button>
-        <h1>{coordinator?.name || 'Coordinator'}</h1>
+        <h1>{coordinator ? `C-${coordinator.number} ${coordinator.name}` : 'Coordinator'}</h1>
         <span>{coordinator?.member_count ?? 0} people</span>
         <Button
           variant="outline"
