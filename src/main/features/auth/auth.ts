@@ -20,11 +20,26 @@ class ApiError extends Error {
   }
 }
 
+function apiErrorMessage(data: unknown, status: number): string {
+  if (typeof data === 'string' && data.trim()) return data
+  if (data && typeof data === 'object') {
+    const details = Object.entries(data).flatMap(([field, value]) => {
+      const messages = Array.isArray(value) ? value : [value]
+      return messages
+        .filter((message): message is string => typeof message === 'string' && !!message.trim())
+        .map((message) =>
+          ['message', 'detail', 'non_field_errors'].includes(field) ? message : `${field}: ${message}`
+        )
+    })
+    if (details.length) return details.join(' ')
+  }
+  return `Request failed (HTTP ${status}).`
+}
+
 async function request<T>(path: string, init: RequestInit): Promise<T> {
   const response = await fetch(`${apiBase}${path}`, { ...init, signal: AbortSignal.timeout(15000) })
-  const data = await response.json()
-  if (!response.ok)
-    throw new ApiError(data.message || data.detail || 'Sign-in failed', response.status)
+  const data: unknown = await response.json().catch(() => null)
+  if (!response.ok) throw new ApiError(apiErrorMessage(data, response.status), response.status)
   return data as T
 }
 

@@ -144,8 +144,10 @@ export default function ManualRegistrationPage({
     setSaving(true)
     setError('')
     try {
+      const { coordinator_key, ...registration } = form
       const result = await createManualRegistration(options.course.course_key, {
-        ...form,
+        ...registration,
+        ...(registrationType === 'COORDINATOR' ? { coordinator_key } : {}),
         mode: 'OFFLINE',
         country,
         account_phone: form.phone,
