@@ -6,7 +6,7 @@ import FullScreenLoader from '../shell/FullScreenLoader'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
 import {
   createManualRegistration,
-  getCoordinators,
+  getCoordinatorPage,
   getRegistrationOptions,
   type Candidate,
   type Coordinator,
@@ -74,8 +74,12 @@ export default function ManualRegistrationPage({
 }): React.JSX.Element {
   const [options, setOptions] = useState<RegistrationOptions | null>(null)
   const [coordinators, setCoordinators] = useState<Coordinator[]>([])
+  const [coordinatorSearch, setCoordinatorSearch] = useState('')
+  const [selectedCoordinator, setSelectedCoordinator] = useState<Coordinator | null>(null)
   const [form, setForm] = useState<Form>(initial)
-  const [registrationType, setRegistrationType] = useState<'INDIVIDUAL' | 'COORDINATOR'>('INDIVIDUAL')
+  const [registrationType, setRegistrationType] = useState<'INDIVIDUAL' | 'COORDINATOR'>(
+    'INDIVIDUAL'
+  )
   const [created, setCreated] = useState<Candidate | null>(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -84,11 +88,10 @@ export default function ManualRegistrationPage({
 
   useEffect(() => {
     let active = true
-    Promise.all([getRegistrationOptions(), getCoordinators(country)])
-      .then(([result, coordinatorPage]) => {
+    getRegistrationOptions()
+      .then((result) => {
         if (active) {
           setOptions(result)
-          setCoordinators(coordinatorPage.results)
           setForm((current) => ({
             ...current,
             language:
@@ -107,6 +110,25 @@ export default function ManualRegistrationPage({
       active = false
     }
   }, [country, finish])
+
+  useEffect(() => {
+    if (registrationType !== 'COORDINATOR' || !coordinatorSearch.trim()) return
+    let active = true
+    const timer = window.setTimeout(() => {
+      getCoordinatorPage(country, 1, { search: coordinatorSearch.trim(), status: 'ACTIVE' })
+        .then((page) => {
+          if (active) setCoordinators(page.results)
+        })
+        .catch((cause) => {
+          if (active)
+            setError(cause instanceof Error ? cause.message : 'Could not search coordinators')
+        })
+    }, 300)
+    return () => {
+      active = false
+      window.clearTimeout(timer)
+    }
+  }, [country, registrationType, coordinatorSearch])
 
   async function submit(event: React.FormEvent): Promise<void> {
     event.preventDefault()
@@ -149,8 +171,7 @@ export default function ManualRegistrationPage({
     }
   }
 
-  const deliveryState =
-    coordinators.find((item) => item.coordinator_key === form.coordinator_key)?.state || form.state
+  const deliveryState = selectedCoordinator?.state || form.state
   const priceState = deliveryState.replace(/\s/g, '').toLowerCase() === 'tamilnadu'
   const total = options
     ? Number(options.course.offline_registration_fee) +
@@ -185,6 +206,7 @@ export default function ManualRegistrationPage({
             onClick={() => {
               setCreated(null)
               setRegistrationType('INDIVIDUAL')
+              setSelectedCoordinator(null)
               setForm({
                 ...initial,
                 language:
@@ -219,6 +241,7 @@ export default function ManualRegistrationPage({
                     onChange={(event) => {
                       const type = event.target.value as 'INDIVIDUAL' | 'COORDINATOR'
                       setRegistrationType(type)
+                      setSelectedCoordinator(null)
                       setForm((current) => ({ ...current, coordinator_key: '' }))
                     }}
                   >
@@ -226,21 +249,55 @@ export default function ManualRegistrationPage({
                     <option value="COORDINATOR">Under coordinator</option>
                   </select>
                 </label>
-                {registrationType === 'COORDINATOR' && <label>
-                  Active coordinator
-                  <select
-                    required
-                    value={form.coordinator_key}
-                    onChange={(event) => setForm({ ...form, coordinator_key: event.target.value })}
-                  >
-                    <option value="">Select coordinator</option>
-                    {coordinators.filter((coordinator) => coordinator.status === 'ACTIVE').sort((left, right) => left.number - right.number).map((coordinator) => (
-                      <option key={coordinator.coordinator_key} value={coordinator.coordinator_key}>
-                        {coordinator.name} C-{coordinator.number}
-                      </option>
-                    ))}
-                  </select>
-                </label>}
+                {registrationType === 'COORDINATOR' && (
+                  <>
+                    <label>
+                      Search coordinator
+                      <Input
+                        value={coordinatorSearch}
+                        onChange={(event) => setCoordinatorSearch(event.target.value)}
+                        placeholder="Name or C-number"
+                      />
+                    </label>
+                    <label>
+                      Active coordinator
+                      <select
+                        required
+                        value={form.coordinator_key}
+                        onChange={(event) => {
+                          const value = event.target.value
+                          setForm({ ...form, coordinator_key: value })
+                          setSelectedCoordinator(
+                            value
+                              ? (coordinators.find((item) => item.coordinator_key === value) ??
+                                  selectedCoordinator)
+                              : null
+                          )
+                        }}
+                      >
+                        <option value="">Search to select a coordinator</option>
+                        {(selectedCoordinator &&
+                        !coordinators.some(
+                          (item) => item.coordinator_key === selectedCoordinator.coordinator_key
+                        )
+                          ? [selectedCoordinator, ...(coordinatorSearch.trim() ? coordinators : [])]
+                          : coordinatorSearch.trim()
+                            ? coordinators
+                            : selectedCoordinator
+                              ? [selectedCoordinator]
+                              : []
+                        ).map((coordinator) => (
+                          <option
+                            key={coordinator.coordinator_key}
+                            value={coordinator.coordinator_key}
+                          >
+                            {coordinator.name} C-{coordinator.number}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </>
+                )}
                 <label>
                   Gender
                   <select
