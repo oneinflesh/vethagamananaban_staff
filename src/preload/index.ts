@@ -80,6 +80,10 @@ const api = {
   courseUploadCoordinatorPhoto: (key: string, bytes: Uint8Array, name: string) =>
     ipcRenderer.invoke('course:upload-coordinator-photo', key, bytes, name),
   courseCoordinatorMembers: (key: string) => ipcRenderer.invoke('course:coordinator-members', key),
+  courseCoordinatorCandidateOptions: (key: string, search: string, page: number) =>
+    ipcRenderer.invoke('course:coordinator-candidate-options', key, search, page),
+  courseCoordinatorUpdateMembers: (key: string, additions: string[], removals: string[]) =>
+    ipcRenderer.invoke('course:coordinator-update-members', key, additions, removals),
   courseSetCoordinatorMembers: (key: string, keys: string[]) =>
     ipcRenderer.invoke('course:set-coordinator-members', key, keys),
   courseUpdateCandidate: (key: string, data: unknown) =>

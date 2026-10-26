@@ -203,6 +203,16 @@ export type CoordinatorMember = {
   phone: string
   address: string
 }
+export type CoordinatorCandidateOption = {
+  enrollment_key: string
+  bbs_number: string
+  name: string
+  district: string
+  state: string
+  phone: string
+  selected: boolean
+}
+export type CoordinatorCandidatePage = { count: number; results: CoordinatorCandidateOption[] }
 
 export type MonthlyStudent = {
   enrollment_key: string
@@ -329,6 +339,18 @@ export async function uploadCoordinatorPhoto(key: string, file: File): Promise<C
 }
 export const getCoordinatorMembers = (key: string): Promise<CoordinatorMember[]> =>
   window.office.courseCoordinatorMembers(key)
+export const getCoordinatorCandidateOptions = (
+  key: string,
+  search: string,
+  page: number
+): Promise<CoordinatorCandidatePage> =>
+  window.office.courseCoordinatorCandidateOptions(key, search, page)
+export const updateCoordinatorMembers = (
+  key: string,
+  additions: string[],
+  removals: string[]
+): Promise<{ added: number; removed: number }> =>
+  window.office.courseCoordinatorUpdateMembers(key, additions, removals)
 export const setCoordinatorMembers = (key: string, keys: string[]): Promise<CoordinatorMember[]> =>
   window.office.courseSetCoordinatorMembers(key, keys)
 export const getMonthlySummary = (examKey: string, country: string): Promise<MonthlySummary> =>

@@ -239,6 +239,27 @@ export function uploadCoordinatorPhoto(
 }
 export const getCoordinatorMembers = (key: string): Promise<unknown> =>
   authorizedGet(`staff/course-coordinators/${encodeURIComponent(key)}/members/`)
+export const getCoordinatorCandidateOptions = (
+  key: string,
+  search: string,
+  page: number
+): Promise<unknown> => {
+  const params = new URLSearchParams({ page: String(page), page_size: '20' })
+  if (search) params.set('search', search)
+  return authorizedGet(
+    `staff/course-coordinators/${encodeURIComponent(key)}/candidate-options/?${params}`
+  )
+}
+export const updateCoordinatorMembers = (
+  key: string,
+  addKeys: string[],
+  removeKeys: string[]
+): Promise<unknown> =>
+  authorizedRequest(`staff/course-coordinators/${encodeURIComponent(key)}/update-members/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ add_keys: addKeys, remove_keys: removeKeys })
+  })
 export const setCoordinatorMembers = (key: string, enrollmentKeys: string[]): Promise<unknown> =>
   authorizedRequest(`staff/course-coordinators/${encodeURIComponent(key)}/members/`, {
     method: 'POST',

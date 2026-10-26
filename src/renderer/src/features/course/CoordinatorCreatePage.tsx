@@ -5,7 +5,7 @@ import FullScreenLoader from '../shell/FullScreenLoader'
 import { useNotifications } from '../notifications/Notifications'
 import {
   createCoordinator,
-  getAllCandidates,
+  getCandidates,
   getRegistrationOptions,
   uploadCoordinatorPhoto,
   type Candidate
@@ -61,6 +61,7 @@ export default function CoordinatorCreatePage({
   const [kind, setKind] = useState<'candidate' | 'standalone'>('candidate')
   const [candidateKey, setCandidateKey] = useState('')
   const [candidateSearch, setCandidateSearch] = useState('')
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null)
   const [form, setForm] = useState<Form>(emptyForm)
   const [photo, setPhoto] = useState<File | null>(null)
   const [loading, setLoading] = useState(true)
@@ -70,11 +71,10 @@ export default function CoordinatorCreatePage({
 
   useEffect(() => {
     let active = true
-    Promise.all([getRegistrationOptions(), getAllCandidates(country, 'OFFLINE', 'ACTIVE')])
-      .then(([options, people]) => {
+    getRegistrationOptions()
+      .then((options) => {
         if (!active) return
         setCourseKey(options.course.course_key)
-        setCandidates(people)
       })
       .catch((cause) => {
         if (active) setError(cause instanceof Error ? cause.message : 'Could not load candidates')
@@ -87,14 +87,33 @@ export default function CoordinatorCreatePage({
     }
   }, [country])
 
-  const selectedCandidate = candidates.find(
-    (candidate) => candidate.enrollment_key === candidateKey
-  )
-  const visibleCandidates = candidates.filter((candidate) =>
-    `${candidate.bbs_identifier} ${candidate.full_name}`
-      .toLowerCase()
-      .includes(candidateSearch.toLowerCase())
-  )
+  useEffect(() => {
+    if (kind !== 'candidate' || !candidateSearch.trim()) {
+      return
+    }
+    let active = true
+    const timer = window.setTimeout(() => {
+      getCandidates(country, 1, 'OFFLINE', 'ACTIVE', candidateSearch.trim())
+        .then((page) => {
+          if (active) setCandidates(page.results)
+        })
+        .catch((cause) => {
+          if (active)
+            setError(cause instanceof Error ? cause.message : 'Could not search candidates')
+        })
+    }, 300)
+    return () => {
+      active = false
+      window.clearTimeout(timer)
+    }
+  }, [country, kind, candidateSearch])
+
+  const matchingCandidates = candidateSearch.trim() ? candidates : []
+  const visibleCandidates =
+    selectedCandidate &&
+    !matchingCandidates.some((item) => item.enrollment_key === selectedCandidate.enrollment_key)
+      ? [selectedCandidate, ...matchingCandidates]
+      : matchingCandidates
 
   async function save(): Promise<void> {
     if (!courseKey || saving) return
@@ -172,9 +191,17 @@ export default function CoordinatorCreatePage({
               Candidate
               <select
                 value={candidateKey}
-                onChange={(event) => setCandidateKey(event.target.value)}
+                onChange={(event) => {
+                  setCandidateKey(event.target.value)
+                  setSelectedCandidate(
+                    event.target.value
+                      ? (candidates.find((item) => item.enrollment_key === event.target.value) ??
+                          selectedCandidate)
+                      : null
+                  )
+                }}
               >
-                <option value="">Select candidate</option>
+                <option value="">Search to select a candidate</option>
                 {visibleCandidates.map((candidate) => (
                   <option value={candidate.enrollment_key} key={candidate.enrollment_key}>
                     {candidate.bbs_identifier} · {candidate.full_name}

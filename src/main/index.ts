@@ -37,6 +37,8 @@ import {
   updateCoordinatorStatus,
   uploadCoordinatorPhoto,
   getCoordinatorMembers,
+  getCoordinatorCandidateOptions,
+  updateCoordinatorMembers,
   setCoordinatorMembers,
   updateCandidate,
   uploadCandidatePhoto
@@ -182,6 +184,12 @@ app.whenReady().then(() => {
     uploadCoordinatorPhoto(key, bytes, name)
   )
   ipcMain.handle('course:coordinator-members', (_event, key) => getCoordinatorMembers(key))
+  ipcMain.handle('course:coordinator-candidate-options', (_event, key, search, page) =>
+    getCoordinatorCandidateOptions(key, search, page)
+  )
+  ipcMain.handle('course:coordinator-update-members', (_event, key, additions, removals) =>
+    updateCoordinatorMembers(key, additions, removals)
+  )
   ipcMain.handle('course:set-coordinator-members', (_event, key, keys) =>
     setCoordinatorMembers(key, keys)
   )

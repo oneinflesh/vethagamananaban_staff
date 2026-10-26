@@ -124,6 +124,16 @@ interface Window {
     courseCoordinatorMembers(
       key: string
     ): Promise<import('./features/course/courseApi').CoordinatorMember[]>
+    courseCoordinatorCandidateOptions(
+      key: string,
+      search: string,
+      page: number
+    ): Promise<import('./features/course/courseApi').CoordinatorCandidatePage>
+    courseCoordinatorUpdateMembers(
+      key: string,
+      additions: string[],
+      removals: string[]
+    ): Promise<{ added: number; removed: number }>
     courseSetCoordinatorMembers(
       key: string,
       keys: string[]
