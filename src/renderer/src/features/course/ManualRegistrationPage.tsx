@@ -101,7 +101,6 @@ export default function ManualRegistrationPage({
   const { loading, leaving, finish } = useSmoothLoading()
 
   useEffect(() => {
-    if (country === 'IN') return
     let active = true
     getRegistrationOptions()
       .then((result) => {
@@ -127,6 +126,7 @@ export default function ManualRegistrationPage({
   }, [country, finish])
 
   useEffect(() => {
+    if (country === 'IN') return
     let active = true
     const timer = window.setTimeout(() => {
       getCandidateFilterOptions(country, '', '', form.state)
