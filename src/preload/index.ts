@@ -53,7 +53,12 @@ const api = {
     pending: boolean,
     filters: unknown
   ) => ipcRenderer.invoke('course:all-candidates', country, mode, status, pending, filters),
-  courseCoordinators: (country: string) => ipcRenderer.invoke('course:coordinators', country),
+  courseCoordinators: (country: string, filters: unknown) =>
+    ipcRenderer.invoke('course:coordinators', country, filters),
+  courseCoordinatorPage: (country: string, page: number, filters: unknown) =>
+    ipcRenderer.invoke('course:coordinator-page', country, page, filters),
+  courseCoordinatorFilterOptions: (country: string, state: string) =>
+    ipcRenderer.invoke('course:coordinator-filter-options', country, state),
   courseCoordinatorCount: (country: string) =>
     ipcRenderer.invoke('course:coordinator-count', country),
   courseRegistrationOptions: () => ipcRenderer.invoke('course:registration-options'),

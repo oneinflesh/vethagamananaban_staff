@@ -94,12 +94,20 @@ export async function getAllCandidates(
   return results
 }
 export async function getCoordinators(
-  country: string
+  country: string,
+  filters: {
+    search?: string
+    status?: string
+    state?: string
+    district?: string
+    ordering?: string
+  } = {}
 ): Promise<{ count: number; results: unknown[] }> {
   const results: unknown[] = []
   let page = 1
   while (true) {
     const params = new URLSearchParams({ country, page: String(page) })
+    for (const [name, value] of Object.entries(filters)) if (value) params.set(name, value)
     const response = await authorizedGet<{ count: number; results: unknown[] }>(
       `staff/course-coordinators/?${params}`
     )
@@ -108,6 +116,26 @@ export async function getCoordinators(
       return { count: response.count, results }
     page += 1
   }
+}
+export function getCoordinatorPage(
+  country: string,
+  page: number,
+  filters: {
+    search?: string
+    status?: string
+    state?: string
+    district?: string
+    ordering?: string
+  }
+): Promise<unknown> {
+  const params = new URLSearchParams({ country, page: String(page), page_size: '20' })
+  for (const [name, value] of Object.entries(filters)) if (value) params.set(name, value)
+  return authorizedGet(`staff/course-coordinators/?${params}`)
+}
+export function getCoordinatorFilterOptions(country: string, state: string): Promise<unknown> {
+  const params = new URLSearchParams({ country })
+  if (state) params.set('state', state)
+  return authorizedGet(`staff/course-coordinators/filter-options/?${params}`)
 }
 export async function getCoordinatorCount(country: string): Promise<number> {
   const params = new URLSearchParams({ country, page: '1' })

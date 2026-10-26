@@ -188,6 +188,13 @@ export type Coordinator = {
   member_count: number
   photo_url: string
 }
+export type CoordinatorFilters = {
+  search?: string
+  status?: string
+  state?: string
+  district?: string
+  ordering?: string
+}
 export type CoordinatorMember = {
   enrollment_key: string
   bbs_number: string
@@ -263,8 +270,20 @@ export const getAllCandidates = (
 ): Promise<Candidate[]> =>
   window.office.courseAllCandidates(country, mode, status, pending, filters)
 export const getCoordinators = (
-  country: string
-): Promise<{ count: number; results: Coordinator[] }> => window.office.courseCoordinators(country)
+  country: string,
+  filters: CoordinatorFilters = {}
+): Promise<{ count: number; results: Coordinator[] }> =>
+  window.office.courseCoordinators(country, filters)
+export const getCoordinatorPage = (
+  country: string,
+  page: number,
+  filters: CoordinatorFilters = {}
+): Promise<{ count: number; results: Coordinator[] }> =>
+  window.office.courseCoordinatorPage(country, page, filters)
+export const getCoordinatorFilterOptions = (
+  country: string,
+  state = ''
+): Promise<CandidateFilterOptions> => window.office.courseCoordinatorFilterOptions(country, state)
 export const getCoordinatorCount = (country: string): Promise<number> =>
   window.office.courseCoordinatorCount(country)
 export const getRegistrationOptions = (): Promise<RegistrationOptions> =>

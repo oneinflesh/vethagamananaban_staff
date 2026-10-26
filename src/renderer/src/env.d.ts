@@ -67,8 +67,18 @@ interface Window {
       filters: import('./features/course/courseApi').CandidateFilters
     ): Promise<import('./features/course/courseApi').Candidate[]>
     courseCoordinators(
-      country: string
+      country: string,
+      filters: import('./features/course/courseApi').CoordinatorFilters
     ): Promise<{ count: number; results: import('./features/course/courseApi').Coordinator[] }>
+    courseCoordinatorPage(
+      country: string,
+      page: number,
+      filters: import('./features/course/courseApi').CoordinatorFilters
+    ): Promise<{ count: number; results: import('./features/course/courseApi').Coordinator[] }>
+    courseCoordinatorFilterOptions(
+      country: string,
+      state: string
+    ): Promise<import('./features/course/courseApi').CandidateFilterOptions>
     courseCoordinatorCount(country: string): Promise<number>
     courseRegistrationOptions(): Promise<import('./features/course/courseApi').RegistrationOptions>
     courseManualRegistration(

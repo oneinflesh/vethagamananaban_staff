@@ -21,6 +21,8 @@ import {
   getAllCandidates,
   getCandidateCounts,
   getCoordinators,
+  getCoordinatorPage,
+  getCoordinatorFilterOptions,
   getCoordinatorCount,
   getRegistrationOptions,
   createManualRegistration,
@@ -147,7 +149,15 @@ app.whenReady().then(() => {
   ipcMain.handle('course:all-candidates', (_event, country, mode, status, pending, filters) =>
     getAllCandidates(country, mode, status, pending, filters)
   )
-  ipcMain.handle('course:coordinators', (_event, country) => getCoordinators(country))
+  ipcMain.handle('course:coordinators', (_event, country, filters) =>
+    getCoordinators(country, filters)
+  )
+  ipcMain.handle('course:coordinator-page', (_event, country, page, filters) =>
+    getCoordinatorPage(country, page, filters)
+  )
+  ipcMain.handle('course:coordinator-filter-options', (_event, country, state) =>
+    getCoordinatorFilterOptions(country, state)
+  )
   ipcMain.handle('course:coordinator-count', (_event, country) => getCoordinatorCount(country))
   ipcMain.handle('course:registration-options', () => getRegistrationOptions())
   ipcMain.handle('course:manual-registration', (_event, courseKey, data) =>
