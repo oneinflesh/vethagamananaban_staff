@@ -350,6 +350,12 @@ export const updateCoordinatorStatus = (
   keys: string[] = []
 ): Promise<{ status: string; candidates_changed: number }> =>
   window.office.courseUpdateCoordinatorStatus(key, status, keys)
+export const updateCoordinatorMemberStatus = (
+  key: string,
+  status: 'ACTIVE' | 'SUSPENDED',
+  keys: string[]
+): Promise<{ status: string; candidates_changed: number }> =>
+  window.office.courseUpdateCoordinatorMemberStatus(key, status, keys)
 export async function uploadCoordinatorPhoto(key: string, file: File): Promise<Coordinator> {
   return window.office.courseUploadCoordinatorPhoto(
     key,

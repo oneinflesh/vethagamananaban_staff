@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
 import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +9,7 @@ import {
   getCoordinator,
   getCoordinatorMemberPage,
   updateCoordinator,
+  updateCoordinatorMemberStatus,
   updateCoordinatorStatus,
   uploadCoordinatorPhoto,
   type Coordinator,
@@ -35,12 +36,16 @@ export default function CoordinatorDetails({
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [restoreOpen, setRestoreOpen] = useState(false)
-  const [restoreKeys, setRestoreKeys] = useState<Set<string>>(new Set())
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set())
+  const [selectedStatuses, setSelectedStatuses] = useState<
+    Map<string, CoordinatorMember['status']>
+  >(new Map())
   const [search, setSearch] = useState('')
+  const [menu, setMenu] = useState<{ x: number; y: number; person: CoordinatorMember } | null>(null)
   const table = useRef<DataTableRef>(null)
   const tableWrap = useRef<HTMLDivElement>(null)
   const tableReady = useRef(false)
-  const restoreKeysRef = useRef(restoreKeys)
+  const selectedKeysRef = useRef(selectedKeys)
   const query = useRef({ coordinatorKey, search, restoreOpen })
   useLayoutEffect(() => {
     query.current = { coordinatorKey, search, restoreOpen }
@@ -75,21 +80,31 @@ export default function CoordinatorDetails({
     return () => window.clearTimeout(timer)
   }, [coordinatorKey, search, restoreOpen])
   useEffect(() => {
-    restoreKeysRef.current = restoreKeys
-    syncVisibleRestoreCheckboxes()
-  }, [restoreKeys, members])
-  function syncVisibleRestoreCheckboxes(): void {
+    selectedKeysRef.current = selectedKeys
+    syncVisibleSelection()
+  }, [selectedKeys, members])
+  function syncVisibleSelection(): void {
     tableWrap.current
-      ?.querySelectorAll<HTMLInputElement>('input[data-restore-key]')
+      ?.querySelectorAll<HTMLInputElement>('input[data-person-key]')
       .forEach((input) => {
-        input.checked = restoreKeysRef.current.has(input.dataset.restoreKey ?? '')
+        input.checked = selectedKeysRef.current.has(input.dataset.personKey ?? '')
       })
   }
-  function toggleRestoreKey(key: string, checked: boolean): void {
-    setRestoreKeys((current) => {
+  function toggleSelectedKey(key: string, checked: boolean): void {
+    setSelectedKeys((current) => {
       const next = new Set(current)
       if (checked) next.add(key)
       else next.delete(key)
+      return next
+    })
+    setSelectedStatuses((current) => {
+      const next = new Map(current)
+      if (checked) {
+        const status =
+          members.find((item) => item.enrollment_key === key)?.status ??
+          (coordinator?.enrollment_key === key ? coordinator.enrollment_status : undefined)
+        if (status) next.set(key, status)
+      } else next.delete(key)
       return next
     })
   }
@@ -139,7 +154,7 @@ export default function CoordinatorDetails({
   }
   async function changeStatus(status: Coordinator['status']): Promise<void> {
     if (!coordinator) return
-    if (status === 'ACTIVE' && coordinator.status === 'ACTIVE' && !restoreKeys.size) return
+    if (status === 'ACTIVE' && coordinator.status === 'ACTIVE' && !selectedKeys.size) return
     if (
       status !== 'ACTIVE' &&
       !window.confirm(
@@ -152,12 +167,13 @@ export default function CoordinatorDetails({
       const result = await updateCoordinatorStatus(
         coordinatorKey,
         status,
-        status === 'ACTIVE' ? [...restoreKeys] : []
+        status === 'ACTIVE' ? [...selectedKeys] : []
       )
       setCoordinator(await getCoordinator(coordinatorKey))
       table.current?.dt()?.ajax.reload(undefined, false)
       setRestoreOpen(false)
-      setRestoreKeys(new Set())
+      setSelectedKeys(new Set())
+      setSelectedStatuses(new Map())
       notify.success(
         `${
           status === 'ACTIVE'
@@ -175,10 +191,78 @@ export default function CoordinatorDetails({
       setSaving(false)
     }
   }
+  async function changePeopleStatus(status: 'ACTIVE' | 'SUSPENDED', keys: string[]): Promise<void> {
+    if (!coordinator || coordinator.status !== 'ACTIVE' || !keys.length) return
+    if (
+      status === 'SUSPENDED' &&
+      !window.confirm(`Discontinue ${keys.length} selected person${keys.length === 1 ? '' : 's'}?`)
+    )
+      return
+    setSaving(true)
+    setMenu(null)
+    try {
+      const result = await updateCoordinatorMemberStatus(coordinatorKey, status, keys)
+      const changedKeys = new Set(keys)
+      setSelectedKeys((current) => new Set([...current].filter((key) => !changedKeys.has(key))))
+      setSelectedStatuses((current) => {
+        const next = new Map(current)
+        changedKeys.forEach((key) => next.delete(key))
+        return next
+      })
+      setCoordinator(await getCoordinator(coordinatorKey))
+      table.current?.dt()?.ajax.reload(undefined, false)
+      notify.success(
+        `${result.candidates_changed} ${result.candidates_changed === 1 ? 'person' : 'people'} ${status === 'ACTIVE' ? 'restored' : 'discontinued'}`
+      )
+    } catch (cause) {
+      notify.error(cause instanceof Error ? cause.message : 'Could not update selected people')
+    } finally {
+      setSaving(false)
+    }
+  }
+  function openPersonMenu(event: MouseEvent<HTMLDivElement>): void {
+    const row = (event.target as HTMLElement).closest('tr')
+    const person = members.find((item) => item.enrollment_key === row?.id)
+    if (!person) return
+    event.preventDefault()
+    setMenu({
+      x: Math.min(event.clientX, window.innerWidth - 230),
+      y: Math.max(8, Math.min(event.clientY, window.innerHeight - 180)),
+      person
+    })
+  }
+  function toggleVisibleSelection(): void {
+    const visible = members.map((item) => item.enrollment_key)
+    if (!visible.length) return
+    const allSelected = visible.every((key) => selectedKeys.has(key))
+    setSelectedKeys((current) => {
+      const next = new Set(current)
+      visible.forEach((key) => {
+        if (allSelected) next.delete(key)
+        else next.add(key)
+      })
+      return next
+    })
+    setSelectedStatuses((current) => {
+      const next = new Map(current)
+      members.forEach((item) => {
+        if (allSelected) next.delete(item.enrollment_key)
+        else next.set(item.enrollment_key, item.status)
+      })
+      return next
+    })
+  }
   const restorableCoordinator =
     coordinator?.enrollment_key && coordinator.enrollment_status !== 'ACTIVE' ? coordinator : null
+  const activeSelectedKeys = [...selectedKeys].filter(
+    (key) => selectedStatuses.get(key) === 'ACTIVE'
+  )
+  const restorableSelectedKeys = [...selectedKeys].filter((key) => {
+    const status = selectedStatuses.get(key)
+    return Boolean(status && status !== 'ACTIVE')
+  })
   return (
-    <section className="page course-page">
+    <section className="page course-page" onClick={() => menu && setMenu(null)}>
       <div className="course-toolbar">
         <Button variant="outline" onClick={onBack}>
           ← Coordinators
@@ -281,9 +365,9 @@ export default function CoordinatorDetails({
               <label className="coordinator-self-restore">
                 <input
                   type="checkbox"
-                  checked={restoreKeys.has(restorableCoordinator.enrollment_key!)}
+                  checked={selectedKeys.has(restorableCoordinator.enrollment_key!)}
                   onChange={(event) =>
-                    toggleRestoreKey(restorableCoordinator.enrollment_key!, event.target.checked)
+                    toggleSelectedKey(restorableCoordinator.enrollment_key!, event.target.checked)
                   }
                 />
                 Restore {restorableCoordinator.bbs_number} to Active
@@ -292,13 +376,8 @@ export default function CoordinatorDetails({
           </aside>
         </div>
       )}
-      <div className="coordinator-people-heading">
-        <div>
-          <h2>People under coordinator</h2>
-          <p>{coordinator?.member_count ?? 0} people assigned</p>
-        </div>
-      </div>
-      <div className="course-list-actions coordinator-people-actions">
+      <div className="coordinator-status-actions">
+        <span>Coordinator status</span>
         {coordinator?.status === 'ACTIVE' ? (
           <>
             <Button
@@ -323,14 +402,52 @@ export default function CoordinatorDetails({
             </Button>
           )
         )}
-        {coordinator?.status === 'ACTIVE' && (
+      </div>
+      <div className="coordinator-people-heading">
+        <div>
+          <h2>People under coordinator</h2>
+          <p>{coordinator?.member_count ?? 0} people assigned</p>
+        </div>
+      </div>
+      <div className="course-list-actions coordinator-people-actions">
+        <Button variant="outline" disabled={!members.length} onClick={toggleVisibleSelection}>
+          {members.length && members.every((item) => selectedKeys.has(item.enrollment_key))
+            ? 'Deselect visible'
+            : 'Select visible'}
+        </Button>
+        {selectedKeys.size > 0 && (
           <Button
             variant="outline"
-            disabled={saving || restoreKeys.size === 0}
-            onClick={() => void changeStatus('ACTIVE')}
+            disabled={saving}
+            onClick={() => {
+              setSelectedKeys(new Set())
+              setSelectedStatuses(new Map())
+            }}
           >
-            Restore selected ({restoreKeys.size})
+            Clear selection
           </Button>
+        )}
+        {coordinator?.status === 'ACTIVE' && (
+          <>
+            {activeSelectedKeys.length > 0 && (
+              <Button
+                variant="outline"
+                disabled={saving}
+                onClick={() => void changePeopleStatus('SUSPENDED', activeSelectedKeys)}
+              >
+                Discontinue selected ({activeSelectedKeys.length})
+              </Button>
+            )}
+            {restorableSelectedKeys.length > 0 && (
+              <Button
+                variant="outline"
+                disabled={saving}
+                onClick={() => void changePeopleStatus('ACTIVE', restorableSelectedKeys)}
+              >
+                Restore selected ({restorableSelectedKeys.length})
+              </Button>
+            )}
+          </>
         )}
         <Button
           variant="outline"
@@ -364,9 +481,9 @@ export default function CoordinatorDetails({
             <label>
               <input
                 type="checkbox"
-                checked={restoreKeys.has(restorableCoordinator.enrollment_key!)}
+                checked={selectedKeys.has(restorableCoordinator.enrollment_key!)}
                 onChange={(event) =>
-                  toggleRestoreKey(restorableCoordinator.enrollment_key!, event.target.checked)
+                  toggleSelectedKey(restorableCoordinator.enrollment_key!, event.target.checked)
                 }
               />{' '}
               {restorableCoordinator.bbs_number} {restorableCoordinator.name} ·{' '}
@@ -390,7 +507,12 @@ export default function CoordinatorDetails({
           </div>
         </div>
       )}
-      <div className="course-table-wrap" ref={tableWrap} onPointerDown={resizeColumns}>
+      <div
+        className="course-table-wrap"
+        ref={tableWrap}
+        onPointerDown={resizeColumns}
+        onContextMenu={openPersonMenu}
+      >
         <DataTable
           ref={table}
           className="display course-table"
@@ -433,7 +555,7 @@ export default function CoordinatorDetails({
             autoWidth: false,
             order: [],
             rowId: 'enrollment_key',
-            drawCallback: () => window.setTimeout(syncVisibleRestoreCheckboxes, 0),
+            drawCallback: () => window.setTimeout(syncVisibleSelection, 0),
             layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' }
           }}
         >
@@ -449,26 +571,55 @@ export default function CoordinatorDetails({
           <Column title="Phone" data="phone" />
           <Column title="Address" data="address" />
           <Column
-            title="Restore"
+            title="Select"
             data="enrollment_key"
             options={{ orderable: false, searchable: false }}
           >
-            {(_value, _type, row: CoordinatorMember) =>
-              row.status !== 'ACTIVE' ? (
-                <input
-                  type="checkbox"
-                  aria-label={`Restore ${row.name}`}
-                  data-restore-key={row.enrollment_key}
-                  defaultChecked={false}
-                  onChange={(event) => toggleRestoreKey(row.enrollment_key, event.target.checked)}
-                />
-              ) : (
-                ''
-              )
-            }
+            {(_value, _type, row: CoordinatorMember) => (
+              <input
+                type="checkbox"
+                aria-label={`Select ${row.name}`}
+                data-person-key={row.enrollment_key}
+                defaultChecked={false}
+                onChange={(event) => toggleSelectedKey(row.enrollment_key, event.target.checked)}
+              />
+            )}
           </Column>
         </DataTable>
       </div>
+      {menu && (
+        <div
+          className="course-context-menu course-context-menu--actions coordinator-person-menu"
+          style={{ left: menu.x, top: menu.y }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <span>
+            {menu.person.bbs_number} · {menu.person.name}
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              onCandidate(menu.person.enrollment_key)
+              setMenu(null)
+            }}
+          >
+            View candidate
+          </button>
+          {coordinator?.status === 'ACTIVE' && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() =>
+                void changePeopleStatus(menu.person.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE', [
+                  menu.person.enrollment_key
+                ])
+              }
+            >
+              {menu.person.status === 'ACTIVE' ? 'Discontinue' : 'Restore'}
+            </button>
+          )}
+        </div>
+      )}
       {loading && <FullScreenLoader message="Loading coordinator" leaving={leaving} />}
     </section>
   )

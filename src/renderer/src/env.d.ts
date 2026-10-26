@@ -116,6 +116,11 @@ interface Window {
       status: 'ACTIVE' | 'SUSPENDED' | 'DROPOUT',
       keys: string[]
     ): Promise<{ status: string; candidates_changed: number }>
+    courseUpdateCoordinatorMemberStatus(
+      key: string,
+      status: 'ACTIVE' | 'SUSPENDED',
+      keys: string[]
+    ): Promise<{ status: string; candidates_changed: number }>
     courseUploadCoordinatorPhoto(
       key: string,
       bytes: Uint8Array,

@@ -647,8 +647,25 @@
 .coordinator-people-heading {
   margin: 0 0 12px;
 }
+.coordinator-status-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 20px;
+}
+.coordinator-status-actions > span {
+  margin-right: 4px;
+  color: #806857;
+  font-size: 12px;
+}
 .coordinator-people-actions {
   margin-bottom: 12px;
+}
+.coordinator-person-menu > span {
+  padding: 8px 10px 5px;
+  color: #806857;
+  font-size: 12px;
 }
 @media (max-width: 900px) {
   .coordinator-detail-layout {
