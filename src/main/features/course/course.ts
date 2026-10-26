@@ -162,6 +162,16 @@ export const updateCoordinator = (key: string, data: unknown): Promise<unknown> 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   })
+export const updateCoordinatorStatus = (
+  key: string,
+  status: 'ACTIVE' | 'SUSPENDED' | 'DROPOUT',
+  enrollmentKeys: string[] = []
+): Promise<unknown> =>
+  authorizedRequest(`staff/course-coordinators/${encodeURIComponent(key)}/update-status/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status, enrollment_keys: enrollmentKeys })
+  })
 export function uploadCoordinatorPhoto(
   key: string,
   bytes: Uint8Array,

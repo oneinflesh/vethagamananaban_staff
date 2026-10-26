@@ -31,6 +31,7 @@ import {
   getCoordinator,
   createCoordinator,
   updateCoordinator,
+  updateCoordinatorStatus,
   uploadCoordinatorPhoto,
   getCoordinatorMembers,
   setCoordinatorMembers,
@@ -158,6 +159,9 @@ app.whenReady().then(() => {
   ipcMain.handle('course:coordinator', (_event, key) => getCoordinator(key))
   ipcMain.handle('course:create-coordinator', (_event, data) => createCoordinator(data))
   ipcMain.handle('course:update-coordinator', (_event, key, data) => updateCoordinator(key, data))
+  ipcMain.handle('course:update-coordinator-status', (_event, key, status, keys) =>
+    updateCoordinatorStatus(key, status, keys)
+  )
   ipcMain.handle('course:upload-coordinator-photo', (_event, key, bytes, name) =>
     uploadCoordinatorPhoto(key, bytes, name)
   )

@@ -56,7 +56,7 @@ export default function CoordinatorList({
     () =>
       records.filter(
         (row) =>
-          (!statusFilter || (row.enrollment_status ?? 'NONE') === statusFilter) &&
+          (!statusFilter || row.status === statusFilter) &&
           (!stateFilter || row.state === stateFilter) &&
           (!districtFilter || row.district === districtFilter)
       ),
@@ -102,14 +102,11 @@ export default function CoordinatorList({
           Status
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
             <option value="">All statuses</option>
-            {fieldOptions(records, 'enrollment_status').map((value) => (
+            {fieldOptions(records, 'status').map((value) => (
               <option key={value} value={value}>
                 {statusLabel(value)}
               </option>
             ))}
-            {records.some((row) => !row.enrollment_status) && (
-              <option value="NONE">No linked candidate</option>
-            )}
           </select>
         </label>
         <label className="course-list-filter">
@@ -189,6 +186,9 @@ export default function CoordinatorList({
                 {row.name}
               </button>
             )}
+          </Column>
+          <Column title="Status" data="status">
+            {(_value, _type, row: Coordinator) => statusLabel(row.status)}
           </Column>
           <Column title="Phone" data="phone" />
           <Column title="Email" data="email" />

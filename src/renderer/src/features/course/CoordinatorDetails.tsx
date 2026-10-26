@@ -9,6 +9,7 @@ import {
   getCoordinator,
   getCoordinatorMembers,
   updateCoordinator,
+  updateCoordinatorStatus,
   uploadCoordinatorPhoto,
   type Coordinator,
   type CoordinatorMember
@@ -32,6 +33,8 @@ export default function CoordinatorDetails({
   const [members, setMembers] = useState<CoordinatorMember[]>([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [restoreOpen, setRestoreOpen] = useState(false)
+  const [restoreKeys, setRestoreKeys] = useState<Set<string>>(new Set())
   const [search, setSearch] = useState('')
   const table = useRef<DataTableRef>(null)
   const notify = useNotifications()
@@ -100,6 +103,39 @@ export default function CoordinatorDetails({
       setSaving(false)
     }
   }
+  async function changeStatus(status: Coordinator['status']): Promise<void> {
+    if (!coordinator) return
+    if (status !== 'ACTIVE' && !window.confirm(
+      `${status === 'SUSPENDED' ? 'Discontinue' : 'Drop out'} C-${coordinator.number} and everyone under this coordinator?`
+    )) return
+    setSaving(true)
+    try {
+      const result = await updateCoordinatorStatus(
+        coordinatorKey, status, status === 'ACTIVE' ? [...restoreKeys] : []
+      )
+      const [details, people] = await Promise.all([
+        getCoordinator(coordinatorKey), getCoordinatorMembers(coordinatorKey)
+      ])
+      setCoordinator(details)
+      setMembers(people)
+      setRestoreOpen(false)
+      setRestoreKeys(new Set())
+      notify.success(`${status === 'ACTIVE' ? 'Coordinator restored' : status === 'SUSPENDED' ? 'Coordinator discontinued' : 'Coordinator dropped out'} · ${result.candidates_changed} candidates updated`)
+    } catch (cause) {
+      notify.error(cause instanceof Error ? cause.message : 'Could not change coordinator status')
+    } finally {
+      setSaving(false)
+    }
+  }
+  const restorable = [
+    ...(coordinator?.enrollment_key && coordinator.enrollment_status !== 'ACTIVE' ? [{
+      enrollment_key: coordinator.enrollment_key,
+      bbs_number: coordinator.bbs_number,
+      name: coordinator.name,
+      status: coordinator.enrollment_status || ''
+    }] : []),
+    ...members.filter((member) => member.status !== 'ACTIVE')
+  ]
   return (
     <section className="page course-page">
       <div className="course-toolbar">
@@ -107,7 +143,7 @@ export default function CoordinatorDetails({
           ← Coordinators
         </Button>
         <h1>{coordinator ? `C-${coordinator.number} ${coordinator.name}` : 'Coordinator'}</h1>
-        <span>{coordinator?.member_count ?? 0} people</span>
+        <span>{coordinator?.status === 'SUSPENDED' ? 'Discontinued' : coordinator?.status === 'DROPOUT' ? 'Dropout' : 'Active'} · {coordinator?.member_count ?? 0} people</span>
         <Button
           variant="outline"
           disabled={!coordinator}
@@ -121,6 +157,7 @@ export default function CoordinatorDetails({
         <div className="candidate-form coordinator-editor">
           <div className="candidate-form__readonly">
             <span>Country: {coordinator.country}</span>
+            <span>Status: {coordinator.status === 'SUSPENDED' ? 'Discontinued' : coordinator.status === 'DROPOUT' ? 'Dropout' : 'Active'}</span>
             <span>People: {coordinator.member_count}</span>
             {coordinator.enrollment_key && (
               <Button variant="link" onClick={() => onCandidate(coordinator.enrollment_key!)}>
@@ -178,9 +215,13 @@ export default function CoordinatorDetails({
         </div>
       )}
       <div className="course-list-actions">
+        {coordinator?.status === 'ACTIVE' ? <>
+          <Button variant="outline" disabled={saving} onClick={() => void changeStatus('SUSPENDED')}>Discontinue coordinator</Button>
+          <Button variant="outline" disabled={saving} onClick={() => void changeStatus('DROPOUT')}>Dropout coordinator</Button>
+        </> : coordinator && <Button variant="outline" disabled={saving} onClick={() => setRestoreOpen(true)}>Restore coordinator</Button>}
         <Button
           variant="outline"
-          disabled={!coordinator}
+          disabled={!coordinator || coordinator.status !== 'ACTIVE'}
           onClick={() => coordinator && onManagePeople(coordinator)}
         >
           Add people
@@ -198,6 +239,27 @@ export default function CoordinatorDetails({
           />
         </label>
       </div>
+      {restoreOpen && coordinator && <div className="candidate-form">
+        <h2>Restore C-{coordinator.number} {coordinator.name}</h2>
+        <p>Choose which candidates to restore to Active. Unchecked candidates keep their current status.</p>
+        {restorable.map((candidate) => <label key={candidate.enrollment_key}>
+          <input
+            type="checkbox"
+            checked={restoreKeys.has(candidate.enrollment_key)}
+            onChange={(event) => setRestoreKeys((current) => {
+              const next = new Set(current)
+              if (event.target.checked) next.add(candidate.enrollment_key)
+              else next.delete(candidate.enrollment_key)
+              return next
+            })}
+          /> {candidate.bbs_number} {candidate.name} · {candidate.status}
+        </label>)}
+        {!restorable.length && <p>No discontinued or dropout candidates to restore.</p>}
+        <div className="course-inline-actions">
+          <Button disabled={saving} onClick={() => void changeStatus('ACTIVE')}>Restore selected</Button>
+          <Button variant="outline" disabled={saving} onClick={() => setRestoreOpen(false)}>Cancel</Button>
+        </div>
+      </div>}
       <div className="course-table-wrap" onPointerDown={resizeColumns}>
         <DataTable
           ref={table}
@@ -222,6 +284,7 @@ export default function CoordinatorDetails({
             )}
           </Column>
           <Column title="Name" data="name" />
+          <Column title="Status" data="status" />
           <Column title="Phone" data="phone" />
           <Column title="Address" data="address" />
         </DataTable>

@@ -159,6 +159,7 @@ export type Coordinator = {
   number: number
   enrollment_key: string | null
   enrollment_status: string | null
+  status: 'ACTIVE' | 'SUSPENDED' | 'DROPOUT'
   bbs_number: string
   name: string
   phone: string
@@ -177,6 +178,7 @@ export type CoordinatorMember = {
   enrollment_key: string
   bbs_number: string
   name: string
+  status: string
   phone: string
   address: string
 }
@@ -268,6 +270,12 @@ export const createCoordinator = (data: unknown): Promise<Coordinator> =>
   window.office.courseCreateCoordinator(data)
 export const updateCoordinator = (key: string, data: unknown): Promise<Coordinator> =>
   window.office.courseUpdateCoordinator(key, data)
+export const updateCoordinatorStatus = (
+  key: string,
+  status: Coordinator['status'],
+  keys: string[] = []
+): Promise<{ status: string; candidates_changed: number }> =>
+  window.office.courseUpdateCoordinatorStatus(key, status, keys)
 export async function uploadCoordinatorPhoto(key: string, file: File): Promise<Coordinator> {
   return window.office.courseUploadCoordinatorPhoto(
     key,

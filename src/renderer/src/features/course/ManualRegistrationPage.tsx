@@ -75,6 +75,7 @@ export default function ManualRegistrationPage({
   const [options, setOptions] = useState<RegistrationOptions | null>(null)
   const [coordinators, setCoordinators] = useState<Coordinator[]>([])
   const [form, setForm] = useState<Form>(initial)
+  const [registrationType, setRegistrationType] = useState<'INDIVIDUAL' | 'COORDINATOR'>('INDIVIDUAL')
   const [created, setCreated] = useState<Candidate | null>(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -112,6 +113,10 @@ export default function ManualRegistrationPage({
     if (!options) return
     if (!form.exam_keys.length) {
       setError('Select released books to fund.')
+      return
+    }
+    if (registrationType === 'COORDINATOR' && !form.coordinator_key) {
+      setError('Select an active coordinator.')
       return
     }
     setSaving(true)
@@ -179,6 +184,7 @@ export default function ManualRegistrationPage({
             variant="outline"
             onClick={() => {
               setCreated(null)
+              setRegistrationType('INDIVIDUAL')
               setForm({
                 ...initial,
                 language:
@@ -207,19 +213,34 @@ export default function ManualRegistrationPage({
                   </label>
                 ))}
                 <label>
-                  Coordinator
+                  Registration type
                   <select
+                    value={registrationType}
+                    onChange={(event) => {
+                      const type = event.target.value as 'INDIVIDUAL' | 'COORDINATOR'
+                      setRegistrationType(type)
+                      setForm((current) => ({ ...current, coordinator_key: '' }))
+                    }}
+                  >
+                    <option value="INDIVIDUAL">Individual</option>
+                    <option value="COORDINATOR">Under coordinator</option>
+                  </select>
+                </label>
+                {registrationType === 'COORDINATOR' && <label>
+                  Active coordinator
+                  <select
+                    required
                     value={form.coordinator_key}
                     onChange={(event) => setForm({ ...form, coordinator_key: event.target.value })}
                   >
-                    <option value="">Individual candidate</option>
-                    {coordinators.map((coordinator) => (
+                    <option value="">Select coordinator</option>
+                    {coordinators.filter((coordinator) => coordinator.status === 'ACTIVE').sort((left, right) => left.number - right.number).map((coordinator) => (
                       <option key={coordinator.coordinator_key} value={coordinator.coordinator_key}>
-                        {coordinator.name}
+                        {coordinator.name} C-{coordinator.number}
                       </option>
                     ))}
                   </select>
-                </label>
+                </label>}
                 <label>
                   Gender
                   <select

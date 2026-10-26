@@ -89,6 +89,11 @@ interface Window {
       key: string,
       data: unknown
     ): Promise<import('./features/course/courseApi').Coordinator>
+    courseUpdateCoordinatorStatus(
+      key: string,
+      status: 'ACTIVE' | 'SUSPENDED' | 'DROPOUT',
+      keys: string[]
+    ): Promise<{ status: string; candidates_changed: number }>
     courseUploadCoordinatorPhoto(
       key: string,
       bytes: Uint8Array,
