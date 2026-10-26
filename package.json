@@ -15,11 +15,13 @@
     "build": "npm run typecheck && electron-vite build",
     "postinstall": "install-electron && electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
-    "build:win": "npm run build && electron-builder --win --publish never && node src/main/shell/publishRelease.mjs",
+    "build:win": "npm run build && electron-builder --win portable --publish never",
+    "release:portable": "npm run build:win && node src/main/shell/publishRelease.mjs",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux"
   },
   "dependencies": {
+    "@devzoy/indian-pincode": "^2.1.0",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@fontsource/anek-tamil": "^5.3.0",

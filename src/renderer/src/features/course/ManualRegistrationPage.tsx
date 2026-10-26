@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { listStates, listDistricts } from '@devzoy/indian-pincode'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useNotifications } from '../notifications/Notifications'
@@ -63,6 +64,12 @@ const fields: { key: keyof Form; label: string; required?: boolean; type?: strin
   { key: 'postal_code', label: 'Pincode' }
 ]
 
+const locationName = (name: string): string =>
+  name.toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase())
+const indianStates = listStates()
+  .map(locationName)
+  .sort((first, second) => first.localeCompare(second))
+
 export default function ManualRegistrationPage({
   country,
   onBack,
@@ -94,6 +101,7 @@ export default function ManualRegistrationPage({
   const { loading, leaving, finish } = useSmoothLoading()
 
   useEffect(() => {
+    if (country === 'IN') return
     let active = true
     getRegistrationOptions()
       .then((result) => {
@@ -134,6 +142,12 @@ export default function ManualRegistrationPage({
       window.clearTimeout(timer)
     }
   }, [country, form.state])
+
+  const stateOptions = country === 'IN' ? indianStates : locations.states
+  const districtOptions =
+    country === 'IN'
+      ? listDistricts(form.state.toUpperCase()).map(locationName)
+      : locations.districts
 
   useEffect(() => {
     if (registrationType !== 'COORDINATOR' || !coordinatorSearch.trim()) return
@@ -279,7 +293,7 @@ export default function ManualRegistrationPage({
                     }}
                   >
                     <option value="">Select state</option>
-                    {locations.states.map((state) => (
+                    {stateOptions.map((state) => (
                       <option key={state} value={state}>
                         {state}
                       </option>
@@ -312,7 +326,7 @@ export default function ManualRegistrationPage({
                     }}
                   >
                     <option value="">Select district</option>
-                    {locations.districts.map((district) => (
+                    {districtOptions.map((district) => (
                       <option key={district} value={district}>
                         {district}
                       </option>
