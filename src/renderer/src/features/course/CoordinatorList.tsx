@@ -270,7 +270,15 @@ export default function CoordinatorList({
           <Column title="Email" data="email" />
           <Column title="District" data="district" />
           <Column title="State" data="state" />
-          <Column title="People" data="member_count" />
+          <Column title="People" data="member_count">
+            {(_value, _type, row: Coordinator) => (
+              <span
+                title={`${row.active_member_count} active, ${row.discontinued_member_count} discontinued, ${row.dropout_member_count} dropout`}
+              >
+                {row.member_count} assigned
+              </span>
+            )}
+          </Column>
           <Column title="Details" data="coordinator_key" options={{ orderable: false }}>
             {(_value, _type, row: Coordinator) => (
               <div className="course-inline-actions">

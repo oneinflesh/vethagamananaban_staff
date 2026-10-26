@@ -406,9 +406,28 @@ export default function CoordinatorDetails({
       <div className="coordinator-people-heading">
         <div>
           <h2>People under coordinator</h2>
-          <p>{coordinator?.member_count ?? 0} people assigned</p>
         </div>
       </div>
+      {coordinator && (
+        <div className="coordinator-member-summary" aria-label="Coordinator people by status">
+          <div>
+            <strong>{coordinator.member_count}</strong>
+            <span>Assigned</span>
+          </div>
+          <div>
+            <strong>{coordinator.active_member_count}</strong>
+            <span>Active</span>
+          </div>
+          <div>
+            <strong>{coordinator.discontinued_member_count}</strong>
+            <span>Discontinued</span>
+          </div>
+          <div>
+            <strong>{coordinator.dropout_member_count}</strong>
+            <span>Dropout</span>
+          </div>
+        </div>
+      )}
       <div className="course-list-actions coordinator-people-actions">
         <Button variant="outline" disabled={!members.length} onClick={toggleVisibleSelection}>
           {members.length && members.every((item) => selectedKeys.has(item.enrollment_key))

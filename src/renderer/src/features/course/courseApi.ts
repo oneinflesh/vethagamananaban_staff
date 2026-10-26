@@ -187,6 +187,9 @@ export type Coordinator = {
   postal_code: string
   country: string
   member_count: number
+  active_member_count: number
+  discontinued_member_count: number
+  dropout_member_count: number
   photo_url: string
 }
 export type CoordinatorFilters = {

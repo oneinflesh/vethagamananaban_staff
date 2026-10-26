@@ -647,6 +647,33 @@
 .coordinator-people-heading {
   margin: 0 0 12px;
 }
+.coordinator-member-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.coordinator-member-summary > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid #e7ddd3;
+  border-radius: 10px;
+  background: #fff;
+}
+.coordinator-member-summary strong {
+  font-size: 19px;
+}
+.coordinator-member-summary span {
+  color: #806857;
+  font-size: 12px;
+}
+@media (max-width: 700px) {
+  .coordinator-member-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .coordinator-status-actions {
   display: flex;
   align-items: center;
