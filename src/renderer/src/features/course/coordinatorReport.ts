@@ -36,7 +36,7 @@ export function printCoordinatorReport(coordinators: Coordinator[], country: str
 
   const table = page.createElement('table')
   const header = table.createTHead().insertRow()
-  for (const title of ['C. no', 'Name', 'Is candidate', 'No. of people', 'District', 'State']) {
+  for (const title of ['C. no', 'Name', 'Is candidate', 'Active people', 'District', 'State']) {
     const cell = page.createElement('th')
     cell.textContent = title
     header.append(cell)
@@ -48,7 +48,10 @@ export function printCoordinatorReport(coordinators: Coordinator[], country: str
       `C-${coordinator.number}`,
       coordinator.name,
       coordinator.bbs_number || 'Coordinator',
-      String(coordinator.member_count + (coordinator.bbs_number ? 1 : 0)),
+      String(
+        coordinator.active_member_count +
+          (coordinator.bbs_number && coordinator.enrollment_status === 'ACTIVE' ? 1 : 0)
+      ),
       coordinator.district || '—',
       coordinator.state || '—'
     ]) {
