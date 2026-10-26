@@ -24,6 +24,7 @@ export type Candidate = {
   education: string
   photo_url: string
   coordinator: CoordinatorLink | null
+  parcel_coordinator: { coordinator_key: string; number: number; name: string } | null
   postal_delivery: {
     recipient_name: string
     phone: string

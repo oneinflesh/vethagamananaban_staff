@@ -314,6 +314,12 @@
 .course-table-wrap table.dataTable tbody tr:hover {
   background: #fffaf4;
 }
+.course-table-wrap table.dataTable tbody tr.course-row--under-coordinator > * {
+  background: #fff0ee !important;
+}
+.course-table-wrap table.dataTable tbody tr.course-row--under-coordinator:hover > * {
+  background: #ffe2df !important;
+}
 .course-table-wrap .dt-container {
   min-width: 0;
 }

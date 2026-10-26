@@ -53,7 +53,7 @@ export default function ShippingTable({
         <Column title="Sent date" data="shipped_at">
           {(_value, _type, row: ShipmentRow) => displayDate(row.shipped_at)}
         </Column>
-        <Column title="BBS / Order" data="reference" />
+        <Column title="C / BBS / Order" data="reference" />
         <Column title="Recipient" data="recipient" />
         <Column title="Phone" data="phone" />
         <Column title="District" data="district" />

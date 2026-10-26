@@ -146,41 +146,57 @@ export default function CandidateList({
   }
 
   async function shipSelected(): Promise<void> {
+    const grouped = new Map<string, Candidate[]>()
+    for (const candidate of (data ?? []).filter((item) => selected.has(item.enrollment_key))) {
+      const key = candidate.parcel_coordinator?.coordinator_key || candidate.enrollment_key
+      grouped.set(key, [...(grouped.get(key) ?? []), candidate])
+    }
     if (
       !selected.size ||
       !window.confirm(
-        `Mark the current book and ID card shipped for ${selected.size} selected candidates?`
+        `Ship ${selected.size} selected candidates in ${grouped.size} parcel${grouped.size === 1 ? '' : 's'}?`
       )
     )
       return
     setShipping(true)
     let shipped = 0
     const failures: string[] = []
-    for (const candidate of (data ?? []).filter((item) => selected.has(item.enrollment_key))) {
-      try {
-        const dispatch = await getInitialDispatch(candidate.enrollment_key)
-        if (!dispatch.wallet_funded)
-          throw new Error(
-            'This candidate has an older paid-book record; open the candidate to dispatch it.'
+    for (const candidates of grouped.values()) {
+      const coordinator = candidates[0].parcel_coordinator
+      const trackingNumber = coordinator
+        ? (window.prompt(`One tracking ID for C-${coordinator.number} ${coordinator.name} (${candidates.length} candidates):`) ?? '').trim()
+        : ''
+      if (coordinator && !trackingNumber) {
+        failures.push(`C-${coordinator.number}: tracking ID is required for a shared parcel`)
+        continue
+      }
+      for (const candidate of candidates) {
+        try {
+          const dispatch = await getInitialDispatch(candidate.enrollment_key)
+          if (!dispatch.wallet_funded)
+            throw new Error(
+              'This candidate has an older paid-book record; open the candidate to dispatch it.'
+            )
+          const current = dispatch.items[0]
+          if (!current) throw new Error('No current book is released.')
+          if (!current.dispatched || !dispatch.id_card_dispatched) {
+            await candidateAction('initial-dispatch', candidate.enrollment_key, {
+              include_id_card: !dispatch.id_card_dispatched,
+              allocation_keys: current.dispatched ? [] : [current.allocation_key],
+              tracking_number: trackingNumber
+            })
+          }
+          shipped += 1
+        } catch (cause) {
+          failures.push(
+            `${candidate.bbs_identifier}: ${cause instanceof Error ? cause.message : 'Could not ship'}`
           )
-        const current = dispatch.items[0]
-        if (!current) throw new Error('No current book is released.')
-        if (!current.dispatched || !dispatch.id_card_dispatched) {
-          await candidateAction('initial-dispatch', candidate.enrollment_key, {
-            include_id_card: !dispatch.id_card_dispatched,
-            allocation_keys: current.dispatched ? [] : [current.allocation_key]
-          })
         }
-        shipped += 1
-      } catch (cause) {
-        failures.push(
-          `${candidate.bbs_identifier}: ${cause instanceof Error ? cause.message : 'Could not ship'}`
-        )
       }
     }
     setShipping(false)
     if (shipped)
-      notify.success(`${shipped} candidate parcel${shipped === 1 ? '' : 's'} marked shipped`)
+      notify.success(`${shipped} candidate${shipped === 1 ? '' : 's'} marked shipped`)
     if (failures.length)
       notify.error(
         failures.slice(0, 3).join('; ') +
@@ -418,6 +434,10 @@ export default function CandidateList({
             autoWidth: false,
             order: [],
             rowId: 'enrollment_key',
+            createdRow: (element, row) => {
+              if (newOffline && (row as Candidate).parcel_coordinator)
+                element.classList.add('course-row--under-coordinator')
+            },
             drawCallback: function () {
               const rows = this.api()
                 .rows({ page: 'current', search: 'applied' })

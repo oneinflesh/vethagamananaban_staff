@@ -18,6 +18,14 @@ export type ShipmentRow = {
   includes_id_card: boolean
   can_mark_received: boolean
   order_key: string | null
+  members: {
+    enrollment_key: string
+    bbs_number: string
+    name: string
+    allocation_keys: string[]
+    receivable_keys: string[]
+    includes_id_card: boolean
+  }[]
 }
 
 export const getShipments = (country: string): Promise<ShipmentRow[]> =>
