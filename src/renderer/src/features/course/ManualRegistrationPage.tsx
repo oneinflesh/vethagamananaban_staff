@@ -6,9 +6,11 @@ import FullScreenLoader from '../shell/FullScreenLoader'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
 import {
   createManualRegistration,
+  getCandidateFilterOptions,
   getCoordinatorPage,
   getRegistrationOptions,
   type Candidate,
+  type CandidateFilterOptions,
   type Coordinator,
   type RegistrationOptions
 } from './courseApi'
@@ -58,8 +60,6 @@ const fields: { key: keyof Form; label: string; required?: boolean; type?: strin
   { key: 'address_line1', label: 'Address 1', required: true },
   { key: 'address_line2', label: 'Address 2' },
   { key: 'address_line3', label: 'Address 3' },
-  { key: 'district', label: 'District' },
-  { key: 'state', label: 'State' },
   { key: 'postal_code', label: 'Pincode' }
 ]
 
@@ -83,6 +83,13 @@ export default function ManualRegistrationPage({
   const [created, setCreated] = useState<Candidate | null>(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [locations, setLocations] = useState<CandidateFilterOptions>({
+    statuses: [],
+    states: [],
+    districts: []
+  })
+  const [otherState, setOtherState] = useState(false)
+  const [otherDistrict, setOtherDistrict] = useState(false)
   const notify = useNotifications()
   const { loading, leaving, finish } = useSmoothLoading()
 
@@ -110,6 +117,23 @@ export default function ManualRegistrationPage({
       active = false
     }
   }, [country, finish])
+
+  useEffect(() => {
+    let active = true
+    const timer = window.setTimeout(() => {
+      getCandidateFilterOptions(country, '', '', form.state)
+        .then((result) => {
+          if (active) setLocations(result)
+        })
+        .catch((cause) => {
+          if (active) setError(cause instanceof Error ? cause.message : 'Could not load locations')
+        })
+    }, 250)
+    return () => {
+      active = false
+      window.clearTimeout(timer)
+    }
+  }, [country, form.state])
 
   useEffect(() => {
     if (registrationType !== 'COORDINATOR' || !coordinatorSearch.trim()) return
@@ -209,6 +233,8 @@ export default function ManualRegistrationPage({
               setCreated(null)
               setRegistrationType('INDIVIDUAL')
               setSelectedCoordinator(null)
+              setOtherState(false)
+              setOtherDistrict(false)
               setForm({
                 ...initial,
                 language:
@@ -236,6 +262,74 @@ export default function ManualRegistrationPage({
                     />
                   </label>
                 ))}
+                <label>
+                  State
+                  <select
+                    required={!form.coordinator_key}
+                    value={otherState ? '__other__' : form.state}
+                    onChange={(event) => {
+                      const custom = event.target.value === '__other__'
+                      setOtherState(custom)
+                      setOtherDistrict(false)
+                      setForm((current) => ({
+                        ...current,
+                        state: custom ? '' : event.target.value,
+                        district: ''
+                      }))
+                    }}
+                  >
+                    <option value="">Select state</option>
+                    {locations.states.map((state) => (
+                      <option key={state} value={state}>
+                        {state}
+                      </option>
+                    ))}
+                    <option value="__other__">Other state</option>
+                  </select>
+                  {otherState && (
+                    <Input
+                      required={!form.coordinator_key}
+                      placeholder="Enter state"
+                      value={form.state}
+                      onChange={(event) =>
+                        setForm((current) => ({ ...current, state: event.target.value }))
+                      }
+                    />
+                  )}
+                </label>
+                <label>
+                  District
+                  <select
+                    required={!form.coordinator_key}
+                    value={otherDistrict ? '__other__' : form.district}
+                    onChange={(event) => {
+                      const custom = event.target.value === '__other__'
+                      setOtherDistrict(custom)
+                      setForm((current) => ({
+                        ...current,
+                        district: custom ? '' : event.target.value
+                      }))
+                    }}
+                  >
+                    <option value="">Select district</option>
+                    {locations.districts.map((district) => (
+                      <option key={district} value={district}>
+                        {district}
+                      </option>
+                    ))}
+                    <option value="__other__">Other district</option>
+                  </select>
+                  {otherDistrict && (
+                    <Input
+                      required={!form.coordinator_key}
+                      placeholder="Enter district"
+                      value={form.district}
+                      onChange={(event) =>
+                        setForm((current) => ({ ...current, district: event.target.value }))
+                      }
+                    />
+                  )}
+                </label>
                 <label>
                   Registration type
                   <select
@@ -343,15 +437,20 @@ export default function ManualRegistrationPage({
                 </label>
               </div>
             </div>
-            <aside className="candidate-form">
+            <aside className="candidate-form manual-registration-books">
               <h2>Fund books in rupees</h2>
               <div className="course-choice-list">
                 {options.exams
-                  .filter((exam) => exam.is_active && exam.is_released)
+                  .slice()
+                  .sort((first, second) => first.sequence - second.sequence)
                   .map((exam) => (
-                    <label key={exam.exam_key} className="course-choice">
+                    <label
+                      key={exam.exam_key}
+                      className={`course-choice${!exam.is_active || !exam.is_released ? ' course-book-option--disabled' : ''}`}
+                    >
                       <input
                         type="checkbox"
+                        disabled={!exam.is_active || !exam.is_released}
                         checked={form.exam_keys.includes(exam.exam_key)}
                         onChange={(event) =>
                           setForm((current) => ({
@@ -362,20 +461,37 @@ export default function ManualRegistrationPage({
                           }))
                         }
                       />
-                      {exam.sequence}. {exam.editions[form.language]?.name || exam.title} · ₹
-                      {priceState
-                        ? exam.editions[form.language]?.course_price_tn
-                        : exam.editions[form.language]?.course_price_other}
+                      <span>
+                        <strong>
+                          {String(exam.sequence).padStart(2, '0')}.{' '}
+                          {exam.editions[form.language]?.name || exam.title}
+                        </strong>
+                        <small>
+                          {!exam.is_active
+                            ? 'Inactive'
+                            : !exam.is_released
+                              ? 'Not released yet'
+                              : `₹${
+                                  priceState
+                                    ? (exam.editions[form.language]?.course_price_tn ??
+                                      'Price unavailable')
+                                    : (exam.editions[form.language]?.course_price_other ??
+                                      'Price unavailable')
+                                }`}
+                        </small>
+                      </span>
                     </label>
                   ))}
               </div>
-              <p>
-                Registration ₹{options.course.offline_registration_fee} + {form.exam_keys.length}{' '}
-                book(s) = ₹{total}
-              </p>
-              <Button type="submit" disabled={saving}>
-                {saving ? 'Registering…' : 'Register and record payment'}
-              </Button>
+              <div className="manual-registration-summary">
+                <p>
+                  Registration ₹{options.course.offline_registration_fee} + {form.exam_keys.length}{' '}
+                  book(s) = <strong>₹{total}</strong>
+                </p>
+                <Button type="submit" disabled={saving}>
+                  {saving ? 'Registering…' : 'Register and record payment'}
+                </Button>
+              </div>
             </aside>
           </form>
         )

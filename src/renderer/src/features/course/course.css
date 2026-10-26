@@ -576,13 +576,60 @@
 }
 .manual-registration-layout {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(250px, 1fr);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
   align-items: start;
 }
 .manual-registration-layout h2 {
   margin: 0 0 14px;
   font-size: 17px;
+}
+.manual-registration-books .course-choice-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  max-height: none;
+  overflow: visible;
+  margin: 0;
+}
+.manual-registration-books .course-choice {
+  display: flex;
+  min-width: 0;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e7ddd3;
+  border-radius: 9px;
+  background: #fff;
+  cursor: pointer;
+}
+.manual-registration-books .course-choice:has(input:checked) {
+  border-color: #ca763b;
+  background: #fff4e8;
+}
+.manual-registration-books .course-choice:has(input:disabled) {
+  cursor: default;
+}
+.manual-registration-books .course-choice span {
+  display: grid;
+  gap: 5px;
+}
+.manual-registration-books .course-choice small {
+  color: #806857;
+}
+.manual-registration-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+}
+.manual-registration-summary p {
+  margin: 0;
+}
+@media (max-width: 1100px) {
+  .manual-registration-books .course-choice-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .coordinator-editor {
   min-width: 0;
