@@ -8,6 +8,7 @@ import { DataTable, Column } from './dataTable'
 import { resizeColumns } from './resizeColumns'
 import { fieldOptions, statusLabel } from './tableFilters'
 import { printCoordinatorLabels } from './coordinatorLabels'
+import { printCoordinatorReport } from './coordinatorReport'
 
 export default function CoordinatorList({
   country,
@@ -74,6 +75,13 @@ export default function CoordinatorList({
         <Button onClick={onCreate}>Create coordinator</Button>
       </div>
       <div className="course-list-actions">
+        <Button
+          variant="outline"
+          disabled={!filtered.length}
+          onClick={() => printCoordinatorReport(filtered, country)}
+        >
+          PDF coordinator list
+        </Button>
         <Button
           variant="outline"
           disabled={!filtered.length}
