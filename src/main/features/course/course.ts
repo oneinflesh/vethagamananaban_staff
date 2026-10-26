@@ -295,6 +295,12 @@ export const updateCandidate = (key: string, data: unknown): Promise<unknown> =>
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   })
+export const setCandidateCoordinator = (key: string, coordinatorKey: string): Promise<unknown> =>
+  authorizedRequest(`staff/course-enrollments/${encodeURIComponent(key)}/set-coordinator/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ coordinator_key: coordinatorKey })
+  })
 export function uploadCandidatePhoto(
   key: string,
   bytes: Uint8Array,

@@ -6,6 +6,7 @@ import { useNotifications } from '../notifications/Notifications'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
 import PaymentsTable from './PaymentsTable'
 import ExamResultsTable from './ExamResultsTable'
+import CandidateCoordinatorAssignment from './CandidateCoordinatorAssignment'
 import {
   getCandidate,
   updateCandidate,
@@ -108,6 +109,11 @@ export default function CandidateDetails({
       setSaving(false)
     }
   }
+  async function reloadCandidate(): Promise<void> {
+    const updated = await getCandidate(candidateKey)
+    setSummary(updated)
+    setForm(updated.candidate)
+  }
 
   return (
     <section className="page course-page">
@@ -166,13 +172,14 @@ export default function CandidateDetails({
                 </label>
               ))}
             </div>
-            {summary?.coordinator && (
-              <button
-                className="course-link"
-                onClick={() => onCoordinator(summary.coordinator!.coordinator_key)}
-              >
-                Coordinator: {summary.coordinator.name}
-              </button>
+            {summary && (
+              <CandidateCoordinatorAssignment
+                key={`${candidateKey}:${summary.coordinator?.coordinator_key ?? 'individual'}`}
+                candidateKey={candidateKey}
+                summary={summary}
+                onUpdated={reloadCandidate}
+                onCoordinator={onCoordinator}
+              />
             )}
             <div>
               <Button disabled={saving} onClick={() => void save()}>
@@ -206,11 +213,7 @@ export default function CandidateDetails({
         <ExamResultsTable
           results={summary.results}
           allocations={summary.candidate.book_allocations ?? []}
-          onUpdated={async () => {
-            const updated = await getCandidate(candidateKey)
-            setSummary(updated)
-            setForm(updated.candidate)
-          }}
+          onUpdated={reloadCandidate}
         />
       )}
       {loading && <FullScreenLoader message="Loading candidate" leaving={leaving} />}

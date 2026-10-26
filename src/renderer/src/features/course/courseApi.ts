@@ -165,6 +165,7 @@ export type CandidateSummary = {
   total_paid: string
   payment_count: number
   coordinator: CoordinatorLink | null
+  candidate_role: 'COORDINATOR' | 'UNDER_COORDINATOR' | 'INDIVIDUAL'
   payments: Payment[]
   results: ExamResult[]
 }
@@ -356,6 +357,8 @@ export const updateCoordinatorMemberStatus = (
   keys: string[]
 ): Promise<{ status: string; candidates_changed: number }> =>
   window.office.courseUpdateCoordinatorMemberStatus(key, status, keys)
+export const setCandidateCoordinator = (key: string, coordinatorKey: string): Promise<unknown> =>
+  window.office.courseSetCandidateCoordinator(key, coordinatorKey)
 export async function uploadCoordinatorPhoto(key: string, file: File): Promise<Coordinator> {
   return window.office.courseUploadCoordinatorPhoto(
     key,

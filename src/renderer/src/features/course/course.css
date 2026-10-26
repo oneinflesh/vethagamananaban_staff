@@ -731,6 +731,47 @@
   grid-template-columns: minmax(0, 1fr) 210px;
   gap: 22px;
 }
+.candidate-assignment {
+  margin: 6px 0 18px;
+  padding: 16px;
+  border: 1px solid #e7ddd3;
+  border-radius: 10px;
+  background: #fffaf4;
+}
+.candidate-assignment h2 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+.candidate-assignment p {
+  margin: 0 0 12px;
+  color: #755d4e;
+  font-size: 12px;
+}
+.candidate-assignment__fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.candidate-assignment__fields label {
+  display: grid;
+  gap: 5px;
+  color: #755d4e;
+  font-size: 12px;
+}
+.candidate-assignment__fields select {
+  width: 100%;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid #ddd2c6;
+  border-radius: 6px;
+  background: white;
+}
+@media (max-width: 760px) {
+  .candidate-assignment__fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .candidate-form,
 .candidate-photo,
 .coordinator-summary {

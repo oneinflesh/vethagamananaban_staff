@@ -43,6 +43,7 @@ import {
   updateCoordinatorMembers,
   setCoordinatorMembers,
   updateCandidate,
+  setCandidateCoordinator,
   uploadCandidatePhoto
 } from './features/course/course'
 import {
@@ -201,6 +202,9 @@ app.whenReady().then(() => {
     setCoordinatorMembers(key, keys)
   )
   ipcMain.handle('course:update-candidate', (_event, key, data) => updateCandidate(key, data))
+  ipcMain.handle('course:set-candidate-coordinator', (_event, key, coordinatorKey) =>
+    setCandidateCoordinator(key, coordinatorKey)
+  )
   ipcMain.handle('course:upload-photo', (_event, key, bytes, name) =>
     uploadCandidatePhoto(key, bytes, name)
   )

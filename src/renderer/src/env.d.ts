@@ -156,6 +156,10 @@ interface Window {
       key: string,
       data: unknown
     ): Promise<import('./features/course/courseApi').Candidate>
+    courseSetCandidateCoordinator(
+      key: string,
+      coordinatorKey: string
+    ): Promise<{ coordinator: { coordinator_key: string; name: string; phone: string } | null }>
     courseUploadPhoto(
       key: string,
       bytes: Uint8Array,
