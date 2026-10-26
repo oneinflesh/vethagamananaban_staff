@@ -22,8 +22,15 @@ interface Window {
       page: number,
       mode: string,
       status: string,
-      search: string
+      search: string,
+      filters: import('./features/course/courseApi').CandidateFilters
     ): Promise<import('./features/course/courseApi').CandidatePage>
+    courseCandidateFilterOptions(
+      country: string,
+      mode: string,
+      status: string,
+      state: string
+    ): Promise<import('./features/course/courseApi').CandidateFilterOptions>
     courseCandidateCounts(
       country: string
     ): Promise<import('./features/course/courseApi').CandidateCounts>
@@ -52,7 +59,8 @@ interface Window {
       country: string,
       mode: string,
       status: string,
-      pending: boolean
+      pending: boolean,
+      filters: import('./features/course/courseApi').CandidateFilters
     ): Promise<import('./features/course/courseApi').Candidate[]>
     courseCoordinators(
       country: string

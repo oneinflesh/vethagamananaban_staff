@@ -12,8 +12,16 @@ const api = {
   logout: () => ipcRenderer.invoke('office:logout'),
   enrolmentSummary: (startDate: string, endDate: string, country: string) =>
     ipcRenderer.invoke('office:enrolment-summary', startDate, endDate, country),
-  courseCandidates: (country: string, page: number, mode: string, status: string, search: string) =>
-    ipcRenderer.invoke('course:candidates', country, page, mode, status, search),
+  courseCandidates: (
+    country: string,
+    page: number,
+    mode: string,
+    status: string,
+    search: string,
+    filters: unknown
+  ) => ipcRenderer.invoke('course:candidates', country, page, mode, status, search, filters),
+  courseCandidateFilterOptions: (country: string, mode: string, status: string, state: string) =>
+    ipcRenderer.invoke('course:candidate-filter-options', country, mode, status, state),
   courseCandidateCounts: (country: string) =>
     ipcRenderer.invoke('course:candidate-counts', country),
   courseBooks: () => ipcRenderer.invoke('course:books'),
@@ -37,8 +45,13 @@ const api = {
   shippingOpenTracking: (trackingNumber: string) =>
     ipcRenderer.invoke('shipping:open-tracking', trackingNumber),
   shippingPaperReceived: (row: unknown) => ipcRenderer.invoke('shipping:paper-received', row),
-  courseAllCandidates: (country: string, mode: string, status: string, pending: boolean) =>
-    ipcRenderer.invoke('course:all-candidates', country, mode, status, pending),
+  courseAllCandidates: (
+    country: string,
+    mode: string,
+    status: string,
+    pending: boolean,
+    filters: unknown
+  ) => ipcRenderer.invoke('course:all-candidates', country, mode, status, pending, filters),
   courseCoordinators: (country: string) => ipcRenderer.invoke('course:coordinators', country),
   courseCoordinatorCount: (country: string) =>
     ipcRenderer.invoke('course:coordinator-count', country),

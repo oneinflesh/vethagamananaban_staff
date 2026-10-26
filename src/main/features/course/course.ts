@@ -5,41 +5,56 @@ export function getCandidates(
   page: number,
   mode: string,
   status: string,
-  search: string
+  search: string,
+  filters: { state?: string; district?: string; initialDispatch?: boolean; ordering?: string } = {}
 ): Promise<unknown> {
   const params = new URLSearchParams({
     country,
     page: String(page),
     page_size: '20',
-    scope: 'course'
+    scope: 'course',
+    view: 'compact'
   })
   if (mode) params.set('mode', mode)
   if (status) params.set('status', status)
   if (search) params.set('search', search)
+  if (filters.state) params.set('state', filters.state)
+  if (filters.district) params.set('district', filters.district)
+  if (filters.initialDispatch) params.set('initial_dispatch', 'pending')
+  if (filters.ordering) params.set('ordering', filters.ordering)
   return authorizedGet(`staff/course-enrollments/?${params}`)
 }
 
+export function getCandidateFilterOptions(
+  country: string,
+  mode: string,
+  status: string,
+  state: string
+): Promise<unknown> {
+  const params = new URLSearchParams({ country, scope: 'course' })
+  if (mode) params.set('mode', mode)
+  if (status) params.set('status', status)
+  if (state) params.set('state', state)
+  return authorizedGet(`staff/course-enrollments/filter-options/?${params}`)
+}
+
 export async function getCandidateCounts(country: string): Promise<unknown> {
-  const sections = [
-    ['all', '', ''],
-    ['online', 'ONLINE', ''],
-    ['offline', 'OFFLINE', 'ACTIVE'],
-    ['discontinued', '', 'SUSPENDED'],
-    ['dropout', '', 'DROPOUT'],
-    ['finished', '', 'COMPLETED'],
-    ['newOffline', 'OFFLINE', 'ACTIVE']
-  ] as const
-  const counts = await Promise.all(
-    sections.map(async ([name, mode, status]) => {
-      const params = new URLSearchParams({ country, scope: 'course', page_size: '1' })
-      if (mode) params.set('mode', mode)
-      if (status) params.set('status', status)
-      if (name === 'newOffline') params.set('initial_dispatch', 'pending')
-      const result = await authorizedGet<{ count: number }>(`staff/course-enrollments/?${params}`)
-      return [name, result.count] as const
-    })
-  )
-  return Object.fromEntries(counts)
+  const pending = new URLSearchParams({
+    country,
+    scope: 'course',
+    view: 'compact',
+    mode: 'OFFLINE',
+    status: 'ACTIVE',
+    initial_dispatch: 'pending',
+    page_size: '1'
+  })
+  const [counts, newOffline] = await Promise.all([
+    authorizedGet<Record<string, number>>(
+      `staff/course-enrollments/candidate-counts/?country=${encodeURIComponent(country)}`
+    ),
+    authorizedGet<{ count: number }>(`staff/course-enrollments/?${pending}`)
+  ])
+  return { ...counts, newOffline: newOffline.count }
 }
 
 export const getCandidate = (key: string): Promise<unknown> =>
@@ -48,18 +63,23 @@ export async function getAllCandidates(
   country: string,
   mode: string,
   status: string,
-  initialDispatch = false
+  initialDispatch = false,
+  filters: { search?: string; state?: string; district?: string } = {}
 ): Promise<unknown[]> {
   const readPage = (page: number): Promise<{ count: number; results: unknown[] }> => {
     const params = new URLSearchParams({
       country,
       scope: 'course',
       page: String(page),
-      page_size: '100'
+      page_size: '100',
+      view: 'compact'
     })
     if (mode) params.set('mode', mode)
     if (status) params.set('status', status)
     if (initialDispatch) params.set('initial_dispatch', 'pending')
+    if (filters.search) params.set('search', filters.search)
+    if (filters.state) params.set('state', filters.state)
+    if (filters.district) params.set('district', filters.district)
     return authorizedGet(`staff/course-enrollments/?${params}`)
   }
   const first = await readPage(1)

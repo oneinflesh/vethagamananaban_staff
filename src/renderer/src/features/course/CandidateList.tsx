@@ -1,17 +1,32 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type MouseEvent } from 'react'
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type MouseEvent
+} from 'react'
 import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
 import FullScreenLoader from '../shell/FullScreenLoader'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
 import { useNotifications } from '../notifications/Notifications'
-import { candidateAction, getAllCandidates, getInitialDispatch, type Candidate } from './courseApi'
+import {
+  candidateAction,
+  getAllCandidates,
+  getCandidateFilterOptions,
+  getCandidates,
+  getInitialDispatch,
+  type Candidate,
+  type CandidateFilterOptions
+} from './courseApi'
 import { DataTable, Column } from './dataTable'
 import { resizeColumns } from './resizeColumns'
 import CandidateActionPanel, { type CandidateAction } from './CandidateActionPanel'
 import type { CourseSection } from './CoursePage'
 import { exportAddressCsv, printAddressLabels, type PaperSize } from './addressLabels'
 import { splitOfflineLabels } from './offlineLabelGroups'
-import { fieldOptions, statusLabel } from './tableFilters'
+import { statusLabel } from './tableFilters'
 
 const names: Record<CourseSection, string> = {
   all: 'All candidates',
@@ -22,7 +37,7 @@ const names: Record<CourseSection, string> = {
   finished: 'Course finished candidates',
   newOffline: 'New Registrations - Offline'
 }
-const emptyCandidates: Candidate[] = []
+const emptyOptions: CandidateFilterOptions = { statuses: [], states: [], districts: [] }
 
 export default function CandidateList({
   section,
@@ -42,6 +57,8 @@ export default function CandidateList({
   onMarks: (key: string) => void
 }): React.JSX.Element {
   const [data, setData] = useState<Candidate[] | null>(null)
+  const [count, setCount] = useState(0)
+  const [filterOptions, setFilterOptions] = useState<CandidateFilterOptions>(emptyOptions)
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
   const [search, setSearch] = useState('')
@@ -52,10 +69,13 @@ export default function CandidateList({
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
   const [visibleKeys, setVisibleKeys] = useState<string[]>([])
   const [shipping, setShipping] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const [menu, setMenu] = useState<{ x: number; y: number; candidate: Candidate } | null>(null)
   const [action, setAction] = useState<{ kind: CandidateAction; candidate: Candidate } | null>(null)
   const table = useRef<DataTableRef>(null)
   const tableWrap = useRef<HTMLDivElement>(null)
+  const selectedRows = useRef(new Map<string, Candidate>())
+  const tableReady = useRef(false)
   const { loading, leaving, finish } = useSmoothLoading()
   const notify = useNotifications()
   useEffect(() => {
@@ -82,28 +102,59 @@ export default function CandidateList({
             ? 'ACTIVE'
             : ''
 
+  const query = useRef({
+    country,
+    mode,
+    status,
+    newOffline,
+    search,
+    statusFilter,
+    stateFilter,
+    districtFilter
+  })
+  useLayoutEffect(() => {
+    query.current = {
+      country,
+      mode,
+      status,
+      newOffline,
+      search,
+      statusFilter,
+      stateFilter,
+      districtFilter
+    }
+  }, [country, mode, status, newOffline, search, statusFilter, stateFilter, districtFilter])
+
   useEffect(() => {
     let active = true
-    getAllCandidates(country, mode, status, newOffline)
-      .then((records) => {
-        if (active) {
-          setData(records)
-          setError('')
-        }
+    getCandidateFilterOptions(country, mode, status, stateFilter)
+      .then((options) => {
+        if (active) setFilterOptions(options)
       })
       .catch((reason) => {
-        if (active) setError(reason instanceof Error ? reason.message : 'Could not load candidates')
-      })
-      .finally(() => {
-        if (active) finish()
+        if (active) setError(reason instanceof Error ? reason.message : 'Could not load filters')
       })
     return () => {
       active = false
     }
-  }, [country, mode, status, newOffline, retry, finish])
+  }, [country, mode, status, stateFilter])
+
+  useEffect(() => {
+    if (!tableReady.current) {
+      tableReady.current = true
+      return
+    }
+    const timer = window.setTimeout(() => table.current?.dt()?.ajax.reload(), search ? 300 : 0)
+    return () => window.clearTimeout(timer)
+  }, [search, statusFilter, stateFilter, districtFilter, country, mode, status, newOffline])
+
+  useEffect(() => {
+    if (retry) table.current?.dt()?.ajax.reload(undefined, false)
+  }, [retry])
 
   function refresh(): void {
     setSelected(new Set())
+    selectedRows.current.clear()
     setRetry((value) => value + 1)
   }
 
@@ -126,7 +177,12 @@ export default function CandidateList({
       const allSelected = visibleKeys.every((key) => next.has(key))
       visibleKeys.forEach((key) => {
         if (allSelected) next.delete(key)
-        else next.add(key)
+        else {
+          next.add(key)
+          const candidate = data?.find((item) => item.enrollment_key === key)
+          if (candidate) selectedRows.current.set(key, candidate)
+        }
+        if (allSelected) selectedRows.current.delete(key)
       })
       return next
     })
@@ -139,15 +195,21 @@ export default function CandidateList({
     if (!key) return
     setSelected((current) => {
       const next = new Set(current)
-      if (target.checked) next.add(key)
-      else next.delete(key)
+      if (target.checked) {
+        next.add(key)
+        const candidate = data?.find((item) => item.enrollment_key === key)
+        if (candidate) selectedRows.current.set(key, candidate)
+      } else {
+        next.delete(key)
+        selectedRows.current.delete(key)
+      }
       return next
     })
   }
 
   async function shipSelected(): Promise<void> {
     const grouped = new Map<string, Candidate[]>()
-    for (const candidate of (data ?? []).filter((item) => selected.has(item.enrollment_key))) {
+    for (const candidate of [...selectedRows.current.values()]) {
       const key = candidate.parcel_coordinator?.coordinator_key || candidate.enrollment_key
       grouped.set(key, [...(grouped.get(key) ?? []), candidate])
     }
@@ -164,7 +226,11 @@ export default function CandidateList({
     for (const candidates of grouped.values()) {
       const coordinator = candidates[0].parcel_coordinator
       const trackingNumber = coordinator
-        ? (window.prompt(`One tracking ID for C-${coordinator.number} ${coordinator.name} (${candidates.length} candidates):`) ?? '').trim()
+        ? (
+            window.prompt(
+              `One tracking ID for C-${coordinator.number} ${coordinator.name} (${candidates.length} candidates):`
+            ) ?? ''
+          ).trim()
         : ''
       if (coordinator && !trackingNumber) {
         failures.push(`C-${coordinator.number}: tracking ID is required for a shared parcel`)
@@ -195,8 +261,7 @@ export default function CandidateList({
       }
     }
     setShipping(false)
-    if (shipped)
-      notify.success(`${shipped} candidate${shipped === 1 ? '' : 's'} marked shipped`)
+    if (shipped) notify.success(`${shipped} candidate${shipped === 1 ? '' : 's'} marked shipped`)
     if (failures.length)
       notify.error(
         failures.slice(0, 3).join('; ') +
@@ -205,23 +270,34 @@ export default function CandidateList({
     refresh()
   }
 
-  const source = data ?? emptyCandidates
-  const filteredData = useMemo(
-    () =>
-      showFilters
-        ? source.filter(
-            (candidate) =>
-              (!showStatusFilter || !statusFilter || candidate.status === statusFilter) &&
-              (!stateFilter || candidate.state === stateFilter) &&
-              (!districtFilter || candidate.district === districtFilter)
-          )
-        : source,
-    [source, showFilters, showStatusFilter, statusFilter, stateFilter, districtFilter]
-  )
-  const printable = newOffline
-    ? (data ?? []).filter((candidate) => selected.has(candidate.enrollment_key))
-    : filteredData
-  const offlineLabels = addressActions ? splitOfflineLabels(printable) : null
+  async function output(kind: 'csv' | 'individual' | 'coordinator'): Promise<void> {
+    setExporting(true)
+    try {
+      const records = newOffline
+        ? [...selectedRows.current.values()]
+        : await getAllCandidates(country, mode, statusFilter || status, false, {
+            search,
+            state: stateFilter,
+            district: districtFilter
+          })
+      if (kind === 'csv') exportAddressCsv(records)
+      else {
+        const groups = splitOfflineLabels(records)
+        const group = kind === 'individual' ? groups.individual : groups.underCoordinator
+        if (!group.length) throw new Error('No matching candidates to print')
+        printAddressLabels(
+          group,
+          newOffline,
+          paper,
+          `${kind === 'individual' ? 'Individual' : 'Coordinator group'} ${newOffline ? 'new registration' : 'offline candidate'} address labels`
+        )
+      }
+    } catch (reason) {
+      notify.error(reason instanceof Error ? reason.message : 'Could not prepare output')
+    } finally {
+      setExporting(false)
+    }
+  }
   const searchControl = (
     <label className="course-list-search">
       <span>Search</span>
@@ -232,7 +308,6 @@ export default function CandidateList({
         onChange={(event) => {
           const value = event.target.value
           setSearch(value)
-          table.current?.dt()?.search(value).draw()
         }}
       />
     </label>
@@ -260,40 +335,22 @@ export default function CandidateList({
         <>
           <Button
             variant="outline"
-            disabled={!printable.length}
-            onClick={() => exportAddressCsv(printable)}
+            disabled={exporting || (newOffline ? !selected.size : !count)}
+            onClick={() => void output('csv')}
           >
             Export CSV
           </Button>
           <Button
             variant="outline"
-            disabled={!offlineLabels?.individual.length}
-            onClick={() =>
-              printAddressLabels(
-                offlineLabels?.individual ?? [],
-                newOffline,
-                paper,
-                newOffline
-                  ? 'Individual new registration address labels'
-                  : 'Individual offline candidate address labels'
-              )
-            }
+            disabled={exporting || (newOffline ? !selected.size : !count)}
+            onClick={() => void output('individual')}
           >
             PDF In
           </Button>
           <Button
             variant="outline"
-            disabled={!offlineLabels?.underCoordinator.length}
-            onClick={() =>
-              printAddressLabels(
-                offlineLabels?.underCoordinator ?? [],
-                newOffline,
-                paper,
-                newOffline
-                  ? 'Coordinator group new registration address labels'
-                  : 'Coordinator group offline candidate address labels'
-              )
-            }
+            disabled={exporting || (newOffline ? !selected.size : !count)}
+            onClick={() => void output('coordinator')}
           >
             PDF Co
           </Button>
@@ -321,7 +378,7 @@ export default function CandidateList({
                 onChange={(event) => setStatusFilter(event.target.value)}
               >
                 <option value="">All statuses</option>
-                {fieldOptions(source, 'status').map((value) => (
+                {filterOptions.statuses.map((value) => (
                   <option key={value} value={value}>
                     {statusLabel(value)}
                   </option>
@@ -339,7 +396,7 @@ export default function CandidateList({
               }}
             >
               <option value="">All states</option>
-              {fieldOptions(source, 'state').map((value) => (
+              {filterOptions.states.map((value) => (
                 <option key={value} value={value}>
                   {value}
                 </option>
@@ -353,10 +410,7 @@ export default function CandidateList({
               onChange={(event) => setDistrictFilter(event.target.value)}
             >
               <option value="">All districts</option>
-              {fieldOptions(
-                source.filter((row) => !stateFilter || row.state === stateFilter),
-                'district'
-              ).map((value) => (
+              {filterOptions.districts.map((value) => (
                 <option key={value} value={value}>
                   {value}
                 </option>
@@ -385,14 +439,14 @@ export default function CandidateList({
           <div className="course-candidate-title">
             <h1>{names[section]}</h1>
             <span>
-              {country} · {data?.length ?? 0} candidates
+              {country} · {count} candidates
             </span>
           </div>
         ) : (
           <>
             <h1>{names[section]}</h1>
             <span>
-              {country} · {data?.length ?? 0} candidates
+              {country} · {count} candidates
             </span>
           </>
         )}
@@ -423,10 +477,64 @@ export default function CandidateList({
       >
         <DataTable
           ref={table}
-          data={filteredData}
           className="display course-table"
           options={{
             pageLength: 20,
+            serverSide: true,
+            processing: true,
+            ajax: (request, callback) => {
+              const current = query.current
+              const order = request.order?.[0]
+              const column = order ? request.columns?.[order.column]?.data : ''
+              const orderFields: Record<string, string> = {
+                bbs_identifier: 'bbs_number',
+                full_name: 'full_name',
+                status: 'status',
+                state: 'state',
+                district: 'district',
+                phone: 'phone',
+                phone2: 'phone2',
+                postal_code: 'postal_code',
+                registered_at: 'registered_at',
+                address_line1: 'address_line1',
+                address_line2: 'address_line2',
+                address_line3: 'address_line3'
+              }
+              const ordering =
+                typeof column === 'string' && orderFields[column]
+                  ? `${order?.dir === 'desc' ? '-' : ''}${orderFields[column]}`
+                  : ''
+              void getCandidates(
+                current.country,
+                Math.floor((request.start ?? 0) / (request.length || 20)) + 1,
+                current.mode,
+                current.statusFilter || current.status,
+                current.search,
+                {
+                  state: current.stateFilter,
+                  district: current.districtFilter,
+                  initialDispatch: current.newOffline,
+                  ordering
+                }
+              )
+                .then((response) => {
+                  setData(response.results)
+                  setCount(response.count)
+                  setError('')
+                  finish()
+                  callback({
+                    draw: request.draw,
+                    recordsTotal: response.count,
+                    recordsFiltered: response.count,
+                    data: response.results
+                  })
+                })
+                .catch((reason) => {
+                  setError(reason instanceof Error ? reason.message : 'Could not load candidates')
+                  finish()
+                  callback({ draw: request.draw, recordsTotal: 0, recordsFiltered: 0, data: [] })
+                })
+            },
             lengthChange: false,
             searching: true,
             paging: true,
@@ -490,7 +598,11 @@ export default function CandidateList({
           <Column title="Pincode" data="postal_code" />
           <Column title="Phone 1" data="phone" />
           <Column title="Phone 2" data="phone2" options={{ defaultContent: '' }} />
-          <Column title="Coordinator" data="coordinator.name" options={{ defaultContent: '' }}>
+          <Column
+            title="Coordinator"
+            data="coordinator.name"
+            options={{ defaultContent: '', orderable: false }}
+          >
             {(_value, _type, row: Candidate) =>
               row.coordinator ? (
                 <button
@@ -504,7 +616,13 @@ export default function CandidateList({
               )
             }
           </Column>
-          {newOffline && <Column title="Initial parcel" data="initial_dispatch_status" />}
+          {newOffline && (
+            <Column
+              title="Initial parcel"
+              data="initial_dispatch_status"
+              options={{ orderable: false }}
+            />
+          )}
           {newOffline && (
             <Column title="Registration date" data="registered_at">
               {(_value, _type, row: Candidate) =>
@@ -621,10 +739,16 @@ export default function CandidateList({
           }}
         />
       )}
-      {(loading || shipping) && (
+      {(loading || shipping || exporting) && (
         <FullScreenLoader
-          message={shipping ? 'Shipping selected parcels' : 'Loading candidates'}
-          leaving={loading && leaving}
+          message={
+            shipping
+              ? 'Shipping selected parcels'
+              : exporting
+                ? 'Preparing output'
+                : 'Loading candidates'
+          }
+          leaving={loading && !shipping && !exporting && leaving}
         />
       )}
     </section>

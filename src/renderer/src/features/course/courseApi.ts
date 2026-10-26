@@ -1,4 +1,9 @@
-export type CoordinatorLink = { coordinator_key: string; number: number; name: string; bbs_number: string | null }
+export type CoordinatorLink = {
+  coordinator_key: string
+  number: number
+  name: string
+  bbs_number: string | null
+}
 export type Candidate = {
   enrollment_key: string
   bbs_identifier: string
@@ -51,6 +56,14 @@ export type Candidate = {
   }[]
 }
 export type CandidatePage = { count: number; results: Candidate[] }
+export type CandidateFilters = {
+  state?: string
+  district?: string
+  initialDispatch?: boolean
+  ordering?: string
+  search?: string
+}
+export type CandidateFilterOptions = { statuses: string[]; states: string[]; districts: string[] }
 export type CandidateCounts = Record<
   'all' | 'online' | 'offline' | 'discontinued' | 'dropout' | 'finished' | 'newOffline',
   number
@@ -228,16 +241,27 @@ export const getCandidates = (
   page: number,
   mode: string,
   status: string,
-  search: string
-): Promise<CandidatePage> => window.office.courseCandidates(country, page, mode, status, search)
+  search: string,
+  filters: CandidateFilters = {}
+): Promise<CandidatePage> =>
+  window.office.courseCandidates(country, page, mode, status, search, filters)
+export const getCandidateFilterOptions = (
+  country: string,
+  mode: string,
+  status: string,
+  state = ''
+): Promise<CandidateFilterOptions> =>
+  window.office.courseCandidateFilterOptions(country, mode, status, state)
 export const getCandidateCounts = (country: string): Promise<CandidateCounts> =>
   window.office.courseCandidateCounts(country)
 export const getAllCandidates = (
   country: string,
   mode = '',
   status = '',
-  pending = false
-): Promise<Candidate[]> => window.office.courseAllCandidates(country, mode, status, pending)
+  pending = false,
+  filters: CandidateFilters = {}
+): Promise<Candidate[]> =>
+  window.office.courseAllCandidates(country, mode, status, pending, filters)
 export const getCoordinators = (
   country: string
 ): Promise<{ count: number; results: Coordinator[] }> => window.office.courseCoordinators(country)

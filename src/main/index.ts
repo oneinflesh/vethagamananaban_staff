@@ -17,6 +17,7 @@ import {
 } from './features/shipping/shipping'
 import {
   getCandidates,
+  getCandidateFilterOptions,
   getAllCandidates,
   getCandidateCounts,
   getCoordinators,
@@ -111,8 +112,11 @@ app.whenReady().then(() => {
     (_event, startDate: string, endDate: string, country: string) =>
       getEnrolmentSummary(startDate, endDate, country)
   )
-  ipcMain.handle('course:candidates', (_event, country, page, mode, status, search) =>
-    getCandidates(country, page, mode, status, search)
+  ipcMain.handle('course:candidates', (_event, country, page, mode, status, search, filters) =>
+    getCandidates(country, page, mode, status, search, filters)
+  )
+  ipcMain.handle('course:candidate-filter-options', (_event, country, mode, status, state) =>
+    getCandidateFilterOptions(country, mode, status, state)
   )
   ipcMain.handle('course:candidate-counts', (_event, country) => getCandidateCounts(country))
   ipcMain.handle('course:books', () => getCourseBooks())
@@ -138,8 +142,8 @@ app.whenReady().then(() => {
     )
   })
   ipcMain.handle('shipping:paper-received', (_event, row) => markCoursePaperReceived(row))
-  ipcMain.handle('course:all-candidates', (_event, country, mode, status, pending) =>
-    getAllCandidates(country, mode, status, pending)
+  ipcMain.handle('course:all-candidates', (_event, country, mode, status, pending, filters) =>
+    getAllCandidates(country, mode, status, pending, filters)
   )
   ipcMain.handle('course:coordinators', (_event, country) => getCoordinators(country))
   ipcMain.handle('course:coordinator-count', (_event, country) => getCoordinatorCount(country))
