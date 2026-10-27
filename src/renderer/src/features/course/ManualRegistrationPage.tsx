@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { useNotifications } from '../notifications/Notifications'
 import FullScreenLoader from '../shell/FullScreenLoader'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
+import { formatDateOfBirthInput, parseDateOfBirth } from './dateOfBirth'
 import {
   createManualRegistration,
   getCandidateFilterOptions,
@@ -54,7 +55,7 @@ const initial: Form = {
 }
 const fields: { key: keyof Form; label: string; required?: boolean; type?: string }[] = [
   { key: 'full_name', label: 'Name', required: true },
-  { key: 'date_of_birth', label: 'Date of birth', type: 'date', required: true },
+  { key: 'date_of_birth', label: 'Date of birth (DD-MM-YYYY)', required: true },
   { key: 'email', label: 'Email', type: 'email' },
   { key: 'phone', label: 'Phone 1', required: true },
   { key: 'phone2', label: 'Phone 2' },
@@ -176,6 +177,11 @@ export default function ManualRegistrationPage({
   async function submit(event: React.FormEvent): Promise<void> {
     event.preventDefault()
     if (!options) return
+    const dateOfBirth = parseDateOfBirth(form.date_of_birth)
+    if (!dateOfBirth) {
+      setError('Enter a valid date of birth as DD-MM-YYYY.')
+      return
+    }
     if (!form.exam_keys.length) {
       setError('Select books to fund.')
       return
@@ -190,6 +196,7 @@ export default function ManualRegistrationPage({
       const { coordinator_key, ...registration } = form
       const result = await createManualRegistration(options.course.course_key, {
         ...registration,
+        date_of_birth: dateOfBirth,
         ...(registrationType === 'COORDINATOR' ? { coordinator_key } : {}),
         mode: 'OFFLINE',
         country,
@@ -279,9 +286,20 @@ export default function ManualRegistrationPage({
                     {label}
                     <Input
                       type={type ?? 'text'}
+                      inputMode={key === 'date_of_birth' ? 'numeric' : undefined}
+                      placeholder={key === 'date_of_birth' ? 'DD-MM-YYYY' : undefined}
+                      maxLength={key === 'date_of_birth' ? 10 : undefined}
                       required={required && (key !== 'address_line1' || !form.coordinator_key)}
                       value={form[key]}
-                      onChange={(event) => setForm({ ...form, [key]: event.target.value })}
+                      onChange={(event) =>
+                        setForm({
+                          ...form,
+                          [key]:
+                            key === 'date_of_birth'
+                              ? formatDateOfBirthInput(event.target.value)
+                              : event.target.value
+                        })
+                      }
                     />
                   </label>
                 ))}
