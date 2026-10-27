@@ -13,7 +13,7 @@ if errorlevel 1 (
 )
 
 echo Checking for updates...
-git -C "%APP_DIR%" pull --ff-only
+git -C "%APP_DIR%." pull --ff-only
 if errorlevel 1 (
   echo Update failed. The dev server was not started.
   pause
@@ -27,7 +27,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-pushd "%APP_DIR%"
+pushd "%APP_DIR%."
 call npm run dev
 set "APP_EXIT_CODE=%ERRORLEVEL%"
 popd
