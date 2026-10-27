@@ -33,6 +33,8 @@ import {
   getCoordinatorCount,
   getRegistrationOptions,
   getCurrentCurriculumContent,
+  setCurrentCurriculumBook,
+  setCourseBookActive,
   createManualRegistration,
   getInitialDispatch,
   getOtherBookOptions,
@@ -174,6 +176,12 @@ app.whenReady().then(() => {
   ipcMain.handle('course:registration-options', () => getRegistrationOptions())
   ipcMain.handle('course:curriculum-content', (_event, examKey) =>
     getCurrentCurriculumContent(examKey)
+  )
+  ipcMain.handle('course:curriculum-activate', (_event, courseKey, sequence) =>
+    setCurrentCurriculumBook(courseKey, sequence)
+  )
+  ipcMain.handle('course:curriculum-book-active', (_event, examKey, active) =>
+    setCourseBookActive(examKey, active)
   )
   ipcMain.handle('course:languages', (_event, courseKey) => getCourseLanguages(courseKey))
   ipcMain.handle('course:language-create', (_event, courseKey, code, name) =>

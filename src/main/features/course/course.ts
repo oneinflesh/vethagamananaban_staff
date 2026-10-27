@@ -166,6 +166,18 @@ export async function getRegistrationOptions(): Promise<unknown> {
 }
 export const getCurrentCurriculumContent = (examKey: string): Promise<unknown> =>
   authorizedGet(`staff/course-exam-contents/?exam=${encodeURIComponent(examKey)}&page_size=100`)
+export const setCurrentCurriculumBook = (courseKey: string, sequence: number): Promise<unknown> =>
+  authorizedRequest(`staff/courses/${encodeURIComponent(courseKey)}/release-exam/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sequence })
+  })
+export const setCourseBookActive = (examKey: string, active: boolean): Promise<unknown> =>
+  authorizedRequest(`staff/course-exams/${encodeURIComponent(examKey)}/`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ is_active: active })
+  })
 export const createManualRegistration = (courseKey: string, data: unknown): Promise<unknown> =>
   authorizedRequest(`staff/courses/${encodeURIComponent(courseKey)}/office-enroll/`, {
     method: 'POST',

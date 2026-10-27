@@ -109,7 +109,12 @@ export default function ManualRegistrationPage({
           setForm((current) => ({
             ...current,
             language:
-              result.languages.find((item) => item.is_active && item.offline_enabled && item.available_countries.includes(country))?.code ?? ''
+              result.languages.find(
+                (item) =>
+                  item.is_active &&
+                  item.offline_enabled &&
+                  item.available_countries.includes(country)
+              )?.code ?? ''
           }))
         }
       })
@@ -172,7 +177,7 @@ export default function ManualRegistrationPage({
     event.preventDefault()
     if (!options) return
     if (!form.exam_keys.length) {
-      setError('Select released books to fund.')
+      setError('Select books to fund.')
       return
     }
     if (registrationType === 'COORDINATOR' && !form.coordinator_key) {
@@ -252,8 +257,12 @@ export default function ManualRegistrationPage({
               setForm({
                 ...initial,
                 language:
-                  options?.languages.find((item) => item.is_active && item.offline_enabled && item.available_countries.includes(country))?.code ??
-                  ''
+                  options?.languages.find(
+                    (item) =>
+                      item.is_active &&
+                      item.offline_enabled &&
+                      item.available_countries.includes(country)
+                  )?.code ?? ''
               })
             }}
           >
@@ -429,7 +438,12 @@ export default function ManualRegistrationPage({
                     onChange={(event) => setForm({ ...form, language: event.target.value })}
                   >
                     {options.languages
-                      .filter((item) => item.is_active && item.offline_enabled && item.available_countries.includes(country))
+                      .filter(
+                        (item) =>
+                          item.is_active &&
+                          item.offline_enabled &&
+                          item.available_countries.includes(country)
+                      )
                       .map((item) => (
                         <option key={item.code} value={item.code}>
                           {item.name}
@@ -460,11 +474,11 @@ export default function ManualRegistrationPage({
                   .map((exam) => (
                     <label
                       key={exam.exam_key}
-                      className={`course-choice${!exam.is_active || !exam.is_released ? ' course-book-option--disabled' : ''}`}
+                      className={`course-choice${!exam.is_active || !exam.editions[form.language] ? ' course-book-option--disabled' : ''}`}
                     >
                       <input
                         type="checkbox"
-                        disabled={!exam.is_active || !exam.is_released}
+                        disabled={!exam.is_active || !exam.editions[form.language]}
                         checked={form.exam_keys.includes(exam.exam_key)}
                         onChange={(event) =>
                           setForm((current) => ({
@@ -483,8 +497,8 @@ export default function ManualRegistrationPage({
                         <small>
                           {!exam.is_active
                             ? 'Inactive'
-                            : !exam.is_released
-                              ? 'Not released yet'
+                            : !exam.editions[form.language]
+                              ? 'Book not configured for this language'
                               : `₹${
                                   priceState
                                     ? (exam.editions[form.language]?.course_price_tn ??

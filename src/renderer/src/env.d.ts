@@ -84,6 +84,8 @@ interface Window {
     courseCurriculumContent(
       examKey: string
     ): Promise<import('./features/course/curriculumApi').CurriculumContentPage>
+    courseCurriculumActivate(courseKey: string, sequence: number): Promise<unknown>
+    courseCurriculumBookActive(examKey: string, active: boolean): Promise<unknown>
     courseLanguages(
       courseKey: string
     ): Promise<import('./features/course/courseLanguagesApi').LanguagePage>
