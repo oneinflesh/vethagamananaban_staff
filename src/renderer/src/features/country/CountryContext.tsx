@@ -1,34 +1,72 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
+import { createCourseCountry, getCourseCountries, type CourseCountry } from './countryApi'
 
-export const countries = [
-  ['IN', 'India'],
-  ['LK', 'Sri Lanka'],
-  ['MY', 'Malaysia'],
-  ['SG', 'Singapore'],
-  ['AE', 'United Arab Emirates'],
-  ['GB', 'United Kingdom'],
-  ['US', 'United States'],
-  ['CA', 'Canada'],
-  ['AU', 'Australia']
-] as const
+const initialCountries: CourseCountry[] = [
+  { code: 'IN', name: 'India' },
+  { code: 'LK', name: 'Sri Lanka' },
+  { code: 'MY', name: 'Malaysia' },
+  { code: 'SG', name: 'Singapore' },
+  { code: 'AE', name: 'United Arab Emirates' },
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'US', name: 'United States' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'AU', name: 'Australia' }
+]
 
-type CountryContextValue = { country: string; setCountry: (country: string) => void }
+type CountryContextValue = {
+  country: string
+  countries: CourseCountry[]
+  setCountry: (country: string) => void
+  addCountry: (code: string, name: string) => Promise<void>
+}
 const CountryContext = createContext<CountryContextValue | null>(null)
 const storageKey = 'office:selected-country'
 
-export function CountryProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const [country, setSelectedCountry] = useState(() => {
-    const saved = localStorage.getItem(storageKey)
-    return countries.some(([code]) => code === saved) ? saved! : 'IN'
-  })
+export function CountryProvider({
+  children,
+  enabled
+}: {
+  children: React.ReactNode
+  enabled: boolean
+}): React.JSX.Element {
+  const [country, setSelectedCountry] = useState(() => localStorage.getItem(storageKey) || 'IN')
+  const [countries, setCountries] = useState(initialCountries)
+
+  useEffect(() => {
+    if (!enabled) return
+    let active = true
+    getCourseCountries()
+      .then((result) => {
+        if (!active) return
+        setCountries(result)
+        const saved = localStorage.getItem(storageKey)
+        if (!result.some((item) => item.code === saved)) {
+          localStorage.setItem(storageKey, 'IN')
+          setSelectedCountry('IN')
+        }
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [enabled])
+
   function setCountry(code: string): void {
-    if (!countries.some(([value]) => value === code)) return
+    if (!countries.some((item) => item.code === code)) return
     localStorage.setItem(storageKey, code)
     setSelectedCountry(code)
   }
+
+  async function addCountry(code: string, name: string): Promise<void> {
+    const created = await createCourseCountry(code.trim().toUpperCase(), name.trim())
+    setCountries((current) => [...current, created].sort((a, b) => a.name.localeCompare(b.name)))
+  }
+
   return (
-    <CountryContext.Provider value={{ country, setCountry }}>{children}</CountryContext.Provider>
+    <CountryContext.Provider value={{ country, countries, setCountry, addCountry }}>
+      {children}
+    </CountryContext.Provider>
   )
 }
 

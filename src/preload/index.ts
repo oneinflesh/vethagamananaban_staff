@@ -10,6 +10,9 @@ const api = {
     ipcRenderer.invoke('office:login', username, password, remember),
   restoreSession: () => ipcRenderer.invoke('office:restore-session'),
   logout: () => ipcRenderer.invoke('office:logout'),
+  courseCountries: () => ipcRenderer.invoke('country:list'),
+  courseCountryCreate: (code: string, name: string) =>
+    ipcRenderer.invoke('country:create', code, name),
   enrolmentSummary: (startDate: string, endDate: string, country: string) =>
     ipcRenderer.invoke('office:enrolment-summary', startDate, endDate, country),
   courseCandidates: (

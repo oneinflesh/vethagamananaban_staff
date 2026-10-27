@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { countries } from '../country/CountryContext'
+import { useCountry } from '../country/CountryContext'
 import { useNotifications } from '../notifications/Notifications'
 import FullScreenLoader from '../shell/FullScreenLoader'
 import { getRegistrationOptions } from './courseApi'
@@ -15,12 +15,15 @@ import {
 
 export default function CourseLanguagesPage({ onBack }: { onBack: () => void }): React.JSX.Element {
   const notify = useNotifications()
+  const { countries, addCountry } = useCountry()
   const [courseKey, setCourseKey] = useState('')
   const [languages, setLanguages] = useState<CourseLanguage[]>([])
   const [selectedKey, setSelectedKey] = useState('')
   const selectedKeyRef = useRef('')
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
+  const [countryName, setCountryName] = useState('')
+  const [countryCode, setCountryCode] = useState('')
   const [countrySelection, setCountrySelection] = useState<string[]>([])
   const [online, setOnline] = useState(false)
   const [offline, setOffline] = useState(false)
@@ -108,6 +111,24 @@ export default function CourseLanguagesPage({ onBack }: { onBack: () => void }):
     }
   }
 
+  async function createCountry(): Promise<void> {
+    if (!/^[a-z]{2}$/i.test(countryCode.trim()) || !countryName.trim()) {
+      notify.error('Enter a two-letter country code and name.')
+      return
+    }
+    setBusy(true)
+    try {
+      await addCountry(countryCode, countryName)
+      setCountryCode('')
+      setCountryName('')
+      notify.success('Country added. You can now enable it for a language.')
+    } catch (cause) {
+      notify.error(cause instanceof Error ? cause.message : 'Could not add country')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function saveAvailability(): Promise<void> {
     if (!selectedKey) return
     if ((online || offline) && !countrySelection.length) {
@@ -183,12 +204,38 @@ export default function CourseLanguagesPage({ onBack }: { onBack: () => void }):
               </button>
             ))}
           </div>
+          <h2 className="course-language-subheading">2. Add country</h2>
+          <div className="course-language-create">
+            <label>
+              Country name
+              <Input
+                value={countryName}
+                onChange={(event) => setCountryName(event.target.value)}
+                placeholder="Germany"
+              />
+            </label>
+            <label>
+              Two-letter code
+              <Input
+                value={countryCode}
+                onChange={(event) => setCountryCode(event.target.value.toUpperCase())}
+                maxLength={2}
+                placeholder="DE"
+              />
+            </label>
+            <Button
+              disabled={busy || !countryName.trim() || countryCode.trim().length !== 2}
+              onClick={() => void createCountry()}
+            >
+              Add country
+            </Button>
+          </div>
         </section>
         {selectedKey && (
           <section className="candidate-form">
-            <h2>2. Choose countries</h2>
+            <h2>3. Choose countries</h2>
             <div className="course-language-countries">
-              {countries.map(([value, label]) => (
+              {countries.map(({ code: value, name: label }) => (
                 <label key={value}>
                   <input
                     type="checkbox"
@@ -208,7 +255,7 @@ export default function CourseLanguagesPage({ onBack }: { onBack: () => void }):
             <Button disabled={busy} onClick={() => void saveCountries()}>
               Save countries
             </Button>
-            <h2 className="course-language-subheading">3. Study-mode availability</h2>
+            <h2 className="course-language-subheading">4. Study-mode availability</h2>
             <div className="course-language-countries">
               <label>
                 <input

@@ -3,6 +3,7 @@ import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import { login, logout, restoreSession } from './features/auth/auth'
 import { getEnrolmentSummary } from './features/dashboard/dashboard'
+import { getCourseCountries, createCourseCountry } from './features/country/country'
 import { getWholeResults, saveWholeResults } from './features/course/wholeResults'
 import {
   getCourseLanguages,
@@ -174,6 +175,8 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('course:coordinator-count', (_event, country) => getCoordinatorCount(country))
   ipcMain.handle('course:registration-options', () => getRegistrationOptions())
+  ipcMain.handle('country:list', () => getCourseCountries())
+  ipcMain.handle('country:create', (_event, code, name) => createCourseCountry(code, name))
   ipcMain.handle('course:curriculum-content', (_event, examKey) =>
     getCurrentCurriculumContent(examKey)
   )

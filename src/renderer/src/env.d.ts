@@ -12,6 +12,11 @@ interface Window {
     ): Promise<import('./features/auth/auth').AuthSession>
     restoreSession(): Promise<import('./features/auth/auth').AuthSession | null>
     logout(): Promise<void>
+    courseCountries(): Promise<import('./features/country/countryApi').CourseCountry[]>
+    courseCountryCreate(
+      code: string,
+      name: string
+    ): Promise<import('./features/country/countryApi').CourseCountry>
     enrolmentSummary(
       startDate: string,
       endDate: string,

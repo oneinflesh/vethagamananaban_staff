@@ -57,7 +57,7 @@ export default function App(): React.JSX.Element {
 
   return (
     <NotificationProvider>
-      <CountryProvider>
+      <CountryProvider enabled={!!staff}>
         <div className="app">
           <TitleBar page={page} onPage={setPage} showNavigation={!!staff} onLogout={handleLogout} />
           {staff ? (
