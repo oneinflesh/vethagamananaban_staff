@@ -16,7 +16,7 @@
     "postinstall": "install-electron && electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win portable --publish never",
-    "release:portable": "npm run build:win && node src/main/shell/publishRelease.mjs",
+    "release:standalone": "npm run build:unpack && node src/main/shell/publishRelease.mjs",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux"
   },

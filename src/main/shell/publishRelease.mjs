@@ -1,21 +1,28 @@
-import { copyFile, mkdir, stat } from 'node:fs/promises'
+import { cp, mkdir, readdir, rm, stat } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import packageJson from '../../../package.json' with { type: 'json' }
 
 const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 const releaseRoot = path.resolve(appRoot, '../adminnew_release')
-const portableName = `${packageJson.name}-${packageJson.version}-portable.exe`
-const portablePath = path.join(appRoot, 'dist', portableName)
-const releasePath = path.join(releaseRoot, portableName)
+const unpackedPath = path.join(appRoot, 'dist', 'win-unpacked')
+const executableName = 'VethagamaNanbanOffice.exe'
 
 if (process.platform !== 'win32') {
   throw new Error('Windows releases must be built on Windows.')
 }
 
-await stat(portablePath)
-await mkdir(releaseRoot, { recursive: true })
+await stat(path.join(unpackedPath, executableName))
 await stat(path.join(releaseRoot, '.git'))
-await copyFile(portablePath, releasePath)
+if (path.dirname(releaseRoot) !== path.dirname(appRoot) || path.basename(releaseRoot) !== 'adminnew_release') {
+  throw new Error('Unexpected release directory; refusing to replace files.')
+}
 
-console.log(`Portable release copied to ${releasePath}`)
+for (const entry of await readdir(releaseRoot, { withFileTypes: true })) {
+  if (entry.name === '.git' || entry.name === '.gitattributes' || entry.name === '.gitignore') continue
+  await rm(path.join(releaseRoot, entry.name), { recursive: entry.isDirectory(), force: true })
+}
+
+await mkdir(releaseRoot, { recursive: true })
+await cp(unpackedPath, releaseRoot, { recursive: true })
+
+console.log(`Standalone release copied to ${releaseRoot}`)
