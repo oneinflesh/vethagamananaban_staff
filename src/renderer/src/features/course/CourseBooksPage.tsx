@@ -7,7 +7,7 @@ import { useSmoothLoading } from '../shell/useSmoothLoading'
 import {
   adjustCourseBookStock,
   getCourseBooks,
-  saveCourseBookTranslation,
+  saveCourseBookEdition,
   updateCourseBook,
   uploadCourseBookCover,
   type CourseBooksData
@@ -15,6 +15,7 @@ import {
 import './courseBooks.css'
 
 type SharedDraft = {
+  vnCode: string
   name: string
   description: string
   isbn: string
@@ -58,16 +59,14 @@ export default function CourseBooksPage({
   const [retry, setRetry] = useState(0)
 
   function fillDrafts(result: CourseBooksData, nextExamKey: string, nextLanguageKey: string): void {
-    const selectedExam = result.exams.find((item) => item.exam_key === nextExamKey)
-    const selectedTranslation = result.translations.find(
+    const selectedEdition = result.editions.find(
       (item) => item.exam === nextExamKey && item.language === nextLanguageKey
     )
-    const selectedBook = result.books.find(
-      (item) => item.vn_code === (selectedTranslation?.catalog_book || selectedExam?.catalog_book)
-    )
+    const selectedBook = result.books.find((item) => item.vn_code === selectedEdition?.catalog_book)
     setShared(
       selectedBook
         ? {
+            vnCode: selectedBook.vn_code,
             name: selectedBook.name ?? '',
             description: selectedBook.description ?? '',
             isbn: selectedBook.isbn ?? '',
@@ -90,7 +89,7 @@ export default function CourseBooksPage({
   }
 
   async function reload(): Promise<void> {
-    const result = await getCourseBooks()
+    const result = await getCourseBooks(country)
     setData(result)
     const nextLanguage = result.languages.some((item) => item.language_key === languageKey)
       ? languageKey
@@ -106,7 +105,7 @@ export default function CourseBooksPage({
   useEffect(() => {
     let active = true
     start()
-    getCourseBooks()
+    getCourseBooks(country)
       .then((result) => {
         if (!active) return
         setData(result)
@@ -127,19 +126,17 @@ export default function CourseBooksPage({
     return () => {
       active = false
     }
-  }, [retry, start, finish])
+  }, [country, retry, start, finish])
 
   const exams = useMemo(
     () => [...(data?.exams ?? [])].sort((a, b) => a.sequence - b.sequence),
     [data]
   )
   const exam = exams.find((item) => item.exam_key === examKey)
-  const translation = data?.translations.find(
+  const edition = data?.editions.find(
     (item) => item.exam === examKey && item.language === languageKey
   )
-  const book = data?.books.find(
-    (item) => item.vn_code === (translation?.catalog_book || exam?.catalog_book)
-  )
+  const book = data?.books.find((item) => item.vn_code === edition?.catalog_book)
   const selectedLanguage = data?.languages.find((item) => item.language_key === languageKey)
   const tamilLanguage =
     selectedLanguage?.code?.toLowerCase().startsWith('ta') ||
@@ -160,7 +157,7 @@ export default function CourseBooksPage({
   }
 
   async function saveShared(): Promise<void> {
-    if (!book || !shared || !exam || !languageKey) return
+    if (!book || !shared || !edition) return
     const weight = Number(shared.weight)
     const stock = Number(shared.stock)
     const priceTn = shared.priceTn.trim() === '' ? null : Number(shared.priceTn)
@@ -170,6 +167,8 @@ export default function CourseBooksPage({
     const lowStockThreshold = Number(shared.lowStockThreshold)
     if (
       !shared.name.trim() ||
+      !shared.vnCode.trim() ||
+      shared.vnCode.trim().length > 20 ||
       !Number.isInteger(weight) ||
       weight < 1 ||
       !Number.isInteger(stock) ||
@@ -193,7 +192,9 @@ export default function CourseBooksPage({
     }
     setBusy(true)
     try {
+      const nextCode = shared.vnCode.trim().toUpperCase()
       await updateCourseBook(book.vn_code, {
+        vn_code: nextCode,
         name: shared.name.trim(),
         description: shared.description.trim(),
         isbn: shared.isbn.trim(),
@@ -208,17 +209,10 @@ export default function CourseBooksPage({
         is_active: shared.isActive
       })
       if (stock !== book.stock) {
-        await adjustCourseBookStock(book.vn_code, stock, shared.stockReason.trim())
+        await adjustCourseBookStock(nextCode, stock, shared.stockReason.trim())
       }
-      if (sharedCover) await uploadCourseBookCover(book.vn_code, sharedCover)
-      await saveCourseBookTranslation(
-        translation?.id ?? null,
-        exam.exam_key,
-        languageKey,
-        shared.name.trim(),
-        shared.description.trim(),
-        null
-      )
+      if (sharedCover) await uploadCourseBookCover(nextCode, sharedCover)
+      await saveCourseBookEdition(edition.id, shared.name.trim(), shared.description.trim(), null)
       await reload()
       notify.success('Book edition saved')
     } catch (cause) {
@@ -271,6 +265,12 @@ export default function CourseBooksPage({
           Country first.
         </p>
       )}
+      {data &&
+        languageKey &&
+        selectedLanguage?.available_countries.includes(country) &&
+        !edition && (
+          <p className="course-error">This country-language book edition is not configured yet.</p>
+        )}
       {data && languageKey && selectedLanguage?.available_countries.includes(country) && (
         <div className="course-books-layout">
           <nav className="course-books-list" aria-label="Course books">
@@ -300,11 +300,21 @@ export default function CourseBooksPage({
               <section
                 className={`course-books-panel${tamilLanguage ? ' course-books-panel--tamil' : ''}`}
               >
-                <h2>{selectedLanguage?.name} book details</h2>
+                <h2>
+                  {selectedLanguage?.name} · {country === 'IN' ? 'India' : 'Sri Lanka'} book details
+                </h2>
                 <div className="course-books-fields">
                   <label>
                     VN code
-                    <Input value={book.vn_code} readOnly />
+                    <Input
+                      maxLength={20}
+                      value={shared?.vnCode ?? ''}
+                      onChange={(event) =>
+                        setShared(
+                          (current) => current && { ...current, vnCode: event.target.value }
+                        )
+                      }
+                    />
                   </label>
                   <label>
                     Category
@@ -368,22 +378,24 @@ export default function CourseBooksPage({
                       }
                     />
                   </label>
+                  {country === 'IN' && (
+                    <label>
+                      Course price · Tamil Nadu (₹)
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={shared?.priceTn ?? ''}
+                        onChange={(event) =>
+                          setShared(
+                            (current) => current && { ...current, priceTn: event.target.value }
+                          )
+                        }
+                      />
+                    </label>
+                  )}
                   <label>
-                    Course price · Tamil Nadu (₹)
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={shared?.priceTn ?? ''}
-                      onChange={(event) =>
-                        setShared(
-                          (current) => current && { ...current, priceTn: event.target.value }
-                        )
-                      }
-                    />
-                  </label>
-                  <label>
-                    Course price · Other (₹)
+                    Course price · {country === 'IN' ? 'Other states' : 'Sri Lanka'} (₹)
                     <Input
                       type="number"
                       min="0"

@@ -36,10 +36,11 @@ export type CourseBookLanguage = {
   available_countries: string[]
 }
 
-export type CourseBookTranslation = {
+export type CourseBookEdition = {
   id: number
   exam: string
   language: string
+  country: string
   catalog_book: string | null
   title: string
   description: string
@@ -50,10 +51,11 @@ export type CourseBooksData = {
   books: CourseBook[]
   exams: CourseBookExam[]
   languages: CourseBookLanguage[]
-  translations: CourseBookTranslation[]
+  editions: CourseBookEdition[]
 }
 
-export const getCourseBooks = (): Promise<CourseBooksData> => window.office.courseBooks()
+export const getCourseBooks = (country: string): Promise<CourseBooksData> =>
+  window.office.courseBooks(country)
 
 export const updateCourseBook = (code: string, changes: unknown): Promise<unknown> =>
   window.office.courseBookUpdate(code, changes)
@@ -69,12 +71,9 @@ export const adjustCourseBookStock = (
   note: string
 ): Promise<unknown> => window.office.courseBookStock(code, stock, note)
 
-export const saveCourseBookTranslation = (
-  id: number | null,
-  exam: string,
-  language: string,
+export const saveCourseBookEdition = (
+  id: number,
   title: string,
   description: string,
   cover: { bytes: Uint8Array; name: string } | null
-): Promise<unknown> =>
-  window.office.courseBookTranslation(id, exam, language, title, description, cover)
+): Promise<unknown> => window.office.courseBookEdition(id, title, description, cover)

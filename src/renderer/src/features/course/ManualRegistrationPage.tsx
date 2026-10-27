@@ -223,7 +223,7 @@ export default function ManualRegistrationPage({
       options.exams
         .filter((exam) => form.exam_keys.includes(exam.exam_key))
         .reduce((sum, exam) => {
-          const edition = exam.editions[form.language]
+          const edition = exam.editions[`${country}:${form.language}`]
           return sum + Number(priceState ? edition?.course_price_tn : edition?.course_price_other)
         }, 0)
     : 0
@@ -474,11 +474,11 @@ export default function ManualRegistrationPage({
                   .map((exam) => (
                     <label
                       key={exam.exam_key}
-                      className={`course-choice${!exam.is_active || !exam.editions[form.language] ? ' course-book-option--disabled' : ''}`}
+                      className={`course-choice${!exam.is_active || !exam.editions[`${country}:${form.language}`] ? ' course-book-option--disabled' : ''}`}
                     >
                       <input
                         type="checkbox"
-                        disabled={!exam.is_active || !exam.editions[form.language]}
+                        disabled={!exam.is_active || !exam.editions[`${country}:${form.language}`]}
                         checked={form.exam_keys.includes(exam.exam_key)}
                         onChange={(event) =>
                           setForm((current) => ({
@@ -492,19 +492,19 @@ export default function ManualRegistrationPage({
                       <span>
                         <strong>
                           {String(exam.sequence).padStart(2, '0')}.{' '}
-                          {exam.editions[form.language]?.name || exam.title}
+                          {exam.editions[`${country}:${form.language}`]?.name || exam.title}
                         </strong>
                         <small>
                           {!exam.is_active
                             ? 'Inactive'
-                            : !exam.editions[form.language]
+                            : !exam.editions[`${country}:${form.language}`]
                               ? 'Book not configured for this language'
                               : `₹${
                                   priceState
-                                    ? (exam.editions[form.language]?.course_price_tn ??
-                                      'Price unavailable')
-                                    : (exam.editions[form.language]?.course_price_other ??
-                                      'Price unavailable')
+                                    ? (exam.editions[`${country}:${form.language}`]
+                                        ?.course_price_tn ?? 'Price unavailable')
+                                    : (exam.editions[`${country}:${form.language}`]
+                                        ?.course_price_other ?? 'Price unavailable')
                                 }`}
                         </small>
                       </span>

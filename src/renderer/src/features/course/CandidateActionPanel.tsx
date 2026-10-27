@@ -270,12 +270,17 @@ export default function CandidateActionPanel({
                         }
                       />
                       {exam.sequence}.{' '}
-                      {exam.editions[summary.candidate.language.toLowerCase()]?.name || exam.title}{' '}
+                      {exam.editions[
+                        `${summary.candidate.country}:${summary.candidate.language.toLowerCase()}`
+                      ]?.name || exam.title}{' '}
                       · ₹
                       {tamilNaduDelivery
-                        ? exam.editions[summary.candidate.language.toLowerCase()]?.course_price_tn
-                        : exam.editions[summary.candidate.language.toLowerCase()]
-                            ?.course_price_other}
+                        ? exam.editions[
+                            `${summary.candidate.country}:${summary.candidate.language.toLowerCase()}`
+                          ]?.course_price_tn
+                        : exam.editions[
+                            `${summary.candidate.country}:${summary.candidate.language.toLowerCase()}`
+                          ]?.course_price_other}
                     </label>
                   ))}
               </div>
@@ -288,9 +293,12 @@ export default function CandidateActionPanel({
                       sum +
                       Number(
                         tamilNaduDelivery
-                          ? exam.editions[summary.candidate.language.toLowerCase()]?.course_price_tn
-                          : exam.editions[summary.candidate.language.toLowerCase()]
-                              ?.course_price_other
+                          ? exam.editions[
+                              `${summary.candidate.country}:${summary.candidate.language.toLowerCase()}`
+                            ]?.course_price_tn
+                          : exam.editions[
+                              `${summary.candidate.country}:${summary.candidate.language.toLowerCase()}`
+                            ]?.course_price_other
                       ),
                     0
                   )

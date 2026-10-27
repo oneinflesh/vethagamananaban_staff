@@ -27,21 +27,19 @@ const api = {
     ipcRenderer.invoke('course:candidate-filter-options', country, mode, status, state),
   courseCandidateCounts: (country: string) =>
     ipcRenderer.invoke('course:candidate-counts', country),
-  courseBooks: () => ipcRenderer.invoke('course:books'),
+  courseBooks: (country: string) => ipcRenderer.invoke('course:books', country),
   courseBookUpdate: (code: string, changes: unknown) =>
     ipcRenderer.invoke('course:book-update', code, changes),
   courseBookCover: (code: string, cover: { bytes: Uint8Array; name: string }) =>
     ipcRenderer.invoke('course:book-cover', code, cover),
   courseBookStock: (code: string, stock: number, note: string) =>
     ipcRenderer.invoke('course:book-stock', code, stock, note),
-  courseBookTranslation: (
-    id: number | null,
-    exam: string,
-    language: string,
+  courseBookEdition: (
+    id: number,
     title: string,
     description: string,
     cover: { bytes: Uint8Array; name: string } | null
-  ) => ipcRenderer.invoke('course:book-translation', id, exam, language, title, description, cover),
+  ) => ipcRenderer.invoke('course:book-edition', id, title, description, cover),
   shippingList: (country: string, page: number, filters: unknown) =>
     ipcRenderer.invoke('shipping:list', country, page, filters),
   shippingTracking: (row: unknown, trackingNumber: string) =>

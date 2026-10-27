@@ -13,17 +13,19 @@ async function readAll<T>(path: string): Promise<T[]> {
   }
 }
 
-export async function getCourseBooks(): Promise<unknown> {
+export async function getCourseBooks(country: string): Promise<unknown> {
   const courses = await readAll<{ course_key: string; is_active: boolean }>('staff/courses/')
   const course = courses.find((item) => item.is_active)
   if (!course) throw new Error('No active course is configured.')
-  const [exams, languages, books, translations] = await Promise.all([
+  const [exams, languages, books, editions] = await Promise.all([
     readAll(`staff/course-exams/?course=${course.course_key}`),
     readAll(`staff/course-languages/?course=${course.course_key}`),
-    readAll('staff/books/'),
-    readAll('staff/course-exam-translations/')
+    readAll(`staff/books/?course_country=${encodeURIComponent(country)}`),
+    readAll(
+      `staff/course-book-editions/?course=${course.course_key}&country=${encodeURIComponent(country)}`
+    )
   ])
-  return { exams, languages, books, translations }
+  return { exams, languages, books, editions }
 }
 
 export function updateCourseBook(code: string, changes: unknown): Promise<unknown> {
@@ -60,17 +62,13 @@ export function adjustCourseBookStock(code: string, stock: number, note: string)
   })
 }
 
-export function saveCourseBookTranslation(
-  id: number | null,
-  examKey: string,
-  languageKey: string,
+export function saveCourseBookEdition(
+  id: number,
   title: string,
   description: string,
   cover: { bytes: Uint8Array; name: string } | null
 ): Promise<unknown> {
   const form = new FormData()
-  form.append('exam', examKey)
-  form.append('language', languageKey)
   form.append('title', title)
   form.append('description', description)
   if (cover) {
@@ -86,8 +84,5 @@ export function saveCourseBookTranslation(
       cover.name
     )
   }
-  return authorizedRequest(
-    id === null ? 'staff/course-exam-translations/' : `staff/course-exam-translations/${id}/`,
-    { method: id === null ? 'POST' : 'PATCH', body: form }
-  )
+  return authorizedRequest(`staff/course-book-editions/${id}/`, { method: 'PATCH', body: form })
 }
