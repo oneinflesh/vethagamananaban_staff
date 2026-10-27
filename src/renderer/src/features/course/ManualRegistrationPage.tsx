@@ -109,7 +109,7 @@ export default function ManualRegistrationPage({
           setForm((current) => ({
             ...current,
             language:
-              result.languages.find((item) => item.is_active && item.offline_enabled)?.code ?? ''
+              result.languages.find((item) => item.is_active && item.offline_enabled && item.available_countries.includes(country))?.code ?? ''
           }))
         }
       })
@@ -252,7 +252,7 @@ export default function ManualRegistrationPage({
               setForm({
                 ...initial,
                 language:
-                  options?.languages.find((item) => item.is_active && item.offline_enabled)?.code ??
+                  options?.languages.find((item) => item.is_active && item.offline_enabled && item.available_countries.includes(country))?.code ??
                   ''
               })
             }}
@@ -429,7 +429,7 @@ export default function ManualRegistrationPage({
                     onChange={(event) => setForm({ ...form, language: event.target.value })}
                   >
                     {options.languages
-                      .filter((item) => item.is_active && item.offline_enabled)
+                      .filter((item) => item.is_active && item.offline_enabled && item.available_countries.includes(country))
                       .map((item) => (
                         <option key={item.code} value={item.code}>
                           {item.name}

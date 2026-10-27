@@ -81,6 +81,7 @@ export type LanguageInfo = {
   name: string
   is_active: boolean
   offline_enabled: boolean
+  available_countries: string[]
 }
 export type ExamInfo = {
   exam_key: string

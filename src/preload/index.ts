@@ -62,6 +62,26 @@ const api = {
   courseCoordinatorCount: (country: string) =>
     ipcRenderer.invoke('course:coordinator-count', country),
   courseRegistrationOptions: () => ipcRenderer.invoke('course:registration-options'),
+  courseCurriculumContent: (examKey: string) =>
+    ipcRenderer.invoke('course:curriculum-content', examKey),
+  courseLanguages: (courseKey: string) => ipcRenderer.invoke('course:languages', courseKey),
+  courseLanguageCreate: (courseKey: string, code: string, name: string) =>
+    ipcRenderer.invoke('course:language-create', courseKey, code, name),
+  courseLanguageCountries: (key: string, countries: string[]) =>
+    ipcRenderer.invoke('course:language-countries', key, countries),
+  courseLanguageAvailability: (key: string, online: boolean, offline: boolean) =>
+    ipcRenderer.invoke('course:language-availability', key, online, offline),
+  courseWholeResults: (
+    courseKey: string,
+    country: string,
+    page: number,
+    search: string,
+    state: string,
+    district: string
+  ) =>
+    ipcRenderer.invoke('course:whole-results', courseKey, country, page, search, state, district),
+  courseSaveWholeResults: (changes: unknown[]) =>
+    ipcRenderer.invoke('course:save-whole-results', changes),
   courseManualRegistration: (courseKey: string, data: unknown) =>
     ipcRenderer.invoke('course:manual-registration', courseKey, data),
   courseInitialDispatch: (key: string) => ipcRenderer.invoke('course:initial-dispatch', key),

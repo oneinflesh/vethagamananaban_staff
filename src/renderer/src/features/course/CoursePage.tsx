@@ -11,6 +11,9 @@ import ManualRegistrationPage from './ManualRegistrationPage'
 import MonthlyDispatchPage from './MonthlyDispatchPage'
 import SendReleasedBooksPage from './SendReleasedBooksPage'
 import CourseBooksPage from './CourseBooksPage'
+import WholeResultsPage from './WholeResultsPage'
+import CourseLanguagesPage from './CourseLanguagesPage'
+import CurrentCurriculumPage from './CurrentCurriculumPage'
 import {
   getCandidateCounts,
   getCoordinatorCount,
@@ -44,6 +47,9 @@ export default function CoursePage(): React.JSX.Element {
   const [manualRegistration, setManualRegistration] = useState(false)
   const [monthlyDispatch, setMonthlyDispatch] = useState(false)
   const [courseBooks, setCourseBooks] = useState(false)
+  const [wholeResults, setWholeResults] = useState(false)
+  const [courseLanguages, setCourseLanguages] = useState(false)
+  const [currentCurriculum, setCurrentCurriculum] = useState(false)
   const [bookCandidate, setBookCandidate] = useState<Candidate | null>(null)
   const [counts, setCounts] = useState<{
     country: string
@@ -62,6 +68,9 @@ export default function CoursePage(): React.JSX.Element {
       manualRegistration ||
       monthlyDispatch ||
       courseBooks ||
+      wholeResults ||
+      courseLanguages ||
+      currentCurriculum ||
       bookCandidate
     )
       return
@@ -93,6 +102,9 @@ export default function CoursePage(): React.JSX.Element {
     manualRegistration,
     monthlyDispatch,
     courseBooks,
+    wholeResults,
+    courseLanguages,
+    currentCurriculum,
     bookCandidate,
     retry
   ])
@@ -233,6 +245,10 @@ export default function CoursePage(): React.JSX.Element {
       />
     )
   if (courseBooks) return <CourseBooksPage onBack={() => setCourseBooks(false)} />
+  if (wholeResults)
+    return <WholeResultsPage country={country} onBack={() => setWholeResults(false)} />
+  if (courseLanguages) return <CourseLanguagesPage onBack={() => setCourseLanguages(false)} />
+  if (currentCurriculum) return <CurrentCurriculumPage onBack={() => setCurrentCurriculum(false)} />
   if (monthlyDispatch)
     return (
       <>
@@ -269,6 +285,9 @@ export default function CoursePage(): React.JSX.Element {
       <div className="course-heading">
         <h1>Course</h1>
         <span>{country}</span>
+        <Button className="course-new-registration" onClick={() => setManualRegistration(true)}>
+          New manual registration
+        </Button>
       </div>
       {countError === country ? (
         <div className="course-error">
@@ -285,8 +304,8 @@ export default function CoursePage(): React.JSX.Element {
           </Button>
         </div>
       ) : visibleCounts ? (
-        <div className="course-card-grid">
-          {sections.slice(0, 5).map((item) => (
+        <div className="course-card-grid course-card-grid--candidates">
+          {sections.slice(0, 6).map((item) => (
             <button className="course-nav-card" key={item.id} onClick={() => setSection(item.id)}>
               <span className="course-nav-card__count">{visibleCounts[item.id]}</span>
               <strong>{item.title}</strong>
@@ -306,8 +325,12 @@ export default function CoursePage(): React.JSX.Element {
           </button>
         </div>
       ) : (
-        <div className="course-card-grid" role="status" aria-label="Loading course cards">
-          {sections.slice(0, 6).map((item) => (
+        <div
+          className="course-card-grid course-card-grid--candidates"
+          role="status"
+          aria-label="Loading course cards"
+        >
+          {sections.slice(0, 7).map((item) => (
             <div
               className="course-nav-card course-nav-card--loading"
               key={item.id}
@@ -333,47 +356,37 @@ export default function CoursePage(): React.JSX.Element {
               →
             </span>
           </button>
-          <button
-            className="course-nav-card course-nav-card--wide"
-            onClick={() => setManualRegistration(true)}
-          >
-            <strong>New manual registration</strong>
-            <small>Register an offline candidate and record payment</small>
-            <span className="course-nav-card__arrow" aria-hidden="true">
-              →
-            </span>
-          </button>
-          <button
-            className="course-nav-card course-nav-card--wide"
-            onClick={() => setSection('dropout')}
-          >
-            <span className="course-nav-card__count">{visibleCounts.dropout}</span>
-            <strong>Dropout candidates</strong>
-            <small>View candidates who left the course</small>
-            <span className="course-nav-card__arrow" aria-hidden="true">
-              →
-            </span>
-          </button>
-        </div>
-      )}
-      {visibleCounts && countError !== country && (
-        <div className="course-card-grid course-card-grid--third">
-          <button
-            className="course-nav-card course-nav-card--monthly"
-            onClick={() => setMonthlyDispatch(true)}
-          >
+          <button className="course-nav-card" onClick={() => setMonthlyDispatch(true)}>
             <strong>Monthly book dispatch</strong>
             <small>Open month, ship books, view unpaid candidates, and print addresses</small>
             <span className="course-nav-card__arrow" aria-hidden="true">
               →
             </span>
           </button>
-          <button
-            className="course-nav-card course-nav-card--monthly"
-            onClick={() => setCourseBooks(true)}
-          >
+          <button className="course-nav-card" onClick={() => setCourseBooks(true)}>
             <strong>Course books</strong>
             <small>Edit shared book details, stock, and language-specific content</small>
+            <span className="course-nav-card__arrow" aria-hidden="true">
+              →
+            </span>
+          </button>
+          <button className="course-nav-card" onClick={() => setWholeResults(true)}>
+            <strong>Results</strong>
+            <small>View and edit whole-course marks</small>
+            <span className="course-nav-card__arrow" aria-hidden="true">
+              →
+            </span>
+          </button>
+          <button className="course-nav-card" onClick={() => setCourseLanguages(true)}>
+            <strong>Language and Country</strong>
+            <small>Create languages and choose available countries</small>
+            <span className="course-nav-card__arrow" aria-hidden="true">
+              →
+            </span>
+          </button>
+          <button className="course-nav-card" onClick={() => setCurrentCurriculum(true)}>
+            <strong>Current Month Curriculum</strong>
+            <small>Active month and question readiness by language</small>
             <span className="course-nav-card__arrow" aria-hidden="true">
               →
             </span>

@@ -3,6 +3,13 @@ import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import { login, logout, restoreSession } from './features/auth/auth'
 import { getEnrolmentSummary } from './features/dashboard/dashboard'
+import { getWholeResults, saveWholeResults } from './features/course/wholeResults'
+import {
+  getCourseLanguages,
+  createCourseLanguage,
+  updateLanguageCountries,
+  updateLanguageAvailability
+} from './features/course/courseLanguages'
 import {
   getCourseBooks,
   updateCourseBook,
@@ -25,6 +32,7 @@ import {
   getCoordinatorFilterOptions,
   getCoordinatorCount,
   getRegistrationOptions,
+  getCurrentCurriculumContent,
   createManualRegistration,
   getInitialDispatch,
   getOtherBookOptions,
@@ -164,6 +172,25 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('course:coordinator-count', (_event, country) => getCoordinatorCount(country))
   ipcMain.handle('course:registration-options', () => getRegistrationOptions())
+  ipcMain.handle('course:curriculum-content', (_event, examKey) =>
+    getCurrentCurriculumContent(examKey)
+  )
+  ipcMain.handle('course:languages', (_event, courseKey) => getCourseLanguages(courseKey))
+  ipcMain.handle('course:language-create', (_event, courseKey, code, name) =>
+    createCourseLanguage(courseKey, code, name)
+  )
+  ipcMain.handle('course:language-countries', (_event, key, countries) =>
+    updateLanguageCountries(key, countries)
+  )
+  ipcMain.handle('course:language-availability', (_event, key, online, offline) =>
+    updateLanguageAvailability(key, online, offline)
+  )
+  ipcMain.handle(
+    'course:whole-results',
+    (_event, courseKey, country, page, search, state, district) =>
+      getWholeResults(courseKey, country, page, search, state, district)
+  )
+  ipcMain.handle('course:save-whole-results', (_event, changes) => saveWholeResults(changes))
   ipcMain.handle('course:manual-registration', (_event, courseKey, data) =>
     createManualRegistration(courseKey, data)
   )

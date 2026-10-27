@@ -22,20 +22,30 @@
   color: #876d5d;
   font-size: 13px;
 }
+.course-new-registration {
+  margin-left: auto;
+}
 .course-card-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
+.course-card-grid--candidates {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.course-card-grid--candidates .course-nav-card {
+  min-height: 146px;
+  padding: 13px;
+}
+.course-card-grid--candidates .course-nav-card strong {
+  font-size: 13px;
+}
+.course-card-grid--candidates .course-nav-card small {
+  font-size: 11px;
+}
 .course-card-grid--second {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   margin-top: 14px;
-}
-.course-card-grid--third {
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  margin-top: 14px;
-}
-.course-nav-card--monthly {
-  grid-column: span 3;
 }
 .course-dispatch-stats {
   display: flex;
@@ -45,16 +55,8 @@
   color: #694a36;
   font-size: 13px;
 }
-@media (max-width: 900px) {
-  .course-nav-card--monthly {
-    grid-column: span 6;
-  }
-}
-.course-nav-card--wide {
-  grid-column: span 2;
-}
-.course-nav-card--wide strong {
-  margin-top: 28px;
+.course-card-grid--second .course-nav-card strong {
+  margin-top: 22px;
 }
 .course-nav-card {
   position: relative;
@@ -252,6 +254,122 @@
   border-radius: 7px;
   background: #fff;
   color: #34261e;
+}
+.course-toolbar--results {
+  flex-wrap: wrap;
+}
+.course-toolbar--results .course-title-actions {
+  flex: 1 1 600px;
+}
+.course-toolbar--results .course-title-actions > input {
+  width: min(210px, 22vw);
+  height: 36px;
+}
+.course-whole-results-table input {
+  width: 72px;
+  height: 30px;
+  padding: 4px;
+  border: 1px solid #d9c8b8;
+  border-radius: 5px;
+}
+.course-whole-results-table th:first-child,
+.course-whole-results-table td:first-child,
+.course-whole-results-table th:nth-child(2),
+.course-whole-results-table td:nth-child(2) {
+  white-space: nowrap;
+}
+.course-result-unavailable {
+  color: #a18d7c;
+}
+.course-results-pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.course-language-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(360px, 1.3fr);
+  gap: 16px;
+  align-items: start;
+}
+.course-language-layout h2 {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+.course-language-create {
+  display: grid;
+  grid-template-columns: 1fr 90px auto;
+  gap: 10px;
+  align-items: end;
+}
+.course-language-create label {
+  display: grid;
+  gap: 5px;
+  color: #755d4e;
+  font-size: 12px;
+}
+.course-language-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+.course-language-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 13px;
+  border: 1px solid #e7ddd3;
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+.course-language-item.is-selected {
+  border-color: #d98c4d;
+  background: #fff4e8;
+}
+.course-language-item small {
+  color: #8c7464;
+}
+.course-language-countries {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+  font-size: 13px;
+}
+.course-language-countries label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.course-language-subheading {
+  margin-top: 30px !important;
+}
+.course-curriculum-summary h2 {
+  margin: 6px 0;
+  font-size: 22px;
+}
+.course-curriculum-summary p {
+  margin: 7px 0 0;
+  color: #755d4e;
+}
+.course-curriculum-languages {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.course-curriculum-languages .candidate-form {
+  display: grid;
+  gap: 8px;
+}
+.course-curriculum-languages h3,
+.course-curriculum-languages p {
+  margin: 0;
 }
 @media (max-width: 900px) {
   .course-list-search {
@@ -917,8 +1035,11 @@
   font-weight: 650;
 }
 @media (max-width: 1000px) {
-  .course-card-grid {
-    min-width: 900px;
+  .course-card-grid--candidates .course-nav-card {
+    padding: 10px;
+  }
+  .course-card-grid--candidates .course-nav-card__count {
+    font-size: 23px;
   }
   .candidate-form__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

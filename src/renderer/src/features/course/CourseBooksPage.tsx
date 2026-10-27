@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { countries } from '../country/CountryContext'
 import { useNotifications } from '../notifications/Notifications'
 import FullScreenLoader from '../shell/FullScreenLoader'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
@@ -44,6 +45,7 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
   const [data, setData] = useState<CourseBooksData | null>(null)
   const [error, setError] = useState('')
   const [languageKey, setLanguageKey] = useState('')
+  const [countryCode, setCountryCode] = useState('')
   const [examKey, setExamKey] = useState('')
   const [shared, setShared] = useState<SharedDraft | null>(null)
   const [sharedCover, setSharedCover] = useState<{ bytes: Uint8Array; name: string } | null>(null)
@@ -86,15 +88,20 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
   async function reload(): Promise<void> {
     const result = await getCourseBooks()
     setData(result)
-    const nextLanguage = result.languages.some(
-      (item) => item.language_key === languageKey && item.is_active
-    )
+    const nextLanguage = result.languages.some((item) => item.language_key === languageKey)
       ? languageKey
-      : (result.languages.find((item) => item.is_active)?.language_key ?? '')
+      : (result.languages[0]?.language_key ?? '')
     const nextExam = result.exams.some((item) => item.exam_key === examKey)
       ? examKey
       : ([...result.exams].sort((a, b) => a.sequence - b.sequence)[0]?.exam_key ?? '')
     setLanguageKey(nextLanguage)
+    if (
+      !result.languages
+        .find((item) => item.language_key === nextLanguage)
+        ?.available_countries.includes(countryCode)
+    ) {
+      setCountryCode('')
+    }
     setExamKey(nextExam)
     fillDrafts(result, nextExam, nextLanguage)
   }
@@ -106,7 +113,7 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
       .then((result) => {
         if (!active) return
         setData(result)
-        const firstLanguage = result.languages.find((item) => item.is_active)?.language_key ?? ''
+        const firstLanguage = ''
         const firstExam =
           [...result.exams].sort((a, b) => a.sequence - b.sequence)[0]?.exam_key ?? ''
         setLanguageKey(firstLanguage)
@@ -238,16 +245,31 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
             value={languageKey}
             onChange={(event) => {
               setLanguageKey(event.target.value)
+              setCountryCode('')
               if (data) fillDrafts(data, examKey, event.target.value)
             }}
           >
-            {data?.languages
-              .filter((item) => item.is_active)
-              .map((item) => (
-                <option key={item.language_key} value={item.language_key}>
-                  {item.name}
-                </option>
-              ))}
+            <option value="">Select language</option>
+            {data?.languages.map((item) => (
+              <option key={item.language_key} value={item.language_key}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Country
+          <select
+            value={countryCode}
+            disabled={!languageKey}
+            onChange={(event) => setCountryCode(event.target.value)}
+          >
+            <option value="">Select country</option>
+            {selectedLanguage?.available_countries.map((code) => (
+              <option key={code} value={code}>
+                {countries.find(([value]) => value === code)?.[1] ?? code}
+              </option>
+            ))}
           </select>
         </label>
         <Button variant="outline" size="sm" onClick={() => setRetry((value) => value + 1)}>
@@ -256,9 +278,16 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
       </div>
       {error && <p className="course-error">{error}</p>}
       {!error && data && !languageKey && (
-        <p className="course-error">No active course language is configured.</p>
+        <p className="course-error">
+          {data.languages.length
+            ? 'Select a language, then a country to manage its books.'
+            : 'Create a course language first.'}
+        </p>
       )}
-      {data && languageKey && (
+      {data && languageKey && !selectedLanguage?.available_countries.length && (
+        <p className="course-error">Choose countries for this language before editing its books.</p>
+      )}
+      {data && languageKey && countryCode && (
         <div className="course-books-layout">
           <nav className="course-books-list" aria-label="Course books">
             {exams.map((item) => {
@@ -515,9 +544,7 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
           )}
         </div>
       )}
-      {loading && (
-        <FullScreenLoader message="Loading course books" leaving={leaving} />
-      )}
+      {loading && <FullScreenLoader message="Loading course books" leaving={leaving} />}
     </section>
   )
 }

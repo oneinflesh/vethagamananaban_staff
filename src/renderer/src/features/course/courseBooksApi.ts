@@ -33,6 +33,7 @@ export type CourseBookLanguage = {
   code: string
   name: string
   is_active: boolean
+  available_countries: string[]
 }
 
 export type CourseBookTranslation = {

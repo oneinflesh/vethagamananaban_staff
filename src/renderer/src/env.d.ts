@@ -81,6 +81,26 @@ interface Window {
     ): Promise<import('./features/course/courseApi').CandidateFilterOptions>
     courseCoordinatorCount(country: string): Promise<number>
     courseRegistrationOptions(): Promise<import('./features/course/courseApi').RegistrationOptions>
+    courseCurriculumContent(
+      examKey: string
+    ): Promise<import('./features/course/curriculumApi').CurriculumContentPage>
+    courseLanguages(
+      courseKey: string
+    ): Promise<import('./features/course/courseLanguagesApi').LanguagePage>
+    courseLanguageCreate(courseKey: string, code: string, name: string): Promise<unknown>
+    courseLanguageCountries(key: string, countries: string[]): Promise<unknown>
+    courseLanguageAvailability(key: string, online: boolean, offline: boolean): Promise<unknown>
+    courseWholeResults(
+      courseKey: string,
+      country: string,
+      page: number,
+      search: string,
+      state: string,
+      district: string
+    ): Promise<import('./features/course/wholeResultsApi').WholeResultsPageData>
+    courseSaveWholeResults(
+      changes: import('./features/course/wholeResultsApi').WholeResultChange[]
+    ): Promise<{ saved: number }>
     courseManualRegistration(
       courseKey: string,
       data: unknown

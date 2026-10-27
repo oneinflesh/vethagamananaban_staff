@@ -164,6 +164,8 @@ export async function getRegistrationOptions(): Promise<unknown> {
   ])
   return { course, languages, exams }
 }
+export const getCurrentCurriculumContent = (examKey: string): Promise<unknown> =>
+  authorizedGet(`staff/course-exam-contents/?exam=${encodeURIComponent(examKey)}&page_size=100`)
 export const createManualRegistration = (courseKey: string, data: unknown): Promise<unknown> =>
   authorizedRequest(`staff/courses/${encodeURIComponent(courseKey)}/office-enroll/`, {
     method: 'POST',
