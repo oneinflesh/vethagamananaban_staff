@@ -147,24 +147,56 @@ export default function CourseLanguagesPage({ onBack }: { onBack: () => void }):
     }
   }
 
+  const selectedLanguage = languages.find((item) => item.language_key === selectedKey)
+
   return (
-    <section className="page course-page">
-      <div className="course-toolbar">
+    <section className="page course-page course-language-page">
+      <div className="course-toolbar course-language-toolbar">
         <Button variant="outline" onClick={onBack}>
           ← Course
         </Button>
         <h1>Language and Country</h1>
+        <span>
+          {languages.length} languages · {countries.length} countries
+        </span>
         <Button variant="outline" onClick={() => setRetry((value) => value + 1)}>
           Refresh
         </Button>
       </div>
       {error && <p className="course-error">{error}</p>}
       <div className="course-language-layout">
-        <section className="candidate-form">
-          <h2>1. Create language</h2>
-          <div className="course-language-create">
+        <aside className="course-language-rail">
+          <div className="course-language-section-heading">
+            <div>
+              <small>STEP 01</small>
+              <h2>Languages</h2>
+            </div>
+            <span>{languages.length}</span>
+          </div>
+          <div className="course-language-list" aria-label="Course languages">
+            {languages.map((language) => (
+              <button
+                type="button"
+                key={language.language_key}
+                className={`course-language-item${language.language_key === selectedKey ? ' is-selected' : ''}`}
+                onClick={() => selectLanguage(language)}
+              >
+                <span className="course-language-item-main">
+                  <strong>{language.name}</strong>
+                  <small>
+                    {language.code.toUpperCase()} · {language.available_countries.length} countries
+                  </small>
+                </span>
+                <span className={`course-language-status${language.is_active ? ' is-live' : ''}`}>
+                  {language.is_active ? 'Live' : 'Draft'}
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="course-language-rail-form">
+            <h3>Add language</h3>
             <label>
-              Name
+              Language name
               <Input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
@@ -172,7 +204,7 @@ export default function CourseLanguagesPage({ onBack }: { onBack: () => void }):
               />
             </label>
             <label>
-              Code
+              Language code
               <Input
                 value={code}
                 onChange={(event) => setCode(event.target.value)}
@@ -186,99 +218,125 @@ export default function CourseLanguagesPage({ onBack }: { onBack: () => void }):
               Add language
             </Button>
           </div>
-          <div className="course-language-list">
-            {languages.map((language) => (
-              <button
-                key={language.language_key}
-                className={
-                  language.language_key === selectedKey
-                    ? 'course-language-item is-selected'
-                    : 'course-language-item'
-                }
-                onClick={() => selectLanguage(language)}
+        </aside>
+        <div className="course-language-workspace">
+          {selectedLanguage ? (
+            <>
+              <section className="course-language-panel">
+                <div className="course-language-section-heading">
+                  <div>
+                    <small>STEP 02</small>
+                    <h2>Available countries</h2>
+                  </div>
+                  <span>{countrySelection.length} selected</span>
+                </div>
+                <p>Choose where {selectedLanguage.name} is available.</p>
+                <div className="course-language-countries">
+                  {countries.map(({ code: value, name: label }) => (
+                    <label
+                      key={value}
+                      className={countrySelection.includes(value) ? 'is-selected' : ''}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={countrySelection.includes(value)}
+                        onChange={(event) =>
+                          setCountrySelection((current) =>
+                            event.target.checked
+                              ? [...current, value]
+                              : current.filter((item) => item !== value)
+                          )
+                        }
+                      />
+                      <span>{label}</span>
+                      <small>{value}</small>
+                    </label>
+                  ))}
+                </div>
+                <div className="course-language-panel-actions">
+                  <Button disabled={busy} onClick={() => void saveCountries()}>
+                    Save countries
+                  </Button>
+                </div>
+              </section>
+              <section className="course-language-panel">
+                <div className="course-language-section-heading">
+                  <div>
+                    <small>STEP 03</small>
+                    <h2>Study modes</h2>
+                  </div>
+                </div>
+                <div className="course-language-modes">
+                  <label className={online ? 'is-selected' : ''}>
+                    <input
+                      type="checkbox"
+                      checked={online}
+                      onChange={(event) => setOnline(event.target.checked)}
+                    />
+                    <span>
+                      <strong>Online</strong>
+                      <small>Allow online course registrations</small>
+                    </span>
+                  </label>
+                  <label className={offline ? 'is-selected' : ''}>
+                    <input
+                      type="checkbox"
+                      checked={offline}
+                      onChange={(event) => setOffline(event.target.checked)}
+                    />
+                    <span>
+                      <strong>Offline</strong>
+                      <small>Allow offline course registrations</small>
+                    </span>
+                  </label>
+                </div>
+                <div className="course-language-panel-actions">
+                  <Button variant="outline" disabled={busy} onClick={() => void saveAvailability()}>
+                    Save study modes
+                  </Button>
+                </div>
+              </section>
+            </>
+          ) : (
+            <section className="course-language-panel course-language-empty">
+              <h2>Select a language</h2>
+              <p>Choose a language on the left to set its countries and study modes.</p>
+            </section>
+          )}
+          <section className="course-language-panel course-language-add-country">
+            <div className="course-language-section-heading">
+              <div>
+                <small>COUNTRY CATALOG</small>
+                <h2>Add a country</h2>
+              </div>
+            </div>
+            <div className="course-language-create">
+              <label>
+                Country name
+                <Input
+                  value={countryName}
+                  onChange={(event) => setCountryName(event.target.value)}
+                  placeholder="Germany"
+                />
+              </label>
+              <label>
+                Two-letter code
+                <Input
+                  value={countryCode}
+                  onChange={(event) => setCountryCode(event.target.value.toUpperCase())}
+                  maxLength={2}
+                  placeholder="DE"
+                />
+              </label>
+              <Button
+                disabled={busy || !countryName.trim() || countryCode.trim().length !== 2}
+                onClick={() => void createCountry()}
               >
-                <strong>{language.name}</strong>
-                <small>
-                  {language.code} · {language.available_countries.length} countries
-                </small>
-              </button>
-            ))}
-          </div>
-          <h2 className="course-language-subheading">2. Add country</h2>
-          <div className="course-language-create">
-            <label>
-              Country name
-              <Input
-                value={countryName}
-                onChange={(event) => setCountryName(event.target.value)}
-                placeholder="Germany"
-              />
-            </label>
-            <label>
-              Two-letter code
-              <Input
-                value={countryCode}
-                onChange={(event) => setCountryCode(event.target.value.toUpperCase())}
-                maxLength={2}
-                placeholder="DE"
-              />
-            </label>
-            <Button
-              disabled={busy || !countryName.trim() || countryCode.trim().length !== 2}
-              onClick={() => void createCountry()}
-            >
-              Add country
-            </Button>
-          </div>
-        </section>
-        {selectedKey && (
-          <section className="candidate-form">
-            <h2>3. Choose countries</h2>
-            <div className="course-language-countries">
-              {countries.map(({ code: value, name: label }) => (
-                <label key={value}>
-                  <input
-                    type="checkbox"
-                    checked={countrySelection.includes(value)}
-                    onChange={(event) =>
-                      setCountrySelection((current) =>
-                        event.target.checked
-                          ? [...current, value]
-                          : current.filter((item) => item !== value)
-                      )
-                    }
-                  />
-                  {label}
-                </label>
-              ))}
+                Add country
+              </Button>
             </div>
-            <Button disabled={busy} onClick={() => void saveCountries()}>
-              Save countries
-            </Button>
-            <h2 className="course-language-subheading">4. Study-mode availability</h2>
-            <div className="course-language-countries">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={online}
-                  onChange={(event) => setOnline(event.target.checked)}
-                />{' '}
-                Online
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={offline}
-                  onChange={(event) => setOffline(event.target.checked)}
-                />{' '}
-                Offline
-              </label>
-            </div>
-            <Button variant="outline" disabled={busy} onClick={() => void saveAvailability()}>
-              Save availability
-            </Button>
           </section>
-        )}
+        </div>
       </div>
       {loading && <FullScreenLoader message="Loading course languages" />}
     </section>
