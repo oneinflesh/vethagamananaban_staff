@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { countries } from '../country/CountryContext'
 import { useNotifications } from '../notifications/Notifications'
 import FullScreenLoader from '../shell/FullScreenLoader'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
@@ -39,13 +38,18 @@ function coverUrl(path: string): string {
     : `https://media.v2.bible2bible.com/${path.replace(/^\/+/, '')}`
 }
 
-export default function CourseBooksPage({ onBack }: { onBack: () => void }): React.JSX.Element {
+export default function CourseBooksPage({
+  country,
+  onBack
+}: {
+  country: string
+  onBack: () => void
+}): React.JSX.Element {
   const notify = useNotifications()
   const { loading, leaving, start, finish } = useSmoothLoading()
   const [data, setData] = useState<CourseBooksData | null>(null)
   const [error, setError] = useState('')
   const [languageKey, setLanguageKey] = useState('')
-  const [countryCode, setCountryCode] = useState('')
   const [examKey, setExamKey] = useState('')
   const [shared, setShared] = useState<SharedDraft | null>(null)
   const [sharedCover, setSharedCover] = useState<{ bytes: Uint8Array; name: string } | null>(null)
@@ -95,13 +99,6 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
       ? examKey
       : ([...result.exams].sort((a, b) => a.sequence - b.sequence)[0]?.exam_key ?? '')
     setLanguageKey(nextLanguage)
-    if (
-      !result.languages
-        .find((item) => item.language_key === nextLanguage)
-        ?.available_countries.includes(countryCode)
-    ) {
-      setCountryCode('')
-    }
     setExamKey(nextExam)
     fillDrafts(result, nextExam, nextLanguage)
   }
@@ -245,7 +242,6 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
             value={languageKey}
             onChange={(event) => {
               setLanguageKey(event.target.value)
-              setCountryCode('')
               if (data) fillDrafts(data, examKey, event.target.value)
             }}
           >
@@ -253,21 +249,6 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
             {data?.languages.map((item) => (
               <option key={item.language_key} value={item.language_key}>
                 {item.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Country
-          <select
-            value={countryCode}
-            disabled={!languageKey}
-            onChange={(event) => setCountryCode(event.target.value)}
-          >
-            <option value="">Select country</option>
-            {selectedLanguage?.available_countries.map((code) => (
-              <option key={code} value={code}>
-                {countries.find(([value]) => value === code)?.[1] ?? code}
               </option>
             ))}
           </select>
@@ -280,14 +261,17 @@ export default function CourseBooksPage({ onBack }: { onBack: () => void }): Rea
       {!error && data && !languageKey && (
         <p className="course-error">
           {data.languages.length
-            ? 'Select a language, then a country to manage its books.'
+            ? 'Select a language to manage its books for the country in the title bar.'
             : 'Create a course language first.'}
         </p>
       )}
-      {data && languageKey && !selectedLanguage?.available_countries.length && (
-        <p className="course-error">Choose countries for this language before editing its books.</p>
+      {data && languageKey && !selectedLanguage?.available_countries.includes(country) && (
+        <p className="course-error">
+          This language is not available in the selected country. Add the country in Language and
+          Country first.
+        </p>
       )}
-      {data && languageKey && countryCode && (
+      {data && languageKey && selectedLanguage?.available_countries.includes(country) && (
         <div className="course-books-layout">
           <nav className="course-books-list" aria-label="Course books">
             {exams.map((item) => {
