@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useNotifications } from '../notifications/Notifications'
 import FullScreenLoader from '../shell/FullScreenLoader'
-import { getRegistrationOptions, type ExamInfo, type RegistrationOptions } from './courseApi'
+import { getRegistrationOptions, type RegistrationOptions } from './courseApi'
 import {
   getCurrentCurriculumContent,
   setCourseBookActive,
@@ -20,8 +20,10 @@ export default function CurrentCurriculumPage({
   const [selectedKey, setSelectedKey] = useState('')
   const [contents, setContents] = useState<CurriculumContent[]>([])
   const [loading, setLoading] = useState(true)
+  const [contentLoading, setContentLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [contentError, setContentError] = useState('')
   const [retry, setRetry] = useState(0)
 
   useEffect(() => {
@@ -53,52 +55,60 @@ export default function CurrentCurriculumPage({
   useEffect(() => {
     if (!selectedKey) return
     let active = true
+    setContents([])
+    setContentError('')
+    setContentLoading(true)
     getCurrentCurriculumContent(selectedKey)
       .then((result) => {
         if (active) setContents(result.results)
       })
       .catch((cause) => {
-        if (active) setError(cause instanceof Error ? cause.message : 'Could not load questions')
+        if (active)
+          setContentError(cause instanceof Error ? cause.message : 'Could not load questions')
+      })
+      .finally(() => {
+        if (active) setContentLoading(false)
       })
     return () => {
       active = false
     }
   }, [selectedKey, retry])
 
-  const selected: ExamInfo | undefined = options?.exams.find(
-    (exam) => exam.exam_key === selectedKey
-  )
+  const selected = options?.exams.find((exam) => exam.exam_key === selectedKey)
   const current = options?.exams.find((exam) => exam.is_current)
+  const languageProgress = (options?.languages ?? [])
+    .filter((language) => language.is_active)
+    .map((language) => ({
+      ...language,
+      content: contents.find((content) => content.language_code === language.code)
+    }))
+  const readyCount = languageProgress.filter(({ content }) => content?.is_ready).length
 
-  async function activate(): Promise<void> {
+  async function makeCurrent(): Promise<void> {
     if (!options || !selected) return
-    if (
-      !window.confirm(
-        `Set month ${selected.sequence} (${selected.title}) as the current course book? This also releases it for dispatch.`
-      )
-    )
+    if (!window.confirm(`Make ${selected.title} the current month? Its books can then be sent.`))
       return
     setSaving(true)
     try {
       await setCurrentCurriculumBook(options.course.course_key, selected.sequence)
-      notify.success(`${selected.title} is now the current course book`)
+      notify.success(`${selected.title} is now the current month`)
       setRetry((value) => value + 1)
     } catch (cause) {
-      notify.error(cause instanceof Error ? cause.message : 'Could not activate this month')
+      notify.error(cause instanceof Error ? cause.message : 'Could not set the current month')
     } finally {
       setSaving(false)
     }
   }
 
-  async function toggleActive(): Promise<void> {
+  async function toggleRegistration(): Promise<void> {
     if (!selected || selected.is_current) return
     setSaving(true)
     try {
       await setCourseBookActive(selected.exam_key, !selected.is_active)
-      notify.success(selected.is_active ? 'Book deactivated' : 'Book activated for registration')
+      notify.success(selected.is_active ? 'Registration closed' : 'Registration opened')
       setRetry((value) => value + 1)
     } catch (cause) {
-      notify.error(cause instanceof Error ? cause.message : 'Could not update book availability')
+      notify.error(cause instanceof Error ? cause.message : 'Could not update registration')
     } finally {
       setSaving(false)
     }
@@ -106,25 +116,27 @@ export default function CurrentCurriculumPage({
 
   return (
     <section className="page course-page">
-      <div className="course-toolbar">
+      <div className="course-toolbar curriculum-toolbar">
         <Button variant="outline" onClick={onBack}>
           ← Course
         </Button>
-        <h1>Current Month Curriculum</h1>
+        <h1>Curriculum</h1>
         <Button variant="outline" onClick={() => setRetry((value) => value + 1)}>
           Refresh
         </Button>
       </div>
       {error && <p className="course-error">{error}</p>}
       {options && (
-        <>
-          <div className="course-curriculum-summary candidate-form">
-            <p>
-              Current book:{' '}
-              {current ? `Month ${current.sequence} · ${current.title}` : 'None selected'}
-            </p>
-            <label>
-              Choose a course book
+        <div className="curriculum-layout">
+          <div className="curriculum-current">
+            <span>Current month</span>
+            <strong>
+              {current ? `${String(current.sequence).padStart(2, '0')} · ${current.title}` : 'None'}
+            </strong>
+          </div>
+          <div className="curriculum-panel">
+            <label className="curriculum-book-picker">
+              <span>Book</span>
               <select value={selectedKey} onChange={(event) => setSelectedKey(event.target.value)}>
                 {options.exams
                   .slice()
@@ -132,48 +144,95 @@ export default function CurrentCurriculumPage({
                   .map((exam) => (
                     <option key={exam.exam_key} value={exam.exam_key}>
                       {String(exam.sequence).padStart(2, '0')} · {exam.title}
-                      {exam.is_current ? ' (current)' : ''}
                     </option>
                   ))}
               </select>
             </label>
             {selected && (
-              <>
-                <p>
-                  {selected.is_released ? 'Released' : 'Not released'} ·{' '}
-                  {selected.is_active ? 'Active book' : 'Inactive book'}
-                </p>
-                <p>Course book: {selected.catalog_book_name}</p>
-                <Button
-                  variant="outline"
-                  disabled={saving || selected.is_current}
-                  onClick={() => void toggleActive()}
-                >
-                  {selected.is_active ? 'Deactivate for registration' : 'Activate for registration'}
-                </Button>{' '}
-                <Button
-                  disabled={saving || selected.is_current || !selected.is_active}
-                  onClick={() => void activate()}
-                >
-                  {saving ? 'Activating…' : 'Set as current month'}
-                </Button>
-              </>
+              <div className="curriculum-book-details">
+                <div className="curriculum-book-status">
+                  <span
+                    className={
+                      selected.is_current
+                        ? 'curriculum-tag curriculum-tag--current'
+                        : 'curriculum-tag'
+                    }
+                  >
+                    {selected.is_current
+                      ? 'Current'
+                      : selected.is_released
+                        ? 'Ready to send'
+                        : 'Not ready to send'}
+                  </span>
+                  <span
+                    className={
+                      selected.is_active ? 'curriculum-tag curriculum-tag--open' : 'curriculum-tag'
+                    }
+                  >
+                    Registration {selected.is_active ? 'open' : 'closed'}
+                  </span>
+                </div>
+                <div className="curriculum-actions">
+                  <Button
+                    variant="outline"
+                    disabled={saving || selected.is_current}
+                    onClick={() => void toggleRegistration()}
+                  >
+                    {selected.is_active ? 'Close registration' : 'Open registration'}
+                  </Button>
+                  <Button
+                    disabled={saving || selected.is_current || !selected.is_active}
+                    onClick={() => void makeCurrent()}
+                  >
+                    {saving ? 'Saving…' : 'Make current'}
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
-          <div className="course-curriculum-languages">
-            {contents.map((content) => (
-              <div className="candidate-form" key={content.content_key}>
-                <h3>{content.language_name}</h3>
-                <p>{content.title}</p>
-                <strong>{content.question_count} / 100 questions</strong>
-                <span>{content.is_ready ? 'Ready' : 'Not ready'}</span>
+          <section className="curriculum-questions">
+            <div className="curriculum-section-heading">
+              <h2>Questions</h2>
+              {!contentLoading && !contentError && languageProgress.length > 0 && (
+                <span>
+                  {readyCount} of {languageProgress.length} ready
+                </span>
+              )}
+            </div>
+            {contentError && <p className="course-error">{contentError}</p>}
+            {contentLoading ? (
+              <p className="curriculum-empty">Loading questions…</p>
+            ) : contentError ? null : languageProgress.length ? (
+              <div className="curriculum-language-grid">
+                {languageProgress.map(({ code, name, content }) => (
+                  <div className="curriculum-language" key={code}>
+                    <div className="curriculum-language__heading">
+                      <h3>{name}</h3>
+                      <span className={content?.is_ready ? 'curriculum-ready' : ''}>
+                        {content?.is_ready ? 'Ready' : 'Not ready'}
+                      </span>
+                    </div>
+                    <div className="curriculum-language__count">
+                      <strong>{content?.question_count ?? 0}</strong>
+                      <span> / 100 questions</span>
+                    </div>
+                    <div className="curriculum-language__track" aria-hidden="true">
+                      <span
+                        style={{
+                          width: `${Math.min(100, Math.max(0, content?.question_count ?? 0))}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-            {!contents.length && <p>No language questions have been added for this book.</p>}
-          </div>
-        </>
+            ) : (
+              <p className="curriculum-empty">No languages yet.</p>
+            )}
+          </section>
+        </div>
       )}
-      {loading && <FullScreenLoader message="Loading current curriculum" />}
+      {loading && <FullScreenLoader message="Loading curriculum" />}
     </section>
   )
 }
