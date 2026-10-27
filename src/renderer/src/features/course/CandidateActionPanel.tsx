@@ -6,11 +6,9 @@ import {
   candidateAction,
   getCandidate,
   getInitialDispatch,
-  getRegistrationOptions,
   type Candidate,
   type CandidateSummary,
-  type InitialDispatch,
-  type RegistrationOptions
+  type InitialDispatch
 } from './courseApi'
 
 export type CandidateAction =
@@ -28,10 +26,9 @@ export default function CandidateActionPanel({
   onChanged: () => void
 }): React.JSX.Element {
   const [dispatch, setDispatch] = useState<InitialDispatch | null>(null)
-  const [options, setOptions] = useState<RegistrationOptions | null>(null)
   const [summary, setSummary] = useState<CandidateSummary | null>(null)
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
-  const [paymentBooks, setPaymentBooks] = useState<Set<string>>(() => new Set())
+  const [paymentAmount, setPaymentAmount] = useState('')
   const [includeIdCard, setIncludeIdCard] = useState(false)
   const [parcelOperation, setParcelOperation] = useState<'send' | 'tracking' | 'undo'>('send')
   const [tracking, setTracking] = useState('')
@@ -52,12 +49,9 @@ export default function CandidateActionPanel({
           if (active) setError(cause instanceof Error ? cause.message : 'Could not load parcel')
         })
     if (action === 'payment')
-      Promise.all([getRegistrationOptions(), getCandidate(candidate.enrollment_key)])
-        .then(([course, record]) => {
-          if (active) {
-            setOptions(course)
-            setSummary(record)
-          }
+      getCandidate(candidate.enrollment_key)
+        .then((record) => {
+          if (active) setSummary(record)
         })
         .catch((cause) => {
           if (active)
@@ -96,9 +90,11 @@ export default function CandidateActionPanel({
               }
         )
       } else {
-        if (!paymentBooks.size) throw new Error('Select released books to fund.')
+        const amount = Number(paymentAmount)
+        if (!/^\d+(\.\d{1,2})?$/.test(paymentAmount.trim()) || !Number.isFinite(amount) || amount < 1)
+          throw new Error('Enter a rupee amount of at least ₹1, with no more than two decimal places.')
         await candidateAction('manual-purchase', candidate.enrollment_key, {
-          exam_keys: [...paymentBooks],
+          amount: amount.toFixed(2),
           payment_method: paymentMethod
         })
       }
@@ -119,8 +115,6 @@ export default function CandidateActionPanel({
     dropout: 'Dropout candidate',
     restore: 'Activate candidate'
   }[action]
-  const deliveryState = candidate.postal_delivery?.state || candidate.state
-  const tamilNaduDelivery = deliveryState.replace(/\s/g, '').toLowerCase() === 'tamilnadu'
   return (
     <div className="course-dialog-backdrop" onClick={onClose}>
       <section
@@ -237,73 +231,20 @@ export default function CandidateActionPanel({
             !error && <p>Loading parcel…</p>
           ))}
         {action === 'payment' &&
-          (options && summary ? (
+          (summary ? (
             <>
-              <p>Wallet balance: ₹{summary.candidate.wallet_balance}</p>
-              <div className="course-choice-list">
-                {options.exams
-                  .filter(
-                    (exam) =>
-                      exam.is_active &&
-                      exam.is_released &&
-                      !summary.payments.some(
-                        (payment) =>
-                          ['CAPTURED', 'MANUAL'].includes(payment.status) &&
-                          payment.locked_book_prices?.[exam.exam_key]
-                      ) &&
-                      !summary.candidate.book_allocations.some(
-                        (allocation) => allocation.exam_number === exam.sequence
-                      )
-                  )
-                  .map((exam) => (
-                    <label className="course-choice" key={exam.exam_key}>
-                      <input
-                        type="checkbox"
-                        checked={paymentBooks.has(exam.exam_key)}
-                        onChange={(event) =>
-                          setPaymentBooks((current) => {
-                            const next = new Set(current)
-                            if (event.target.checked) next.add(exam.exam_key)
-                            else next.delete(exam.exam_key)
-                            return next
-                          })
-                        }
-                      />
-                      {exam.sequence}.{' '}
-                      {exam.editions[
-                        `${summary.candidate.country}:${summary.candidate.language.toLowerCase()}`
-                      ]?.name || exam.title}{' '}
-                      · ₹
-                      {tamilNaduDelivery
-                        ? exam.editions[
-                            `${summary.candidate.country}:${summary.candidate.language.toLowerCase()}`
-                          ]?.course_price_tn
-                        : exam.editions[
-                            `${summary.candidate.country}:${summary.candidate.language.toLowerCase()}`
-                          ]?.course_price_other}
-                    </label>
-                  ))}
-              </div>
-              <p>
-                Amount to add: ₹
-                {options.exams
-                  .filter((exam) => paymentBooks.has(exam.exam_key))
-                  .reduce(
-                    (sum, exam) =>
-                      sum +
-                      Number(
-                        tamilNaduDelivery
-                          ? exam.editions[
-                              `${summary.candidate.country}:${summary.candidate.language.toLowerCase()}`
-                            ]?.course_price_tn
-                          : exam.editions[
-                              `${summary.candidate.country}:${summary.candidate.language.toLowerCase()}`
-                            ]?.course_price_other
-                      ),
-                    0
-                  )
-                  .toFixed(2)}
-              </p>
+              <p>Current wallet balance: ₹{summary.candidate.wallet_balance}</p>
+              <label className="course-dialog__field">
+                Amount to add (₹)
+                <Input
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={paymentAmount}
+                  onChange={(event) => setPaymentAmount(event.target.value)}
+                  autoFocus
+                />
+              </label>
               <label className="course-dialog__field">
                 Payment method
                 <select
@@ -318,7 +259,7 @@ export default function CandidateActionPanel({
               </label>
             </>
           ) : (
-            !error && <p>Loading books…</p>
+            !error && <p>Loading wallet…</p>
           ))}
         <div className="course-dialog__footer">
           <Button variant="outline" onClick={onClose}>
@@ -326,7 +267,7 @@ export default function CandidateActionPanel({
           </Button>
           <Button
             disabled={
-              saving || (action === 'parcel' && !dispatch) || (action === 'payment' && !options)
+              saving || (action === 'parcel' && !dispatch) || (action === 'payment' && !summary)
             }
             onClick={() => void submit()}
           >
