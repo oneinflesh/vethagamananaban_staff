@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  icon: resources/app.ico
+  icon: build/vethagama-nanban-512.png
   executableName: VethagamaNanbanOffice
 portable:
   artifactName: ${name}-${version}-portable.${ext}
