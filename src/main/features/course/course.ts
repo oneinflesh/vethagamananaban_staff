@@ -165,7 +165,7 @@ export async function getRegistrationOptions(): Promise<unknown> {
   return { course, languages, exams }
 }
 export const getCurrentCurriculumContent = (examKey: string): Promise<unknown> =>
-  authorizedGet(`staff/course-exam-contents/?exam=${encodeURIComponent(examKey)}&page_size=100`)
+  authorizedGet(`staff/course-content/?exam=${encodeURIComponent(examKey)}&page_size=100`)
 export const setCurrentCurriculumBook = (courseKey: string, sequence: number): Promise<unknown> =>
   authorizedRequest(`staff/courses/${encodeURIComponent(courseKey)}/release-exam/`, {
     method: 'POST',
