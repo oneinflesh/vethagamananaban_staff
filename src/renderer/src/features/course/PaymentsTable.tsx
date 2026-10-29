@@ -13,7 +13,6 @@ function visibleCreditEntries(entries: CreditEntry[]): CreditEntry[] {
       Number(entry.amount) > 0 && Number(entry.amount) === -Number(settlement.amount)
     )
     if (charge) {
-      charge.amount = '0.00'
       charge.note = 'Staff credit charge (paid from wallet)'
       settlement.note = '__merged__'
     }
