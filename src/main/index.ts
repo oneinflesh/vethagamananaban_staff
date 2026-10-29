@@ -26,6 +26,7 @@ import {
 import {
   getCandidates,
   getPaymentBalances,
+  getPaymentHistory,
   getCandidateFilterOptions,
   getAllCandidates,
   getCandidateCounts,
@@ -135,6 +136,9 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('course:payment-balances', (_event, country, page, search) =>
     getPaymentBalances(country, page, search)
+  )
+  ipcMain.handle('course:payment-history', (_event, key, page) =>
+    getPaymentHistory(key, page)
   )
   ipcMain.handle('course:candidate-filter-options', (_event, country, mode, status, state) =>
     getCandidateFilterOptions(country, mode, status, state)

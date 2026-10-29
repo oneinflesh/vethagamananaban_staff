@@ -5,6 +5,7 @@ import { useNotifications } from '../notifications/Notifications'
 import { DataTable, Column } from './dataTable'
 import { candidateAction, getPaymentBalances, type PaymentBalance } from './courseApi'
 import { resizeColumns } from './resizeColumns'
+import PaymentHistoryDialog from './PaymentHistoryDialog'
 
 export default function CoursePaymentsPage({
   country,
@@ -22,6 +23,7 @@ export default function CoursePaymentsPage({
   const saving = useRef(new Set<string>())
   const [search, setSearch] = useState('')
   const [menu, setMenu] = useState<{ key: string; x: number; y: number } | null>(null)
+  const [historyKey, setHistoryKey] = useState<string | null>(null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -135,8 +137,10 @@ export default function CoursePaymentsPage({
       {menu && (
         <div className="course-context-menu" style={{ left: menu.x, top: menu.y }} onClick={(event) => event.stopPropagation()}>
           <button onClick={() => { onCandidate(menu.key); setMenu(null) }}>View candidate</button>
+          <button onClick={() => { setHistoryKey(menu.key); setMenu(null) }}>Payment history</button>
         </div>
       )}
+      {historyKey && <PaymentHistoryDialog candidateKey={historyKey} onClose={() => setHistoryKey(null)} />}
     </section>
   )
 }

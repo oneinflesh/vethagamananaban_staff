@@ -67,8 +67,21 @@ export type PaymentBalance = {
   credit_balance: string
 }
 export type PaymentBalancePage = { count: number; page: number; page_size: number; results: PaymentBalance[] }
+export type PaymentHistoryEntry = { date: string; transaction_id: string; amount: string; kind: 'WALLET' | 'CREDIT'; details: string }
+export type PaymentHistoryPage = {
+  bbs_number: string
+  name: string
+  wallet_balance: string
+  credit_balance: string
+  count: number
+  page: number
+  page_size: number
+  results: PaymentHistoryEntry[]
+}
 export const getPaymentBalances = (country: string, page: number, search: string): Promise<PaymentBalancePage> =>
   window.office.coursePaymentBalances(country, page, search)
+export const getPaymentHistory = (key: string, page: number): Promise<PaymentHistoryPage> =>
+  window.office.coursePaymentHistory(key, page)
 export type CandidateFilters = {
   state?: string
   district?: string

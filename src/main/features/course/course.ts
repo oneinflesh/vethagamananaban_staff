@@ -31,6 +31,9 @@ export function getPaymentBalances(country: string, page: number, search: string
   return authorizedGet(`staff/course-enrollments/payment-balances/?${params}`)
 }
 
+export const getPaymentHistory = (key: string, page: number): Promise<unknown> =>
+  authorizedGet(`staff/course-enrollments/${encodeURIComponent(key)}/payment-history/?page=${page}`)
+
 export function getCandidateFilterOptions(
   country: string,
   mode: string,

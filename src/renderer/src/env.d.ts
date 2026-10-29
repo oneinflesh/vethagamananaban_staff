@@ -36,6 +36,10 @@ interface Window {
       page: number,
       search: string
     ): Promise<import('./features/course/courseApi').PaymentBalancePage>
+    coursePaymentHistory(
+      key: string,
+      page: number
+    ): Promise<import('./features/course/courseApi').PaymentHistoryPage>
     courseCandidateFilterOptions(
       country: string,
       mode: string,
