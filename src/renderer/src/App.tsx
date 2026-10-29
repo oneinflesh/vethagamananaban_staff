@@ -47,6 +47,12 @@ export default function App(): React.JSX.Element {
     return () => window.clearTimeout(timer)
   }, [session])
 
+  useEffect(() =>
+    window.office.onSessionExpired(() => {
+      setSession(null)
+      setPage('dashboard')
+    }), [])
+
   if (!ready) return <SplashScreen />
 
   async function handleLogout(): Promise<void> {

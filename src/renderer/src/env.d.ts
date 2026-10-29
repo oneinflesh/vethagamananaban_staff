@@ -11,6 +11,7 @@ interface Window {
       remember: boolean
     ): Promise<import('./features/auth/auth').AuthSession>
     restoreSession(): Promise<import('./features/auth/auth').AuthSession | null>
+    onSessionExpired(callback: () => void): () => void
     logout(): Promise<void>
     courseCountries(): Promise<import('./features/country/countryApi').CourseCountry[]>
     courseCountryCreate(

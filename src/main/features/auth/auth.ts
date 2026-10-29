@@ -1,4 +1,5 @@
 import { clearSession, loadSession, saveSession } from './session'
+import { BrowserWindow } from 'electron'
 
 const apiBase = 'https://api.bible2bible.com/api/v1/'
 const rememberDuration = 24 * 60 * 60 * 1000
@@ -10,6 +11,20 @@ export type AuthSession = { staff: Staff; expiresAt: number | null }
 let accessToken: string | null = null
 let refreshToken: string | null = null
 let sessionExpiresAt: number | null = null
+let refreshPromise: Promise<void> | null = null
+
+function expireSession(): void {
+  const hadSession = Boolean(accessToken || refreshToken)
+  clearSession()
+  accessToken = null
+  refreshToken = null
+  sessionExpiresAt = null
+  if (hadSession) {
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.webContents.send('office:session-expired')
+    }
+  }
+}
 
 class ApiError extends Error {
   constructor(
@@ -71,6 +86,7 @@ export function logout(): void {
   accessToken = null
   refreshToken = null
   sessionExpiresAt = null
+  refreshPromise = null
   if (previousAccess && previousRefresh) {
     void fetch(`${apiBase}auth/logout/`, {
       method: 'POST',
@@ -84,16 +100,25 @@ export function logout(): void {
   }
 }
 
-async function refreshAccessToken(): Promise<void> {
+async function performRefresh(): Promise<void> {
   if (!refreshToken || (sessionExpiresAt !== null && Date.now() >= sessionExpiresAt)) {
-    accessToken = null
+    expireSession()
     throw new Error('Session expired. Please sign in again.')
   }
-  const tokens = await request<RefreshResponse>('auth/refresh/', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh: refreshToken })
-  })
+  let tokens: RefreshResponse
+  try {
+    tokens = await request<RefreshResponse>('auth/refresh/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh: refreshToken })
+    })
+  } catch (error) {
+    if (error instanceof ApiError && [400, 401, 403].includes(error.status)) {
+      expireSession()
+      throw new Error('Session expired. Please sign in again.')
+    }
+    throw error
+  }
   accessToken = tokens.access
   if (tokens.refresh) {
     refreshToken = tokens.refresh
@@ -101,11 +126,18 @@ async function refreshAccessToken(): Promise<void> {
   }
 }
 
+function refreshAccessToken(): Promise<void> {
+  if (!refreshPromise) {
+    refreshPromise = performRefresh().finally(() => {
+      refreshPromise = null
+    })
+  }
+  return refreshPromise
+}
+
 export async function authorizedRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (sessionExpiresAt !== null && Date.now() >= sessionExpiresAt) {
-    accessToken = null
-    refreshToken = null
-    clearSession()
+    expireSession()
   }
   if (!accessToken) throw new Error('Please sign in again.')
   const send = (): Promise<T> =>

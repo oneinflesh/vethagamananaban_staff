@@ -9,6 +9,10 @@ const api = {
   login: (username: string, password: string, remember: boolean) =>
     ipcRenderer.invoke('office:login', username, password, remember),
   restoreSession: () => ipcRenderer.invoke('office:restore-session'),
+  onSessionExpired: (callback: () => void) => {
+    ipcRenderer.on('office:session-expired', callback)
+    return () => ipcRenderer.removeListener('office:session-expired', callback)
+  },
   logout: () => ipcRenderer.invoke('office:logout'),
   courseCountries: () => ipcRenderer.invoke('country:list'),
   courseCountryCreate: (code: string, name: string) =>
