@@ -206,6 +206,15 @@ export type CandidateSummary = {
   candidate_role: 'COORDINATOR' | 'UNDER_COORDINATOR' | 'INDIVIDUAL'
   payments: Payment[]
   credit_entries: { amount: string; note: string; created_at: string; book: string | null }[]
+  credit_charges: {
+    date: string
+    payment_key: string
+    book: string | null
+    details: string
+    amount: string
+    wallet_used: string
+    credit_added: string
+  }[]
   results: ExamResult[]
 }
 export type Coordinator = {
