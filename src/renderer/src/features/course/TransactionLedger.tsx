@@ -82,12 +82,9 @@ export default function TransactionLedger({
           <Column title="Amount" data="amount">{(_value, _type, row: PaymentHistoryEntry) =>
             `${Number(row.amount) < 0 ? '−' : '+'}₹${Math.abs(Number(row.amount)).toFixed(2)}`
           }</Column>
-          <Column title="Balance" data="wallet_balance">{(_value, _type, row: PaymentHistoryEntry) => (
-            <span className="course-payment-history__running-balance">
-              <span>Wallet ₹{row.wallet_balance}</span>
-              <span>Credit ₹{row.credit_balance}</span>
-            </span>
-          )}</Column>
+          <Column title="Balance" data="balance">{(_value, _type, row: PaymentHistoryEntry) =>
+            `${Number(row.balance) < 0 ? '−' : ''}₹${Math.abs(Number(row.balance)).toFixed(2)}`
+          }</Column>
         </DataTable>}
         {loading && <p>Loading transactions…</p>}
         {data && !loading && !data.results.length && <p>No transactions yet.</p>}
