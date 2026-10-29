@@ -126,6 +126,7 @@ export default function CandidateDetails({
         <h1>{form?.full_name || 'Candidate details'}</h1>
         <span>{form?.bbs_identifier}</span>
         {form?.mode === 'OFFLINE' && <span>Wallet ₹{form.wallet_balance ?? '0.00'}</span>}
+        {form?.mode === 'OFFLINE' && <span>Credit owed ₹{form.credit_balance ?? '0.00'}</span>}
       </div>
       <div className="course-tabs">
         {(['details', 'payments', 'exams'] as const).map((item) => (

@@ -158,6 +158,20 @@ export default function CandidateList({
     setRetry((value) => value + 1)
   }
 
+  async function prepareOnCredit(candidate: Candidate): Promise<void> {
+    if (!window.confirm(`Prepare the current month's book for ${candidate.bbs_identifier} on credit? The credit is charged when staff ships it.`)) return
+    setShipping(true)
+    try {
+      await candidateAction('credit-and-send', candidate.enrollment_key, {})
+      notify.success('Book is Processing in Monthly Dispatch. Add tracking there to ship it on credit.')
+      refresh()
+    } catch (cause) {
+      notify.error(cause instanceof Error ? cause.message : 'Could not prepare book on credit')
+    } finally {
+      setShipping(false)
+    }
+  }
+
   function openMenu(event: MouseEvent<HTMLDivElement>): void {
     const row = (event.target as HTMLElement).closest('tr')
     const candidate = data?.find((item) => item.enrollment_key === row?.id)
@@ -660,6 +674,16 @@ export default function CandidateList({
               >
                 Prepare ID card and books
               </button>
+              {menu.candidate.status === 'ACTIVE' && (
+                <button
+                  onClick={() => {
+                    void prepareOnCredit(menu.candidate)
+                    setMenu(null)
+                  }}
+                >
+                  Credit and send
+                </button>
+              )}
               {menu.candidate.status === 'ACTIVE' && (
                 <button
                   onClick={() => {

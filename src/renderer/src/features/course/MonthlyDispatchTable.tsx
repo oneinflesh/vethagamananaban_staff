@@ -82,7 +82,9 @@ export default function MonthlyDispatchTable({
           </Column>
           <Column title="Student" data="student_name" />
           <Column title="Phone" data="student_phone" />
-          <Column title="Paid" data="payment_amount" />
+          <Column title="Payment / credit" data="payment_amount">
+            {(_value, _type, row: DispatchRow) => row.credit_amount ? `Credit ₹${row.credit_amount}` : row.payment_amount}
+          </Column>
           <Column title="Purchased" data="purchased_at">
             {(_value, _type, row: DispatchRow) => dateLabel(row.purchased_at)}
           </Column>

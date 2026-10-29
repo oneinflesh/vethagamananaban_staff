@@ -335,7 +335,7 @@ export default function MonthlyDispatchPage({
             variant={view === 'dispatch' ? 'secondary' : 'outline'}
             onClick={() => setView('dispatch')}
           >
-            All paid ({summary?.paid_count ?? 0})
+            All ready ({summary?.paid_count ?? 0})
           </Button>
           <Button
             variant={view === 'previous' ? 'secondary' : 'outline'}
@@ -380,7 +380,7 @@ export default function MonthlyDispatchPage({
       </div>
       {summary && (
         <div className="course-dispatch-stats">
-          <span>Paid: {summary.paid_count}</span>
+          <span>Ready: {summary.paid_count}</span>
           <span>Amount: ₹{summary.paid_amount}</span>
           <span>Processing, awaiting book: {summary.funded_pending_count}</span>
           <span>Unpaid: {summary.unpaid_count}</span>

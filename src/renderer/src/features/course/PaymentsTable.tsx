@@ -14,6 +14,7 @@ export default function PaymentsTable({
       <div className="candidate-metrics">
         <span>Total paid: ₹{summary.total_paid}</span>
         <span>Rupee balance: ₹{summary.candidate.wallet_balance}</span>
+        <span>Vethagama Nanban credit owed: ₹{summary.candidate.credit_balance}</span>
         <span>Payments: {summary.payment_count}</span>
         <span>Books paid: {summary.candidate.paid_books}</span>
         <span>Books remaining: {summary.candidate.remaining_books}</span>
@@ -38,6 +39,17 @@ export default function PaymentsTable({
         </Column>
         <Column title="Status" data="status" />
       </DataTable>
+      {summary.credit_entries.length > 0 && (
+        <>
+          <h2>Credit history</h2>
+          <DataTable data={summary.credit_entries} className="display course-table" options={{ paging: false, searching: false, info: false, order: [] }}>
+            <Column title="Date" data="created_at">{(_value, _type, row) => row.created_at?.slice(0, 10)}</Column>
+            <Column title="Book" data="book" options={{ defaultContent: '' }} />
+            <Column title="Details" data="note" />
+            <Column title="Credit change" data="amount">{(_value, _type, row) => `₹${row.amount}`}</Column>
+          </DataTable>
+        </>
+      )}
     </div>
   )
 }

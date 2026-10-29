@@ -125,7 +125,9 @@ interface Window {
         | 'other-book-dispatch'
         | 'set-password'
         | 'update-status'
-        | 'manual-purchase',
+        | 'manual-purchase'
+        | 'manual-credit'
+        | 'credit-and-send',
       key: string,
       data: unknown
     ): Promise<unknown>

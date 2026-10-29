@@ -34,6 +34,7 @@ export default function CandidateActionPanel({
   const [tracking, setTracking] = useState('')
   const [password, setPassword] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('CASH')
+  const [addToCredit, setAddToCredit] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const notify = useNotifications()
@@ -93,7 +94,7 @@ export default function CandidateActionPanel({
         const amount = Number(paymentAmount)
         if (!/^\d+(\.\d{1,2})?$/.test(paymentAmount.trim()) || !Number.isFinite(amount) || amount < 1)
           throw new Error('Enter a rupee amount of at least ₹1, with no more than two decimal places.')
-        await candidateAction('manual-purchase', candidate.enrollment_key, {
+        await candidateAction(addToCredit ? 'manual-credit' : 'manual-purchase', candidate.enrollment_key, {
           amount: amount.toFixed(2),
           payment_method: paymentMethod
         })
@@ -234,6 +235,7 @@ export default function CandidateActionPanel({
           (summary ? (
             <>
               <p>Current wallet balance: ₹{summary.candidate.wallet_balance}</p>
+              <p>Vethagama Nanban credit owed: ₹{summary.candidate.credit_balance}</p>
               <label className="course-dialog__field">
                 Amount to add (₹)
                 <Input
@@ -245,7 +247,11 @@ export default function CandidateActionPanel({
                   autoFocus
                 />
               </label>
-              <label className="course-dialog__field">
+              <label className="course-choice">
+                <input type="checkbox" checked={addToCredit} onChange={(event) => setAddToCredit(event.target.checked)} />
+                Add as credit owed (no payment received)
+              </label>
+              {!addToCredit && <label className="course-dialog__field">
                 Payment method
                 <select
                   value={paymentMethod}
@@ -256,7 +262,7 @@ export default function CandidateActionPanel({
                   <option value="UPI">UPI</option>
                   <option value="OTHER">Other</option>
                 </select>
-              </label>
+              </label>}
             </>
           ) : (
             !error && <p>Loading wallet…</p>

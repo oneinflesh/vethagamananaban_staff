@@ -44,6 +44,7 @@ export type Candidate = {
   paid_books: number
   remaining_books: number
   wallet_balance: string
+  credit_balance: string
   available_funded_books: number
   initial_dispatch_status: string
   registered_at: string
@@ -168,6 +169,7 @@ export type CandidateSummary = {
   coordinator: CoordinatorLink | null
   candidate_role: 'COORDINATOR' | 'UNDER_COORDINATOR' | 'INDIVIDUAL'
   payments: Payment[]
+  credit_entries: { amount: string; note: string; created_at: string; book: string | null }[]
   results: ExamResult[]
 }
 export type Coordinator = {
@@ -268,6 +270,7 @@ export type MonthlyAllocation = {
   book_number: string
   exam_title: string
   payment_amount: string
+  credit_amount: string | null
   purchased_at: string | null
   status: string
   tracking_number: string
@@ -335,7 +338,9 @@ export const candidateAction = (
     | 'other-book-dispatch'
     | 'set-password'
     | 'update-status'
-    | 'manual-purchase',
+    | 'manual-purchase'
+    | 'manual-credit'
+    | 'credit-and-send',
   key: string,
   data: unknown
 ): Promise<unknown> => window.office.courseCandidateAction(action, key, data)
