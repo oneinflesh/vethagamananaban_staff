@@ -99,7 +99,7 @@ interface Window {
     courseCurriculumContent(
       examKey: string
     ): Promise<import('./features/course/curriculumApi').CurriculumContentPage>
-    courseCurriculumActivate(courseKey: string, sequence: number): Promise<unknown>
+    courseCurriculumActivate(courseKey: string, sequence: number, country: string): Promise<unknown>
     courseCurriculumBookActive(examKey: string, active: boolean): Promise<unknown>
     courseLanguages(
       courseKey: string

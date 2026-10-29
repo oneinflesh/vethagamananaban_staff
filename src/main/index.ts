@@ -186,8 +186,8 @@ app.whenReady().then(() => {
   ipcMain.handle('course:curriculum-content', (_event, examKey) =>
     getCurrentCurriculumContent(examKey)
   )
-  ipcMain.handle('course:curriculum-activate', (_event, courseKey, sequence) =>
-    setCurrentCurriculumBook(courseKey, sequence)
+  ipcMain.handle('course:curriculum-activate', (_event, courseKey, sequence, country) =>
+    setCurrentCurriculumBook(courseKey, sequence, country)
   )
   ipcMain.handle('course:curriculum-book-active', (_event, examKey, active) =>
     setCourseBookActive(examKey, active)

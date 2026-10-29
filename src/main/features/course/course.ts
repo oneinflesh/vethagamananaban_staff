@@ -175,11 +175,11 @@ export async function getRegistrationOptions(): Promise<unknown> {
 }
 export const getCurrentCurriculumContent = (examKey: string): Promise<unknown> =>
   authorizedGet(`staff/course-content/?exam=${encodeURIComponent(examKey)}&page_size=100`)
-export const setCurrentCurriculumBook = (courseKey: string, sequence: number): Promise<unknown> =>
+export const setCurrentCurriculumBook = (courseKey: string, sequence: number, country: string): Promise<unknown> =>
   authorizedRequest(`staff/courses/${encodeURIComponent(courseKey)}/release-exam/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sequence })
+    body: JSON.stringify({ sequence, country })
   })
 export const setCourseBookActive = (examKey: string, active: boolean): Promise<unknown> =>
   authorizedRequest(`staff/course-exams/${encodeURIComponent(examKey)}/`, {

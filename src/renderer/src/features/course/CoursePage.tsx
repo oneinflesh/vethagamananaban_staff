@@ -252,7 +252,7 @@ export default function CoursePage(): React.JSX.Element {
   if (wholeResults)
     return <WholeResultsPage country={country} onBack={() => setWholeResults(false)} />
   if (courseLanguages) return <CourseLanguagesPage onBack={() => setCourseLanguages(false)} />
-  if (currentCurriculum) return <CurrentCurriculumPage onBack={() => setCurrentCurriculum(false)} />
+  if (currentCurriculum) return <CurrentCurriculumPage country={country} onBack={() => setCurrentCurriculum(false)} />
   if (coursePayments)
     return (
       <>

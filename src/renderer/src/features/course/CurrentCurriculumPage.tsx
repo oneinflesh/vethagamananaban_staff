@@ -11,8 +11,10 @@ import {
 } from './curriculumApi'
 
 export default function CurrentCurriculumPage({
+  country,
   onBack
 }: {
+  country: string
   onBack: () => void
 }): React.JSX.Element {
   const notify = useNotifications()
@@ -20,7 +22,7 @@ export default function CurrentCurriculumPage({
   const [selectedKey, setSelectedKey] = useState('')
   const [contents, setContents] = useState<CurriculumContent[]>([])
   const [loading, setLoading] = useState(true)
-  const [contentLoading, setContentLoading] = useState(false)
+  const [contentLoading, setContentLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [contentError, setContentError] = useState('')
@@ -32,6 +34,7 @@ export default function CurrentCurriculumPage({
       .then((result) => {
         if (!active) return
         setOptions(result)
+        setContentLoading(true)
         setSelectedKey((previous) =>
           result.exams.some((exam) => exam.exam_key === previous)
             ? previous
@@ -55,9 +58,6 @@ export default function CurrentCurriculumPage({
   useEffect(() => {
     if (!selectedKey) return
     let active = true
-    setContents([])
-    setContentError('')
-    setContentLoading(true)
     getCurrentCurriculumContent(selectedKey)
       .then((result) => {
         if (active) setContents(result.results)
@@ -77,12 +77,18 @@ export default function CurrentCurriculumPage({
   const selected = options?.exams.find((exam) => exam.exam_key === selectedKey)
   const current = options?.exams.find((exam) => exam.is_current)
   const languageProgress = (options?.languages ?? [])
-    .filter((language) => language.is_active)
+    .filter((language) => language.is_active && language.available_countries.includes(country))
     .map((language) => ({
       ...language,
       content: contents.find((content) => content.language_code === language.code)
     }))
   const readyCount = languageProgress.filter(({ content }) => content?.is_ready).length
+
+  function refresh(): void {
+    setContentLoading(true)
+    setContentError('')
+    setRetry((value) => value + 1)
+  }
 
   async function makeCurrent(): Promise<void> {
     if (!options || !selected) return
@@ -90,9 +96,9 @@ export default function CurrentCurriculumPage({
       return
     setSaving(true)
     try {
-      await setCurrentCurriculumBook(options.course.course_key, selected.sequence)
+      await setCurrentCurriculumBook(options.course.course_key, selected.sequence, country)
       notify.success(`${selected.title} is now the current month`)
-      setRetry((value) => value + 1)
+      refresh()
     } catch (cause) {
       notify.error(cause instanceof Error ? cause.message : 'Could not set the current month')
     } finally {
@@ -106,7 +112,7 @@ export default function CurrentCurriculumPage({
     try {
       await setCourseBookActive(selected.exam_key, !selected.is_active)
       notify.success(selected.is_active ? 'Registration closed' : 'Registration opened')
-      setRetry((value) => value + 1)
+      refresh()
     } catch (cause) {
       notify.error(cause instanceof Error ? cause.message : 'Could not update registration')
     } finally {
@@ -121,7 +127,7 @@ export default function CurrentCurriculumPage({
           ← Course
         </Button>
         <h1>Curriculum</h1>
-        <Button variant="outline" onClick={() => setRetry((value) => value + 1)}>
+        <Button variant="outline" onClick={refresh}>
           Refresh
         </Button>
       </div>
@@ -137,7 +143,12 @@ export default function CurrentCurriculumPage({
           <div className="curriculum-panel">
             <label className="curriculum-book-picker">
               <span>Book</span>
-              <select value={selectedKey} onChange={(event) => setSelectedKey(event.target.value)}>
+              <select value={selectedKey} onChange={(event) => {
+                setContents([])
+                setContentError('')
+                setContentLoading(true)
+                setSelectedKey(event.target.value)
+              }}>
                 {options.exams
                   .slice()
                   .sort((a, b) => a.sequence - b.sequence)

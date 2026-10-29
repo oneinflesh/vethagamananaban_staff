@@ -73,8 +73,8 @@ const api = {
   courseRegistrationOptions: () => ipcRenderer.invoke('course:registration-options'),
   courseCurriculumContent: (examKey: string) =>
     ipcRenderer.invoke('course:curriculum-content', examKey),
-  courseCurriculumActivate: (courseKey: string, sequence: number) =>
-    ipcRenderer.invoke('course:curriculum-activate', courseKey, sequence),
+  courseCurriculumActivate: (courseKey: string, sequence: number, country: string) =>
+    ipcRenderer.invoke('course:curriculum-activate', courseKey, sequence, country),
   courseCurriculumBookActive: (examKey: string, active: boolean) =>
     ipcRenderer.invoke('course:curriculum-book-active', examKey, active),
   courseLanguages: (courseKey: string) => ipcRenderer.invoke('course:languages', courseKey),
