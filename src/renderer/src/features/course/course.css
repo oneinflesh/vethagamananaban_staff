@@ -1452,6 +1452,49 @@
   margin: 0;
   font-weight: 650;
 }
+.candidate-payments {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+.candidate-metrics--payments {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0;
+  color: #34261e;
+}
+.candidate-metrics--payments > span {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  padding: 10px 14px;
+  border: 1px solid #e7ddd3;
+  border-radius: 10px;
+  background: white;
+}
+.candidate-metrics--payments > button {
+  justify-self: start;
+  align-self: center;
+}
+.candidate-payments > .course-table-wrap,
+.candidate-payments__credit .course-table-wrap {
+  margin: 0;
+}
+.candidate-payments__credit {
+  display: grid;
+  gap: 10px;
+}
+.candidate-payments__credit h2 {
+  margin: 0;
+  font-size: 17px;
+}
+@media (max-width: 900px) {
+  .candidate-metrics--payments { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .candidate-metrics--payments { grid-template-columns: minmax(0, 1fr); }
+}
 @media (max-width: 1000px) {
   .course-card-grid--candidates .course-nav-card {
     padding: 10px;

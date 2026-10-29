@@ -170,7 +170,7 @@ export default function CoursePaymentsPage({
         </DataTable>
       </div>
       {menu && (
-        <div className="course-context-menu" style={{ left: menu.x, top: menu.y }} onClick={(event) => event.stopPropagation()}>
+        <div className="course-context-menu course-context-menu--actions" style={{ left: menu.x, top: menu.y }} onClick={(event) => event.stopPropagation()}>
           <button onClick={() => { onCandidate(menu.key); setMenu(null) }}>View candidate</button>
           <button onClick={() => { setHistoryKey(menu.key); setMenu(null) }}>Payment history</button>
         </div>
