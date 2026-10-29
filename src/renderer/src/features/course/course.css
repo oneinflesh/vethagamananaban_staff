@@ -143,6 +143,7 @@
 .course-payment-history__table .course-table-wrap { margin: 0; }
 .course-payment-history__wallet { background: #e8f6ec !important; }
 .course-payment-history__credit { background: #fde9e6 !important; }
+.course-payment-history__transfer { background: #eef3fb !important; }
 .course-payment-history__restored td:not(:last-child) {
   text-decoration: line-through;
   opacity: .55;

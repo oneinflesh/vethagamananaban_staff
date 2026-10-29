@@ -89,7 +89,7 @@ export default function CoursePaymentsPage({
       row.credit_send_state = 'ALREADY_IN_DISPATCH'
       button.textContent = 'Already in dispatch list'
       table.current?.dt()?.ajax.reload(undefined, false)
-      notify.success('Book added to monthly dispatch. Credit is charged when shipped.')
+      notify.success('Book added to monthly dispatch. Credit owed updated.')
     } catch (error) {
       button.disabled = false
       button.textContent = 'Credit and send'

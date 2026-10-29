@@ -159,7 +159,7 @@ export default function CandidateList({
   }
 
   async function prepareOnCredit(candidate: Candidate): Promise<void> {
-    if (!window.confirm(`Prepare the current month's book for ${candidate.bbs_identifier} on credit? The credit is charged when staff ships it.`)) return
+    if (!window.confirm(`Prepare the current month's book for ${candidate.bbs_identifier} on credit? Credit owed is added now.`)) return
     setShipping(true)
     try {
       await candidateAction('credit-and-send', candidate.enrollment_key, {})

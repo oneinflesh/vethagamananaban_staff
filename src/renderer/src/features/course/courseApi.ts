@@ -72,7 +72,7 @@ export type PaymentHistoryEntry = {
   date: string
   transaction_id: string
   amount: string
-  kind: 'WALLET' | 'CREDIT'
+  kind: 'WALLET' | 'CREDIT' | 'TRANSFER'
   details: string
   wallet_balance: string
   credit_balance: string
