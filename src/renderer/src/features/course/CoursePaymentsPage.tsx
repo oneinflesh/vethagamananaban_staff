@@ -107,7 +107,8 @@ export default function CoursePaymentsPage({
       MONTH_NOT_OPEN: 'Month not open',
       ALREADY_IN_DISPATCH: 'Already in dispatch list',
       ALREADY_COMPLETED: 'Book completed',
-      WALLET_AVAILABLE: 'Wallet available'
+      WALLET_AVAILABLE: 'Wallet balance',
+      PRICE_UNAVAILABLE: 'Price unavailable'
     }
     return <Button variant="outline" disabled={row.credit_send_state !== 'READY'} onClick={(event) => void creditAndSend(row, event.currentTarget)}>{labels[row.credit_send_state]}</Button>
   }
@@ -143,6 +144,10 @@ export default function CoursePaymentsPage({
             ordering: false,
             autoWidth: false,
             rowId: 'enrollment_key',
+            createdRow: (element, data) => {
+              if ((data as PaymentBalance).credit_send_state === 'WALLET_AVAILABLE')
+                element.classList.add('course-payment-wallet-funded')
+            },
             layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' },
             ajax: (request, callback) => {
               const page = Math.floor((request.start ?? 0) / (request.length || 20)) + 1

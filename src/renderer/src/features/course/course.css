@@ -102,6 +102,9 @@
   border-radius: 6px;
   background: #fff;
 }
+.course-table tbody tr.course-payment-wallet-funded > td {
+  background: #e8f6ec !important;
+}
 .course-payment-history {
   display: flex;
   flex-direction: column;
