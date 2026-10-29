@@ -140,6 +140,10 @@
 .course-payment-history__table .course-table-wrap { margin: 0; }
 .course-payment-history__wallet { background: #e8f6ec !important; }
 .course-payment-history__credit { background: #fde9e6 !important; }
+.course-payment-history__restored td:not(:last-child) {
+  text-decoration: line-through;
+  opacity: .55;
+}
 .course-payment-history__id { overflow-wrap: anywhere; }
 .course-payment-history__footer { margin-top: 12px; }
 @media (max-width: 760px) {
@@ -1456,6 +1460,10 @@
   display: grid;
   gap: 18px;
   min-width: 0;
+}
+.candidate-payments__top {
+  display: flex;
+  justify-content: flex-end;
 }
 .candidate-metrics--payments {
   display: grid;

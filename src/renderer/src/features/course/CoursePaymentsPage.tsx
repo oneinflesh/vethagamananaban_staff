@@ -175,7 +175,8 @@ export default function CoursePaymentsPage({
           <button onClick={() => { setHistoryKey(menu.key); setMenu(null) }}>Payment history</button>
         </div>
       )}
-      {historyKey && <PaymentHistoryDialog candidateKey={historyKey} onClose={() => setHistoryKey(null)} />}
+      {historyKey && <PaymentHistoryDialog candidateKey={historyKey} onClose={() => setHistoryKey(null)}
+        onRestored={() => table.current?.dt()?.ajax.reload(undefined, false)} />}
     </section>
   )
 }

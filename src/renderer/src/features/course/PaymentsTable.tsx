@@ -23,14 +23,19 @@ function visibleCreditEntries(entries: CreditEntry[]): CreditEntry[] {
 
 export default function PaymentsTable({
   summary,
-  onAddPayment
+  onAddPayment,
+  onTransactions
 }: {
   summary: CandidateSummary
   onAddPayment: () => void
+  onTransactions: () => void
 }): React.JSX.Element {
   const creditEntries = visibleCreditEntries(summary.credit_entries)
   return (
     <div className="candidate-payments">
+      <div className="candidate-payments__top">
+        <Button variant="outline" onClick={onTransactions}>Transactions</Button>
+      </div>
       <div className="candidate-metrics candidate-metrics--payments">
         <span>Total paid: ₹{summary.total_paid}</span>
         <span>Rupee balance: ₹{summary.candidate.wallet_balance}</span>
@@ -45,7 +50,11 @@ export default function PaymentsTable({
       <div className="course-table-wrap"><DataTable
         data={summary.payments}
         className="display course-table"
-        options={{ paging: false, searching: false, info: false, order: [] }}
+        options={{ paging: false, searching: false, info: false, order: [],
+          createdRow: (row, payment) => {
+            if (summary.restored_payment_keys.includes((payment as CandidateSummary['payments'][number]).payment_key))
+              row.classList.add('course-payment-history__restored')
+          } }}
       >
         <Column title="Date" data="paid_at">
           {(_value, _type, row) => row.paid_at?.slice(0, 10) || row.created_at?.slice(0, 10) || '—'}
@@ -57,7 +66,7 @@ export default function PaymentsTable({
         <Column title="Locked book price" data="locked_book_price">
           {(_value, _type, row) => (row.wallet_topup ? `₹${row.locked_book_price}` : '—')}
         </Column>
-        <Column title="Status" data="status" />
+        <Column title="Status" data="status">{(_value, _type, row) => summary.restored_payment_keys.includes(row.payment_key) ? 'Restored' : row.status}</Column>
       </DataTable></div>
       {creditEntries.length > 0 && (
         <div className="candidate-payments__credit">

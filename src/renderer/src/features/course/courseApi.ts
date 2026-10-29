@@ -68,7 +68,16 @@ export type PaymentBalance = {
   credit_send_state: 'READY' | 'NOT_AVAILABLE' | 'MONTH_NOT_OPEN' | 'ALREADY_IN_DISPATCH' | 'ALREADY_COMPLETED' | 'WALLET_AVAILABLE'
 }
 export type PaymentBalancePage = { count: number; page: number; page_size: number; results: PaymentBalance[] }
-export type PaymentHistoryEntry = { date: string; transaction_id: string; amount: string; kind: 'WALLET' | 'CREDIT'; details: string }
+export type PaymentHistoryEntry = {
+  date: string
+  transaction_id: string
+  amount: string
+  kind: 'WALLET' | 'CREDIT'
+  details: string
+  payment_key: string | null
+  restored: boolean
+  can_restore: boolean
+}
 export type PaymentHistoryPage = {
   bbs_number: string
   name: string
@@ -192,6 +201,7 @@ export type CandidateSummary = {
   candidate: Candidate
   total_paid: string
   payment_count: number
+  restored_payment_keys: string[]
   coordinator: CoordinatorLink | null
   candidate_role: 'COORDINATOR' | 'UNDER_COORDINATOR' | 'INDIVIDUAL'
   payments: Payment[]
@@ -366,7 +376,8 @@ export const candidateAction = (
     | 'update-status'
     | 'manual-purchase'
     | 'manual-credit'
-    | 'credit-and-send',
+    | 'credit-and-send'
+    | 'restore-wallet-payment',
   key: string,
   data: unknown
 ): Promise<unknown> => window.office.courseCandidateAction(action, key, data)

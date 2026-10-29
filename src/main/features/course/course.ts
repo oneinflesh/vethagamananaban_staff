@@ -205,7 +205,8 @@ export function candidateAction(
     | 'update-status'
     | 'manual-purchase'
     | 'manual-credit'
-    | 'credit-and-send',
+    | 'credit-and-send'
+    | 'restore-wallet-payment',
   key: string,
   data: unknown
 ): Promise<unknown> {

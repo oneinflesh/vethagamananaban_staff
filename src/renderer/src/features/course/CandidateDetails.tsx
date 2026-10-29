@@ -5,6 +5,7 @@ import FullScreenLoader from '../shell/FullScreenLoader'
 import { useNotifications } from '../notifications/Notifications'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
 import PaymentsTable from './PaymentsTable'
+import PaymentHistoryDialog from './PaymentHistoryDialog'
 import CandidateActionPanel from './CandidateActionPanel'
 import ExamResultsTable from './ExamResultsTable'
 import CandidateCoordinatorAssignment from './CandidateCoordinatorAssignment'
@@ -51,6 +52,7 @@ export default function CandidateDetails({
   const [tab, setTab] = useState<Tab>(initialTab)
   const [saving, setSaving] = useState(false)
   const [addingPayment, setAddingPayment] = useState(false)
+  const [showTransactions, setShowTransactions] = useState(false)
   const notify = useNotifications()
   const { loading, leaving, finish } = useSmoothLoading()
 
@@ -212,7 +214,7 @@ export default function CandidateDetails({
         </div>
       )}
       {tab === 'payments' && summary && (
-        <PaymentsTable summary={summary} onAddPayment={() => setAddingPayment(true)} />
+        <PaymentsTable summary={summary} onAddPayment={() => setAddingPayment(true)} onTransactions={() => setShowTransactions(true)} />
       )}
       {tab === 'exams' && summary && (
         <ExamResultsTable
@@ -222,6 +224,10 @@ export default function CandidateDetails({
         />
       )}
       {loading && <FullScreenLoader message="Loading candidate" leaving={leaving} />}
+      {showTransactions && (
+        <PaymentHistoryDialog candidateKey={candidateKey} onClose={() => setShowTransactions(false)}
+          onRestored={() => void reloadCandidate().catch((error) => notify.error(error instanceof Error ? error.message : 'Could not refresh candidate'))} />
+      )}
       {addingPayment && form && (
         <CandidateActionPanel
           action="payment"
