@@ -21,6 +21,7 @@ export default function CoursePaymentsPage({
   const rows = useRef<PaymentBalance[]>([])
   const query = useRef({ country, search: '' })
   const saving = useRef(new Set<string>())
+  const preparing = useRef(new Set<string>())
   const [search, setSearch] = useState('')
   const [menu, setMenu] = useState<{ key: string; x: number; y: number } | null>(null)
   const [historyKey, setHistoryKey] = useState<string | null>(null)
@@ -78,6 +79,39 @@ export default function CoursePaymentsPage({
     )
   }
 
+  async function creditAndSend(row: PaymentBalance, button: HTMLButtonElement): Promise<void> {
+    if (row.credit_send_state !== 'READY' || preparing.current.has(row.enrollment_key)) return
+    preparing.current.add(row.enrollment_key)
+    button.disabled = true
+    button.textContent = 'Preparing…'
+    try {
+      await candidateAction('credit-and-send', row.enrollment_key, {})
+      row.credit_send_state = 'ALREADY_IN_DISPATCH'
+      button.textContent = 'Already in dispatch list'
+      table.current?.dt()?.ajax.reload(undefined, false)
+      notify.success('Book added to monthly dispatch. Credit is charged when shipped.')
+    } catch (error) {
+      button.disabled = false
+      button.textContent = 'Credit and send'
+      notify.error(error instanceof Error ? error.message : 'Could not prepare book')
+      table.current?.dt()?.ajax.reload(undefined, false)
+    } finally {
+      preparing.current.delete(row.enrollment_key)
+    }
+  }
+
+  function creditSendButton(row: PaymentBalance): React.JSX.Element {
+    const labels: Record<PaymentBalance['credit_send_state'], string> = {
+      READY: 'Credit and send',
+      NOT_AVAILABLE: 'Not available',
+      MONTH_NOT_OPEN: 'Month not open',
+      ALREADY_IN_DISPATCH: 'Already in dispatch list',
+      ALREADY_COMPLETED: 'Book completed',
+      WALLET_AVAILABLE: 'Wallet available'
+    }
+    return <Button variant="outline" disabled={row.credit_send_state !== 'READY'} onClick={(event) => void creditAndSend(row, event.currentTarget)}>{labels[row.credit_send_state]}</Button>
+  }
+
   function openMenu(event: MouseEvent<HTMLDivElement>): void {
     const key = (event.target as HTMLElement).closest('tr')?.id
     if (!key || !rows.current.some((row) => row.enrollment_key === key)) return
@@ -132,6 +166,7 @@ export default function CoursePaymentsPage({
           <Column title="Credit owed" data="credit_balance">{(_value, _type, row: PaymentBalance) => `₹${row.credit_balance}`}</Column>
           <Column title="Quick Wallet Payment" data="enrollment_key">{(_value, _type, row: PaymentBalance) => amountInput(row, 'wallet')}</Column>
           <Column title="Quick Credit Payment" data="enrollment_key">{(_value, _type, row: PaymentBalance) => amountInput(row, 'credit')}</Column>
+          <Column title="Credit and send" data="credit_send_state">{(_value, _type, row: PaymentBalance) => creditSendButton(row)}</Column>
         </DataTable>
       </div>
       {menu && (

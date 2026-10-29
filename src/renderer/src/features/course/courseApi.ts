@@ -65,6 +65,7 @@ export type PaymentBalance = {
   status: string
   wallet_balance: string
   credit_balance: string
+  credit_send_state: 'READY' | 'NOT_AVAILABLE' | 'MONTH_NOT_OPEN' | 'ALREADY_IN_DISPATCH' | 'ALREADY_COMPLETED' | 'WALLET_AVAILABLE'
 }
 export type PaymentBalancePage = { count: number; page: number; page_size: number; results: PaymentBalance[] }
 export type PaymentHistoryEntry = { date: string; transaction_id: string; amount: string; kind: 'WALLET' | 'CREDIT'; details: string }
