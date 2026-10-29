@@ -25,6 +25,7 @@ import {
 } from './features/shipping/shipping'
 import {
   getCandidates,
+  getPaymentBalances,
   getCandidateFilterOptions,
   getAllCandidates,
   getCandidateCounts,
@@ -131,6 +132,9 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('course:candidates', (_event, country, page, mode, status, search, filters) =>
     getCandidates(country, page, mode, status, search, filters)
+  )
+  ipcMain.handle('course:payment-balances', (_event, country, page, search) =>
+    getPaymentBalances(country, page, search)
   )
   ipcMain.handle('course:candidate-filter-options', (_event, country, mode, status, state) =>
     getCandidateFilterOptions(country, mode, status, state)

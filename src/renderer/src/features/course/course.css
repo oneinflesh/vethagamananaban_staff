@@ -44,8 +44,20 @@
   font-size: 11px;
 }
 .course-card-grid--second {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   margin-top: 14px;
+}
+.course-toolbar--payments {
+  margin-bottom: 12px;
+}
+.course-quick-payment {
+  width: 100%;
+  min-width: 90px;
+  max-width: 140px;
+  padding: 6px 8px;
+  border: 1px solid #d9c8b9;
+  border-radius: 6px;
+  background: #fff;
 }
 .course-dispatch-stats {
   display: flex;

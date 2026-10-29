@@ -57,6 +57,18 @@ export type Candidate = {
   }[]
 }
 export type CandidatePage = { count: number; results: Candidate[] }
+export type PaymentBalance = {
+  enrollment_key: string
+  bbs_number: string
+  name: string
+  mode: string
+  status: string
+  wallet_balance: string
+  credit_balance: string
+}
+export type PaymentBalancePage = { count: number; page: number; page_size: number; results: PaymentBalance[] }
+export const getPaymentBalances = (country: string, page: number, search: string): Promise<PaymentBalancePage> =>
+  window.office.coursePaymentBalances(country, page, search)
 export type CandidateFilters = {
   state?: string
   district?: string

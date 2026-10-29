@@ -27,6 +27,8 @@ const api = {
     search: string,
     filters: unknown
   ) => ipcRenderer.invoke('course:candidates', country, page, mode, status, search, filters),
+  coursePaymentBalances: (country: string, page: number, search: string) =>
+    ipcRenderer.invoke('course:payment-balances', country, page, search),
   courseCandidateFilterOptions: (country: string, mode: string, status: string, state: string) =>
     ipcRenderer.invoke('course:candidate-filter-options', country, mode, status, state),
   courseCandidateCounts: (country: string) =>

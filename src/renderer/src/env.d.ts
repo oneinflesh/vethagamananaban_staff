@@ -31,6 +31,11 @@ interface Window {
       search: string,
       filters: import('./features/course/courseApi').CandidateFilters
     ): Promise<import('./features/course/courseApi').CandidatePage>
+    coursePaymentBalances(
+      country: string,
+      page: number,
+      search: string
+    ): Promise<import('./features/course/courseApi').PaymentBalancePage>
     courseCandidateFilterOptions(
       country: string,
       mode: string,
