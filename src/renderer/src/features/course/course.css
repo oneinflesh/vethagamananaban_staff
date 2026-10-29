@@ -148,6 +148,7 @@
   opacity: .55;
 }
 .course-payment-history__id { overflow-wrap: anywhere; }
+.course-payment-history__running-balance { display: grid; gap: 2px; white-space: nowrap; }
 .course-payment-history__footer { margin-top: 12px; }
 @media (max-width: 760px) {
   .course-payment-history { width: 94vw; min-width: 0; }

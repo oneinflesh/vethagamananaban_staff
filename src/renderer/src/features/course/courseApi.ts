@@ -74,6 +74,8 @@ export type PaymentHistoryEntry = {
   amount: string
   kind: 'WALLET' | 'CREDIT'
   details: string
+  wallet_balance: string
+  credit_balance: string
   payment_key: string | null
   restored: boolean
   can_restore: boolean

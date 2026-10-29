@@ -86,6 +86,12 @@ export default function PaymentHistoryDialog({
               <Column title="Amount" data="amount">
                 {(_value, _type, row: PaymentHistoryEntry) => `${Number(row.amount) < 0 ? '−' : '+'}₹${Math.abs(Number(row.amount)).toFixed(2)}`}
               </Column>
+              <Column title="Balance" data="wallet_balance">{(_value, _type, row: PaymentHistoryEntry) => (
+                <span className="course-payment-history__running-balance">
+                  <span>Wallet ₹{row.wallet_balance}</span>
+                  <span>Credit ₹{row.credit_balance}</span>
+                </span>
+              )}</Column>
               <Column title="" data="can_restore">{(_value, _type, row: PaymentHistoryEntry) => row.can_restore ? (
                 <Button variant="outline" disabled={!!restoring} onClick={() => void restore(row)}>Restore</Button>
               ) : row.restored ? 'Restored' : ''}</Column>
