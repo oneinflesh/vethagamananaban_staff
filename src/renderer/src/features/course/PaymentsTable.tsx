@@ -1,10 +1,13 @@
 import { DataTable, Column } from './dataTable'
+import { Button } from '@/components/ui/button'
 import type { CandidateSummary } from './courseApi'
 
 export default function PaymentsTable({
-  summary
+  summary,
+  onAddPayment
 }: {
   summary: CandidateSummary
+  onAddPayment: () => void
 }): React.JSX.Element {
   return (
     <div className="course-table-wrap">
@@ -14,6 +17,9 @@ export default function PaymentsTable({
         <span>Payments: {summary.payment_count}</span>
         <span>Books paid: {summary.candidate.paid_books}</span>
         <span>Books remaining: {summary.candidate.remaining_books}</span>
+        {summary.candidate.mode === 'OFFLINE' && (
+          <Button onClick={onAddPayment}>Add payment</Button>
+        )}
       </div>
       <DataTable
         data={summary.payments}

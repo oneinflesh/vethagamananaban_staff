@@ -5,6 +5,7 @@ import FullScreenLoader from '../shell/FullScreenLoader'
 import { useNotifications } from '../notifications/Notifications'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
 import PaymentsTable from './PaymentsTable'
+import CandidateActionPanel from './CandidateActionPanel'
 import ExamResultsTable from './ExamResultsTable'
 import CandidateCoordinatorAssignment from './CandidateCoordinatorAssignment'
 import {
@@ -49,6 +50,7 @@ export default function CandidateDetails({
   const [form, setForm] = useState<Candidate | null>(null)
   const [tab, setTab] = useState<Tab>(initialTab)
   const [saving, setSaving] = useState(false)
+  const [addingPayment, setAddingPayment] = useState(false)
   const notify = useNotifications()
   const { loading, leaving, finish } = useSmoothLoading()
 
@@ -208,7 +210,9 @@ export default function CandidateDetails({
           </aside>
         </div>
       )}
-      {tab === 'payments' && summary && <PaymentsTable summary={summary} />}
+      {tab === 'payments' && summary && (
+        <PaymentsTable summary={summary} onAddPayment={() => setAddingPayment(true)} />
+      )}
       {tab === 'exams' && summary && (
         <ExamResultsTable
           results={summary.results}
@@ -217,6 +221,19 @@ export default function CandidateDetails({
         />
       )}
       {loading && <FullScreenLoader message="Loading candidate" leaving={leaving} />}
+      {addingPayment && form && (
+        <CandidateActionPanel
+          action="payment"
+          candidate={form}
+          onClose={() => setAddingPayment(false)}
+          onChanged={() => {
+            setAddingPayment(false)
+            void reloadCandidate().catch((error) =>
+              notify.error(error instanceof Error ? error.message : 'Could not refresh payments')
+            )
+          }}
+        />
+      )}
     </section>
   )
 }
