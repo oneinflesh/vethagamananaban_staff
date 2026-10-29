@@ -382,7 +382,7 @@ export default function MonthlyDispatchPage({
         <div className="course-dispatch-stats">
           <span>Paid: {summary.paid_count}</span>
           <span>Amount: ₹{summary.paid_amount}</span>
-          <span>Funded, awaiting book: {summary.funded_pending_count}</span>
+          <span>Processing, awaiting book: {summary.funded_pending_count}</span>
           <span>Unpaid: {summary.unpaid_count}</span>
         </div>
       )}
