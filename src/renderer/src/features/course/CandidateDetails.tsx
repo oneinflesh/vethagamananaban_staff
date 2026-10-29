@@ -214,7 +214,9 @@ export default function CandidateDetails({
         </div>
       )}
       {tab === 'payments' && summary && (
-        <PaymentsTable summary={summary} onAddPayment={() => setAddingPayment(true)} onTransactions={() => setShowTransactions(true)} />
+        <PaymentsTable summary={summary} onAddPayment={() => setAddingPayment(true)}
+          onTransactions={() => setShowTransactions(true)}
+          onRestored={() => void reloadCandidate().catch((error) => notify.error(error instanceof Error ? error.message : 'Could not refresh candidate'))} />
       )}
       {tab === 'exams' && summary && (
         <ExamResultsTable

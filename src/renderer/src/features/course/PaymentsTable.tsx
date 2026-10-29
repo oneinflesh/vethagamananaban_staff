@@ -1,17 +1,18 @@
-import { DataTable, Column } from './dataTable'
 import { Button } from '@/components/ui/button'
+import TransactionLedger from './TransactionLedger'
 import type { CandidateSummary } from './courseApi'
 
 export default function PaymentsTable({
   summary,
   onAddPayment,
-  onTransactions
+  onTransactions,
+  onRestored
 }: {
   summary: CandidateSummary
   onAddPayment: () => void
   onTransactions: () => void
+  onRestored: () => void
 }): React.JSX.Element {
-  const creditEntries = summary.credit_charges
   return (
     <div className="candidate-payments">
       <div className="candidate-payments__top">
@@ -24,44 +25,13 @@ export default function PaymentsTable({
         <span>Payments: {summary.payment_count}</span>
         <span>Books paid: {summary.candidate.paid_books}</span>
         <span>Books remaining: {summary.candidate.remaining_books}</span>
-        {summary.candidate.mode === 'OFFLINE' && (
-          <Button onClick={onAddPayment}>Add payment</Button>
-        )}
+        {summary.candidate.mode === 'OFFLINE' && <Button onClick={onAddPayment}>Add payment</Button>}
       </div>
-      <div className="course-table-wrap"><DataTable
-        data={summary.payments}
-        className="display course-table"
-        options={{ paging: false, searching: false, info: false, order: [],
-          createdRow: (row, payment) => {
-            if (summary.restored_payment_keys.includes((payment as CandidateSummary['payments'][number]).payment_key))
-              row.classList.add('course-payment-history__restored')
-          } }}
-      >
-        <Column title="Date" data="paid_at">
-          {(_value, _type, row) => row.paid_at?.slice(0, 10) || row.created_at?.slice(0, 10) || '—'}
-        </Column>
-        <Column title="Purpose" data="purpose" />
-        <Column title="Method" data="method" />
-        <Column title="Amount" data="amount" />
-        <Column title="Books funded" data="months" />
-        <Column title="Locked book price" data="locked_book_price">
-          {(_value, _type, row) => (row.wallet_topup ? `₹${row.locked_book_price}` : '—')}
-        </Column>
-        <Column title="Status" data="status">{(_value, _type, row) => summary.restored_payment_keys.includes(row.payment_key) ? 'Restored' : row.status}</Column>
-      </DataTable></div>
-      {creditEntries.length > 0 && (
-        <div className="candidate-payments__credit">
-          <h2>Credit charges</h2>
-          <div className="course-table-wrap"><DataTable data={creditEntries} className="display course-table" options={{ paging: false, searching: false, info: false, order: [] }}>
-            <Column title="Date" data="date">{(_value, _type, row) => row.date?.slice(0, 10)}</Column>
-            <Column title="Book" data="book" options={{ defaultContent: '' }} />
-            <Column title="Details" data="details" />
-            <Column title="Charge" data="amount">{(_value, _type, row) => `₹${row.amount}`}</Column>
-            <Column title="Wallet used" data="wallet_used">{(_value, _type, row) => `₹${row.wallet_used}`}</Column>
-            <Column title="Credit added" data="credit_added">{(_value, _type, row) => `₹${row.credit_added}`}</Column>
-          </DataTable></div>
-        </div>
-      )}
+      <TransactionLedger
+        candidateKey={summary.candidate.enrollment_key}
+        refreshKey={`${summary.payment_count}:${summary.candidate.wallet_balance}:${summary.candidate.credit_balance}`}
+        onRestored={onRestored}
+      />
     </div>
   )
 }

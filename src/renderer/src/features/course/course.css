@@ -139,16 +139,18 @@
 }
 .course-payment-history__balances small { color: #876d5d; }
 .course-payment-history__balances strong { font-size: 20px; }
-.course-payment-history__table { flex: 1; overflow: auto; }
-.course-payment-history__table .course-table-wrap { margin: 0; }
-.course-payment-history__wallet { background: #e8f6ec !important; }
-.course-payment-history__credit { background: #fde9e6 !important; }
-.course-payment-history__transfer { background: #eef3fb !important; }
+.course-transaction-ledger { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.course-payment-history > .course-transaction-ledger { flex: 1; }
+.course-transaction-ledger > .course-table-wrap { flex: 1; min-height: 0; margin: 0; overflow: auto; }
+.course-table tbody tr.course-payment-history__wallet > td { background: #e8f6ec !important; }
+.course-table tbody tr.course-payment-history__credit > td { background: #fde9e6 !important; }
+.course-table tbody tr.course-payment-history__transfer > td { background: #eef3fb !important; }
+.course-transaction-ledger__details { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.course-transaction-ledger__details button { flex: none; }
 .course-payment-history__restored td:not(:last-child) {
   text-decoration: line-through;
   opacity: .55;
 }
-.course-payment-history__id { overflow-wrap: anywhere; }
 .course-payment-history__running-balance { display: grid; gap: 2px; white-space: nowrap; }
 .course-payment-history__footer { margin-top: 12px; }
 @media (max-width: 760px) {
