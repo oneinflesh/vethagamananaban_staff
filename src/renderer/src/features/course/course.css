@@ -199,15 +199,29 @@
   min-width: 0;
 }
 .course-toolbar--dispatch {
+  flex-wrap: nowrap;
   gap: 8px;
   margin-bottom: 12px;
+}
+.course-toolbar--dispatch h1,
+.course-toolbar--dispatch > span {
+  flex: none;
+  white-space: nowrap;
 }
 .course-dispatch-title-controls {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
   gap: 8px;
   margin-left: auto;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.course-dispatch-title-controls > * {
+  flex: none;
 }
 .course-list-filter--compact {
   gap: 4px;
