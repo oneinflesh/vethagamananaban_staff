@@ -24,6 +24,9 @@ export default function PaymentsTable({
         <span>Balance: <strong className={paymentBalanceTone(summary.candidate.wallet_balance, summary.candidate.credit_balance)}>{formatPaymentBalance(summary.candidate.wallet_balance, summary.candidate.credit_balance)}</strong></span>
         <span>Payments: {summary.payment_count}</span>
         <span>Exams attended: {summary.candidate.exams_attended}</span>
+        <span>First exam: {summary.candidate.first_exam ? `${summary.candidate.first_exam.number}. ${summary.candidate.first_exam.name}` : 'Not yet attended'}</span>
+        <span>Exam papers in arrears: {summary.candidate.exam_papers_in_arrears}</span>
+        <span>Books sent: {summary.candidate.books_sent}</span>
         <span>Books paid: {summary.candidate.books_paid}</span>
         <span>Books remaining: {summary.candidate.remaining_books}</span>
         {summary.candidate.mode === 'OFFLINE' && <Button onClick={onAddPayment}>Add payment</Button>}
