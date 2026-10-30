@@ -401,6 +401,15 @@
   border: 1px solid #d9c8b8;
   border-radius: 5px;
 }
+.course-whole-results-table input[aria-invalid="true"] {
+  border-color: #b42318;
+  background: #fff0ee;
+}
+.course-results-save-status {
+  min-width: 70px;
+  color: #8d4b20;
+  font-size: 12px;
+}
 .course-whole-results-table {
   max-height: none;
   overflow: hidden;

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useNotifications } from '../notifications/Notifications'
@@ -30,9 +30,13 @@ export default function WholeResultsPage({
   const [district, setDistrict] = useState('')
   const [states, setStates] = useState<string[]>([])
   const [districts, setDistricts] = useState<string[]>([])
-  const [edits, setEdits] = useState<Record<string, WholeResultChange>>({})
+  const savingCells = useRef(new Set<string>())
+  const failedCells = useRef(new Set<string>())
+  const failedValues = useRef(new Map<string, string>())
+  const savedScores = useRef(new Map<string, number | null>())
+  const [savingCount, setSavingCount] = useState(0)
+  const [failedCount, setFailedCount] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
 
@@ -82,8 +86,9 @@ export default function WholeResultsPage({
     getWholeResults(courseKey, country, page, query, state, district)
       .then((result) => {
         if (active) {
+          savedScores.current.clear()
+          failedValues.current.clear()
           setData(result)
-          setEdits({})
           setError('')
         }
       })
@@ -98,26 +103,32 @@ export default function WholeResultsPage({
     }
   }, [courseKey, country, page, query, state, district, retry])
 
-  const changes = useMemo(() => Object.values(edits), [edits])
-
   function goBack(): void {
-    if (changes.length && !window.confirm('Discard unsaved result changes?')) return
+    const focused = document.activeElement
+    if (focused instanceof HTMLInputElement && focused.dataset.resultScore === 'true') focused.blur()
+    if (savingCells.current.size || failedCells.current.size) {
+      notify.error(failedCells.current.size ? 'Retry the highlighted mark before leaving' : 'Wait for the mark to save')
+      return
+    }
     onBack()
   }
 
-  function editScore(
+  async function saveScore(
     candidate: WholeResultCandidate,
     examKey: string,
     input: HTMLInputElement
-  ): void {
+  ): Promise<void> {
+    const key = `${candidate.enrollment_key}:${examKey}`
+    if (savingCells.current.has(key)) return
     const raw = input.value.trim()
     const score = raw === '' ? null : Number(raw)
     if (
-      score !== null &&
+      input.validity.badInput ||
+      (score !== null &&
       (!Number.isFinite(score) ||
         score < 0 ||
         score > 100 ||
-        (candidate.mode === 'ONLINE' && !Number.isInteger(score)))
+        (candidate.mode === 'ONLINE' && !Number.isInteger(score))))
     ) {
       notify.error(
         candidate.mode === 'ONLINE'
@@ -127,30 +138,60 @@ export default function WholeResultsPage({
       input.value = String(candidate.cells[examKey]?.score ?? '')
       return
     }
-    const key = `${candidate.enrollment_key}:${examKey}`
-    const currentScore = candidate.cells[examKey]?.score
+    const currentScore = savedScores.current.has(key) ? savedScores.current.get(key) : candidate.cells[examKey]?.score
     const original = currentScore == null ? null : Number(currentScore)
-    setEdits((current) => {
-      const next = { ...current }
-      if (score === original) delete next[key]
-      else next[key] = { enrollment_key: candidate.enrollment_key, exam_key: examKey, score }
-      return next
-    })
-  }
-
-  async function save(): Promise<void> {
-    if (!changes.length) return
-    setSaving(true)
+    if (score === original) {
+      failedCells.current.delete(key)
+      failedValues.current.delete(key)
+      setFailedCount(failedCells.current.size)
+      input.removeAttribute('aria-invalid')
+      return
+    }
+    savingCells.current.add(key)
+    setSavingCount(savingCells.current.size)
+    input.disabled = true
     try {
-      const result = await saveWholeResults(changes)
-      notify.success(`${result.saved} result${result.saved === 1 ? '' : 's'} saved`)
-      setEdits({})
-      setRetry((value) => value + 1)
+      const change: WholeResultChange = { enrollment_key: candidate.enrollment_key, exam_key: examKey, score }
+      await saveWholeResults([change])
+      candidate.cells[examKey].score = score
+      savedScores.current.set(key, score)
+      failedCells.current.delete(key)
+      failedValues.current.delete(key)
+      setFailedCount(failedCells.current.size)
+      input.removeAttribute('aria-invalid')
     } catch (cause) {
+      failedCells.current.add(key)
+      failedValues.current.set(key, raw)
+      setFailedCount(failedCells.current.size)
+      input.setAttribute('aria-invalid', 'true')
       notify.error(cause instanceof Error ? cause.message : 'Could not save results')
     } finally {
-      setSaving(false)
+      savingCells.current.delete(key)
+      setSavingCount(savingCells.current.size)
+      input.disabled = false
     }
+  }
+
+  function moveVertically(input: HTMLInputElement, direction: -1 | 1): void {
+    const cell = input.closest('td')
+    let row: Element | null = input.closest('tr')
+    if (!cell || !row) return
+    while ((row = direction === 1 ? row.nextElementSibling : row.previousElementSibling)) {
+      const next = row.querySelectorAll('td')[cell.cellIndex]?.querySelector<HTMLInputElement>('input[data-result-score="true"]')
+      if (next && !next.disabled) {
+        next.focus()
+        next.select()
+        return
+      }
+    }
+    input.blur()
+  }
+
+  function changePage(next: number): void {
+    const focused = document.activeElement
+    if (focused instanceof HTMLInputElement && focused.dataset.resultScore === 'true') focused.blur()
+    if (savingCells.current.size || failedCells.current.size) return
+    setPage(next)
   }
 
   return (
@@ -168,7 +209,7 @@ export default function WholeResultsPage({
             State
             <select
               value={state}
-              disabled={!!changes.length}
+              disabled={!!savingCount || !!failedCount}
               onChange={(event) => {
                 setPage(1)
                 setState(event.target.value)
@@ -187,7 +228,7 @@ export default function WholeResultsPage({
             District
             <select
               value={district}
-              disabled={!!changes.length}
+              disabled={!!savingCount || !!failedCount}
               onChange={(event) => {
                 setPage(1)
                 setDistrict(event.target.value)
@@ -203,21 +244,21 @@ export default function WholeResultsPage({
           </label>
           <Input
             aria-label="Search candidates"
-            disabled={!!changes.length}
+            disabled={!!savingCount || !!failedCount}
             placeholder="BBS number, name or phone"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
           <Button
             variant="outline"
-            disabled={!!changes.length}
+            disabled={!!savingCount || !!failedCount}
             onClick={() => setRetry((value) => value + 1)}
           >
             Refresh
           </Button>
-          <Button disabled={!changes.length || saving} onClick={() => void save()}>
-            {saving ? 'Saving…' : `Save ${changes.length} changes`}
-          </Button>
+          <span className="course-results-save-status" role="status">
+            {savingCount ? 'Saving…' : failedCount ? 'Save failed — retry the highlighted mark' : ''}
+          </span>
         </div>
       </div>
       {error && <p className="course-error">{error}</p>}
@@ -254,9 +295,19 @@ export default function WholeResultsPage({
                         min="0"
                         max="100"
                         step={candidate.mode === 'ONLINE' ? '1' : '0.01'}
-                        defaultValue={cell.score ?? ''}
+                        defaultValue={failedValues.current.get(`${candidate.enrollment_key}:${exam.exam_key}`) ??
+                          (savedScores.current.has(`${candidate.enrollment_key}:${exam.exam_key}`)
+                            ? savedScores.current.get(`${candidate.enrollment_key}:${exam.exam_key}`) ?? ''
+                            : cell.score ?? '')}
+                        aria-invalid={failedCells.current.has(`${candidate.enrollment_key}:${exam.exam_key}`) || undefined}
+                        data-result-score="true"
                         aria-label={`${candidate.bbs_number} ${exam.title} marks`}
-                        onBlur={(event) => editScore(candidate, exam.exam_key, event.currentTarget)}
+                        onBlur={(event) => void saveScore(candidate, exam.exam_key, event.currentTarget)}
+                        onKeyDown={(event) => {
+                          if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return
+                          event.preventDefault()
+                          moveVertically(event.currentTarget, event.key === 'ArrowDown' ? 1 : -1)
+                        }}
                       />
                     ) : (
                       <span className="course-result-unavailable">{cell?.score ?? '—'}</span>
@@ -272,15 +323,15 @@ export default function WholeResultsPage({
             </span>
             <Button
               variant="outline"
-              disabled={page <= 1 || !!changes.length}
-              onClick={() => setPage(page - 1)}
+              disabled={page <= 1 || !!savingCount || !!failedCount}
+              onClick={() => changePage(page - 1)}
             >
               Previous
             </Button>
             <Button
               variant="outline"
-              disabled={page * data.page_size >= data.count || !!changes.length}
-              onClick={() => setPage(page + 1)}
+              disabled={page * data.page_size >= data.count || !!savingCount || !!failedCount}
+              onClick={() => changePage(page + 1)}
             >
               Next
             </Button>
