@@ -233,7 +233,13 @@ export default function WholeResultsPage({
                 searching: false,
                 info: false,
                 ordering: false,
-                scrollX: true
+                autoWidth: false,
+                columnDefs: [
+                  { targets: 0, width: '120px' },
+                  { targets: 1, width: '220px' }
+                ],
+                scrollX: true,
+                scrollY: 'max(220px, calc(100vh - 270px))'
               }}
             >
               <Column title="BBS number" data="bbs_number" />
