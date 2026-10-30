@@ -11,11 +11,13 @@ import { formatPaymentBalance, paymentBalanceTone } from './paymentBalance'
 export default function CoursePaymentsPage({
   country,
   onBack,
-  onCandidate
+  onCandidate,
+  onPreviousBalances
 }: {
   country: string
   onBack: () => void
   onCandidate: (key: string) => void
+  onPreviousBalances: () => void
 }): React.JSX.Element {
   const notify = useNotifications()
   const table = useRef<DataTableRef>(null)
@@ -35,25 +37,25 @@ export default function CoursePaymentsPage({
     return () => window.clearTimeout(timer)
   }, [country, search])
 
-  async function save(row: PaymentBalance, kind: 'wallet' | 'credit', input: HTMLInputElement): Promise<void> {
+  async function save(row: PaymentBalance, input: HTMLInputElement): Promise<void> {
     const raw = input.value.trim()
     if (!raw) return
     if (!/^\d+(\.\d{1,2})?$/.test(raw) || Number(raw) < 1) {
       notify.error('Enter an amount of at least ₹1 with up to two decimal places.')
       return
     }
-    const key = `${row.enrollment_key}:${kind}`
+    const key = row.enrollment_key
     if (saving.current.has(key)) return
     saving.current.add(key)
     input.disabled = true
     try {
-      await candidateAction(kind === 'wallet' ? 'manual-purchase' : 'manual-credit', row.enrollment_key, {
+      await candidateAction('manual-purchase', row.enrollment_key, {
         amount: Number(raw).toFixed(2),
         payment_method: 'CASH'
       })
       input.value = ''
       table.current?.dt()?.ajax.reload(undefined, false)
-      notify.success(kind === 'wallet' ? 'Payment recorded' : 'Credit charge recorded')
+      notify.success('Payment recorded')
     } catch (error) {
       notify.error(error instanceof Error ? error.message : 'Could not save amount')
     } finally {
@@ -62,8 +64,8 @@ export default function CoursePaymentsPage({
     }
   }
 
-  function amountInput(row: PaymentBalance, kind: 'wallet' | 'credit'): React.JSX.Element | string {
-    if (row.mode !== 'OFFLINE' || (kind === 'wallet' && row.status !== 'ACTIVE')) return '—'
+  function amountInput(row: PaymentBalance): React.JSX.Element | string {
+    if (row.mode !== 'OFFLINE' || row.status !== 'ACTIVE') return '—'
     return (
       <input
         className="course-quick-payment"
@@ -71,8 +73,8 @@ export default function CoursePaymentsPage({
         min="1"
         step="0.01"
         placeholder="₹ Amount"
-        aria-label={`${kind === 'wallet' ? 'Wallet payment' : 'Credit charge'} for ${row.bbs_number}`}
-        onBlur={(event) => void save(row, kind, event.currentTarget)}
+        aria-label={`Wallet payment for ${row.bbs_number}`}
+        onBlur={(event) => void save(row, event.currentTarget)}
         onKeyDown={(event) => {
           if (event.key === 'Enter') event.currentTarget.blur()
         }}
@@ -127,6 +129,7 @@ export default function CoursePaymentsPage({
         <Button variant="outline" onClick={onBack}>← Course</Button>
         <h1>Payments</h1>
         <span>{country}</span>
+        <Button variant="outline" onClick={onPreviousBalances}>Previous balance entry</Button>
         <label className="course-list-search">
           Search
           <input type="search" value={search} placeholder="BBS number or name" onChange={(event) => setSearch(event.target.value)} />
@@ -171,8 +174,7 @@ export default function CoursePaymentsPage({
           <Column title="Balance" data="wallet_balance">{(_value, _type, row: PaymentBalance) => <span className={paymentBalanceTone(row.wallet_balance, row.credit_balance)}>{formatPaymentBalance(row.wallet_balance, row.credit_balance)}</span>}</Column>
           <Column title="Exams attended" data="exams_attended" />
           <Column title="Books paid" data="books_paid" />
-          <Column title="Quick Wallet Payment" data="enrollment_key">{(_value, _type, row: PaymentBalance) => amountInput(row, 'wallet')}</Column>
-          <Column title="Quick Credit Payment" data="enrollment_key">{(_value, _type, row: PaymentBalance) => amountInput(row, 'credit')}</Column>
+          <Column title="Quick Wallet Payment" data="enrollment_key">{(_value, _type, row: PaymentBalance) => amountInput(row)}</Column>
           <Column title="Credit and send" data="credit_send_state">{(_value, _type, row: PaymentBalance) => creditSendButton(row)}</Column>
         </DataTable>
       </div>

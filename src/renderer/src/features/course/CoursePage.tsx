@@ -15,6 +15,7 @@ import WholeResultsPage from './WholeResultsPage'
 import CourseLanguagesPage from './CourseLanguagesPage'
 import CurrentCurriculumPage from './CurrentCurriculumPage'
 import CoursePaymentsPage from './CoursePaymentsPage'
+import PreviousBalancePage from './PreviousBalancePage'
 import {
   getCandidateCounts,
   getCoordinatorCount,
@@ -52,6 +53,7 @@ export default function CoursePage(): React.JSX.Element {
   const [courseLanguages, setCourseLanguages] = useState(false)
   const [currentCurriculum, setCurrentCurriculum] = useState(false)
   const [coursePayments, setCoursePayments] = useState(false)
+  const [previousBalances, setPreviousBalances] = useState(false)
   const [bookCandidate, setBookCandidate] = useState<Candidate | null>(null)
   const [counts, setCounts] = useState<{
     country: string
@@ -74,6 +76,7 @@ export default function CoursePage(): React.JSX.Element {
       courseLanguages ||
       currentCurriculum ||
       coursePayments ||
+      previousBalances ||
       bookCandidate
     )
       return
@@ -109,6 +112,7 @@ export default function CoursePage(): React.JSX.Element {
     courseLanguages,
     currentCurriculum,
     coursePayments,
+    previousBalances,
     bookCandidate,
     retry
   ])
@@ -209,7 +213,7 @@ export default function CoursePage(): React.JSX.Element {
         }}
       />
     )
-  if (candidateKey && !monthlyDispatch && !coursePayments)
+  if (candidateKey && !monthlyDispatch && !coursePayments && !previousBalances)
     return (
       <CandidateDetails
         key={candidateKey}
@@ -253,6 +257,15 @@ export default function CoursePage(): React.JSX.Element {
     return <WholeResultsPage country={country} onBack={() => setWholeResults(false)} />
   if (courseLanguages) return <CourseLanguagesPage onBack={() => setCourseLanguages(false)} />
   if (currentCurriculum) return <CurrentCurriculumPage country={country} onBack={() => setCurrentCurriculum(false)} />
+  if (previousBalances)
+    return (
+      <>
+        <div className={candidateKey ? 'course-list-host course-list-host--hidden' : 'course-list-host'}>
+          <PreviousBalancePage country={country} onBack={() => setPreviousBalances(false)} onCandidate={(key) => { setCandidateTab('details'); setCandidateKey(key) }} />
+        </div>
+        {candidateKey && <CandidateDetails key={candidateKey} candidateKey={candidateKey} initialTab={candidateTab} onBack={() => setCandidateKey(null)} onCoordinator={setCoordinatorKey} />}
+      </>
+    )
   if (coursePayments)
     return (
       <>
@@ -261,6 +274,7 @@ export default function CoursePage(): React.JSX.Element {
             country={country}
             onBack={() => setCoursePayments(false)}
             onCandidate={(key) => { setCandidateTab('details'); setCandidateKey(key) }}
+            onPreviousBalances={() => setPreviousBalances(true)}
           />
         </div>
         {candidateKey && (
