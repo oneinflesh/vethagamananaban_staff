@@ -123,18 +123,10 @@ export default function WholeResultsPage({
     const raw = input.value.trim()
     const score = raw === '' ? null : Number(raw)
     if (
-      input.validity.badInput ||
-      (score !== null &&
-      (!Number.isFinite(score) ||
-        score < 0 ||
-        score > 100 ||
-        (candidate.mode === 'ONLINE' && !Number.isInteger(score))))
+      (raw !== '' && !/^\d{1,3}$/.test(raw)) ||
+      (score !== null && score > 100)
     ) {
-      notify.error(
-        candidate.mode === 'ONLINE'
-          ? 'Online marks must be a whole number from 0 to 100.'
-          : 'Marks must be between 0 and 100.'
-      )
+      notify.error('Marks must be a whole number from 0 to 100.')
       input.value = String(candidate.cells[examKey]?.score ?? '')
       return
     }
@@ -291,10 +283,10 @@ export default function WholeResultsPage({
                     const cell = candidate.cells[exam.exam_key]
                     return cell?.editable ? (
                       <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step={candidate.mode === 'ONLINE' ? '1' : '0.01'}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={3}
                         defaultValue={failedValues.current.get(`${candidate.enrollment_key}:${exam.exam_key}`) ??
                           (savedScores.current.has(`${candidate.enrollment_key}:${exam.exam_key}`)
                             ? savedScores.current.get(`${candidate.enrollment_key}:${exam.exam_key}`) ?? ''
@@ -303,7 +295,14 @@ export default function WholeResultsPage({
                         data-result-score="true"
                         aria-label={`${candidate.bbs_number} ${exam.title} marks`}
                         onBlur={(event) => void saveScore(candidate, exam.exam_key, event.currentTarget)}
+                        onPaste={(event) => {
+                          if (!/^\d{1,3}$/.test(event.clipboardData.getData('text').trim())) event.preventDefault()
+                        }}
                         onKeyDown={(event) => {
+                          if (['.', ',', '-', '+', 'e', 'E'].includes(event.key)) {
+                            event.preventDefault()
+                            return
+                          }
                           if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return
                           event.preventDefault()
                           moveVertically(event.currentTarget, event.key === 'ArrowDown' ? 1 : -1)
