@@ -274,6 +274,7 @@ export default function CoursePage(): React.JSX.Element {
     return <>
       <div className={candidateKey ? 'course-list-host course-list-host--hidden' : 'course-list-host'}>
         <CoordinatorPaymentsPage country={country} onBack={() => setCoordinatorPayments(false)}
+          onCoordinator={setCoordinatorKey}
           onCandidate={(key) => { setCandidateTab('details'); setCandidateKey(key) }} />
       </div>
       {candidateKey && <CandidateDetails key={candidateKey} candidateKey={candidateKey}

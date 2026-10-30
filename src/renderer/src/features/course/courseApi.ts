@@ -281,6 +281,10 @@ export type CoordinatorWalletMember = {
   books_sent: number
   books_paid: number
   credit_send_state: PaymentBalance['credit_send_state']
+  previous_balance_entered: boolean
+  previous_balance_amount: string
+  payment_due: string
+  payment_book: string
 }
 export type CoordinatorWalletResult = {
   payment_key: string
