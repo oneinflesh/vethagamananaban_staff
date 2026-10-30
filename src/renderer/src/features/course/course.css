@@ -1501,6 +1501,38 @@
   justify-self: start;
   align-self: center;
 }
+.course-coordinator-payment-entry {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  max-width: 620px;
+  margin: 22px 0;
+}
+.course-coordinator-payment-entry label {
+  display: grid;
+  flex: 1;
+  gap: 6px;
+  font-size: 13px;
+}
+.course-coordinator-payment-entry input {
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #ddd2c6;
+  border-radius: 6px;
+  background: white;
+}
+.course-coordinator-payment-controls,
+.course-coordinator-payment-options {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.course-coordinator-payment-controls {
+  margin: 10px 0;
+}
+.course-coordinator-payment-controls button:last-child {
+  margin-left: auto;
+}
 .candidate-payments > .course-table-wrap,
 .candidate-payments__credit .course-table-wrap {
   margin: 0;

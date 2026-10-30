@@ -65,6 +65,7 @@ import {
   shipMonthlyAllocation,
   saveMonthlyTracking
 } from './features/course/monthlyDispatch'
+import { getCoordinatorWalletMembers, distributeCoordinatorWallet } from './features/course/coordinatorPayments'
 
 function createWindow(): void {
   // Create the browser window.
@@ -233,6 +234,8 @@ app.whenReady().then(() => {
     uploadCoordinatorPhoto(key, bytes, name)
   )
   ipcMain.handle('course:coordinator-members', (_event, key) => getCoordinatorMembers(key))
+  ipcMain.handle('course:coordinator-wallet-members', (_event, key) => getCoordinatorWalletMembers(key))
+  ipcMain.handle('course:coordinator-wallet-distribution', (_event, key, data) => distributeCoordinatorWallet(key, data))
   ipcMain.handle('course:coordinator-member-page', (_event, key, page, search, restoreOnly) =>
     getCoordinatorMemberPage(key, page, search, restoreOnly)
   )

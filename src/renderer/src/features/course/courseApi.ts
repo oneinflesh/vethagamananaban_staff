@@ -269,6 +269,25 @@ export type CoordinatorMember = {
   phone: string
   address: string
 }
+export type CoordinatorWalletMember = {
+  enrollment_key: string
+  bbs_number: string
+  name: string
+  status: string
+  mode: string
+  wallet_balance: string
+  credit_balance: string
+  exams_attended: number
+  books_sent: number
+  books_paid: number
+  credit_send_state: PaymentBalance['credit_send_state']
+}
+export type CoordinatorWalletResult = {
+  payment_key: string
+  amount: string
+  member_count: number
+  distribution: { enrollment_key: string; bbs_number: string; amount: string }[]
+}
 export type CoordinatorCandidateOption = {
   enrollment_key: string
   bbs_number: string
@@ -440,6 +459,10 @@ export async function uploadCoordinatorPhoto(key: string, file: File): Promise<C
 }
 export const getCoordinatorMembers = (key: string): Promise<CoordinatorMember[]> =>
   window.office.courseCoordinatorMembers(key)
+export const getCoordinatorWalletMembers = (key: string): Promise<CoordinatorWalletMember[]> =>
+  window.office.courseCoordinatorWalletMembers(key)
+export const distributeCoordinatorWallet = (key: string, data: unknown): Promise<CoordinatorWalletResult> =>
+  window.office.courseCoordinatorWalletDistribution(key, data)
 export const getCoordinatorMemberPage = (
   key: string,
   page: number,

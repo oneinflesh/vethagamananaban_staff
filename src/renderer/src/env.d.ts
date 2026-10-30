@@ -170,6 +170,8 @@ interface Window {
     courseCoordinatorMembers(
       key: string
     ): Promise<import('./features/course/courseApi').CoordinatorMember[]>
+    courseCoordinatorWalletMembers(key: string): Promise<import('./features/course/courseApi').CoordinatorWalletMember[]>
+    courseCoordinatorWalletDistribution(key: string, data: unknown): Promise<import('./features/course/courseApi').CoordinatorWalletResult>
     courseCoordinatorMemberPage(
       key: string,
       page: number,

@@ -12,12 +12,14 @@ export default function CoursePaymentsPage({
   country,
   onBack,
   onCandidate,
-  onPreviousBalances
+  onPreviousBalances,
+  onCoordinatorPayments
 }: {
   country: string
   onBack: () => void
   onCandidate: (key: string) => void
   onPreviousBalances: () => void
+  onCoordinatorPayments: () => void
 }): React.JSX.Element {
   const notify = useNotifications()
   const table = useRef<DataTableRef>(null)
@@ -130,6 +132,7 @@ export default function CoursePaymentsPage({
         <h1>Payments</h1>
         <span>{country}</span>
         <Button variant="outline" onClick={onPreviousBalances}>Previous balance entry</Button>
+        <Button variant="outline" onClick={onCoordinatorPayments}>Coordinator payments</Button>
         <label className="course-list-search">
           Search
           <input type="search" value={search} placeholder="BBS number or name" onChange={(event) => setSearch(event.target.value)} />
