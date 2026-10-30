@@ -173,6 +173,7 @@ export default function CoursePaymentsPage({
           <Column title="Name" data="name" />
           <Column title="Balance" data="wallet_balance">{(_value, _type, row: PaymentBalance) => <span className={paymentBalanceTone(row.wallet_balance, row.credit_balance)}>{formatPaymentBalance(row.wallet_balance, row.credit_balance)}</span>}</Column>
           <Column title="Exams attended" data="exams_attended" />
+          <Column title="Books sent" data="books_sent" />
           <Column title="Books paid" data="books_paid" />
           <Column title="Quick Wallet Payment" data="enrollment_key">{(_value, _type, row: PaymentBalance) => amountInput(row)}</Column>
           <Column title="Credit and send" data="credit_send_state">{(_value, _type, row: PaymentBalance) => creditSendButton(row)}</Column>

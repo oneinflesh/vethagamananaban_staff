@@ -46,6 +46,7 @@ export default function PreviousBalancePage({
       row.wallet_balance = updated.wallet_balance
       row.credit_balance = updated.credit_balance
       row.books_paid = updated.books_paid
+      row.books_sent = updated.books_sent
       row.previous_balance_entered = true
       const balance = input.closest('tr')?.querySelector<HTMLElement>('[data-net-balance]')
       if (balance) {
@@ -54,6 +55,8 @@ export default function PreviousBalancePage({
       }
       const paid = input.closest('tr')?.querySelector<HTMLElement>('[data-books-paid]')
       if (paid) paid.textContent = String(row.books_paid)
+      const sent = input.closest('tr')?.querySelector<HTMLElement>('[data-books-sent]')
+      if (sent) sent.textContent = String(row.books_sent)
       input.value = ''
       input.placeholder = 'Entered'
       notify.success(`${row.bbs_number} previous balance saved`)
@@ -112,6 +115,7 @@ export default function PreviousBalancePage({
         <Column title="Name" data="name" />
         <Column title="Balance" data="wallet_balance">{(_value, _type, row: PaymentBalance) => <span data-net-balance className={paymentBalanceTone(row.wallet_balance, row.credit_balance)}>{formatPaymentBalance(row.wallet_balance, row.credit_balance)}</span>}</Column>
         <Column title="Exams attended" data="exams_attended" />
+        <Column title="Books sent" data="books_sent">{(_value, _type, row: PaymentBalance) => <span data-books-sent>{row.books_sent}</span>}</Column>
         <Column title="Books paid" data="books_paid">{(_value, _type, row: PaymentBalance) => <span data-books-paid>{row.books_paid}</span>}</Column>
         <Column title="Pending Payment" data="enrollment_key">{(_value, _type, row: PaymentBalance) => pendingInput(row)}</Column>
       </DataTable>

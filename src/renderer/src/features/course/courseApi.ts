@@ -43,6 +43,7 @@ export type Candidate = {
   } | null
   paid_books: number
   exams_attended: number
+  books_sent: number
   books_paid: number
   remaining_books: number
   wallet_balance: string
@@ -68,6 +69,7 @@ export type PaymentBalance = {
   wallet_balance: string
   credit_balance: string
   exams_attended: number
+  books_sent: number
   books_paid: number
   previous_balance_entered: boolean
   credit_send_state: 'READY' | 'NOT_AVAILABLE' | 'MONTH_NOT_OPEN' | 'ALREADY_IN_DISPATCH' | 'ALREADY_COMPLETED' | 'WALLET_AVAILABLE' | 'PRICE_UNAVAILABLE'
