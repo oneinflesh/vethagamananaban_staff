@@ -169,6 +169,8 @@ export default function CoursePaymentsPage({
           <Column title="Name" data="name" />
           <Column title="Wallet" data="wallet_balance">{(_value, _type, row: PaymentBalance) => `₹${row.wallet_balance}`}</Column>
           <Column title="Credit owed" data="credit_balance">{(_value, _type, row: PaymentBalance) => `₹${row.credit_balance}`}</Column>
+          <Column title="Exams attended" data="exams_attended" />
+          <Column title="Books paid" data="books_paid" />
           <Column title="Quick Wallet Payment" data="enrollment_key">{(_value, _type, row: PaymentBalance) => amountInput(row, 'wallet')}</Column>
           <Column title="Quick Credit Payment" data="enrollment_key">{(_value, _type, row: PaymentBalance) => amountInput(row, 'credit')}</Column>
           <Column title="Credit and send" data="credit_send_state">{(_value, _type, row: PaymentBalance) => creditSendButton(row)}</Column>

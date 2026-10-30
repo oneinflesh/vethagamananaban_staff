@@ -23,7 +23,8 @@ export default function PaymentsTable({
         <span>Rupee balance: ₹{summary.candidate.wallet_balance}</span>
         <span>Vethagama Nanban credit owed: ₹{summary.candidate.credit_balance}</span>
         <span>Payments: {summary.payment_count}</span>
-        <span>Books paid: {summary.candidate.paid_books}</span>
+        <span>Exams attended: {summary.candidate.exams_attended}</span>
+        <span>Books paid: {summary.candidate.books_paid}</span>
         <span>Books remaining: {summary.candidate.remaining_books}</span>
         {summary.candidate.mode === 'OFFLINE' && <Button onClick={onAddPayment}>Add payment</Button>}
       </div>
