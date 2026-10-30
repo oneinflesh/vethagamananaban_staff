@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { formatPaymentBalance, paymentBalanceTone } from './paymentBalance'
 import { useNotifications } from '../notifications/Notifications'
 import {
   candidateAction,
@@ -234,8 +235,7 @@ export default function CandidateActionPanel({
         {action === 'payment' &&
           (summary ? (
             <>
-              <p>Current wallet balance: ₹{summary.candidate.wallet_balance}</p>
-              <p>Vethagama Nanban credit owed: ₹{summary.candidate.credit_balance}</p>
+              <p>Balance: <strong className={paymentBalanceTone(summary.candidate.wallet_balance, summary.candidate.credit_balance)}>{formatPaymentBalance(summary.candidate.wallet_balance, summary.candidate.credit_balance)}</strong></p>
               <label className="course-dialog__field">
                 Amount to add (₹)
                 <Input

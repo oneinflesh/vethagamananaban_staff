@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import TransactionLedger from './TransactionLedger'
 import type { PaymentHistoryPage } from './courseApi'
+import { formatPaymentBalance, paymentBalanceTone } from './paymentBalance'
 
 export default function PaymentHistoryDialog({
   candidateKey,
@@ -25,8 +26,7 @@ export default function PaymentHistoryDialog({
           <Button variant="outline" onClick={onClose}>Close</Button>
         </div>
         <div className="course-payment-history__balances">
-          <div><small>Wallet balance</small><strong>₹{data?.wallet_balance ?? '—'}</strong></div>
-          <div><small>Credit owed</small><strong>₹{data?.credit_balance ?? '—'}</strong></div>
+          <div><small>Balance</small><strong className={data ? paymentBalanceTone(data.wallet_balance, data.credit_balance) : ''}>{data ? formatPaymentBalance(data.wallet_balance, data.credit_balance) : '—'}</strong></div>
         </div>
         <TransactionLedger candidateKey={candidateKey} onData={setData} onRestored={onRestored} />
       </section>

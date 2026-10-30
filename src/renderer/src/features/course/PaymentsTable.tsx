@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import TransactionLedger from './TransactionLedger'
 import type { CandidateSummary } from './courseApi'
+import { formatPaymentBalance, paymentBalanceTone } from './paymentBalance'
 
 export default function PaymentsTable({
   summary,
@@ -20,8 +21,7 @@ export default function PaymentsTable({
       </div>
       <div className="candidate-metrics candidate-metrics--payments">
         <span>Total paid: ₹{summary.total_paid}</span>
-        <span>Rupee balance: ₹{summary.candidate.wallet_balance}</span>
-        <span>Vethagama Nanban credit owed: ₹{summary.candidate.credit_balance}</span>
+        <span>Balance: <strong className={paymentBalanceTone(summary.candidate.wallet_balance, summary.candidate.credit_balance)}>{formatPaymentBalance(summary.candidate.wallet_balance, summary.candidate.credit_balance)}</strong></span>
         <span>Payments: {summary.payment_count}</span>
         <span>Exams attended: {summary.candidate.exams_attended}</span>
         <span>Books paid: {summary.candidate.books_paid}</span>

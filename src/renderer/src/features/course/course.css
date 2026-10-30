@@ -139,6 +139,8 @@
 }
 .course-payment-history__balances small { color: #876d5d; }
 .course-payment-history__balances strong { font-size: 20px; }
+.course-balance--owed { color: #b42318; font-weight: 700; }
+.course-balance--available { color: #137333; font-weight: 700; }
 .course-transaction-ledger { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 .course-payment-history > .course-transaction-ledger { flex: 1; }
 .course-transaction-ledger > .course-table-wrap { flex: 1; min-height: 0; margin: 0; overflow: auto; }

@@ -6,6 +6,7 @@ import { DataTable, Column } from './dataTable'
 import { candidateAction, getPaymentBalances, type PaymentBalance } from './courseApi'
 import { resizeColumns } from './resizeColumns'
 import PaymentHistoryDialog from './PaymentHistoryDialog'
+import { formatPaymentBalance, paymentBalanceTone } from './paymentBalance'
 
 export default function CoursePaymentsPage({
   country,
@@ -167,8 +168,7 @@ export default function CoursePaymentsPage({
             {(_value, _type, row: PaymentBalance) => <button className="course-link" onClick={() => onCandidate(row.enrollment_key)}>{row.bbs_number}</button>}
           </Column>
           <Column title="Name" data="name" />
-          <Column title="Wallet" data="wallet_balance">{(_value, _type, row: PaymentBalance) => `₹${row.wallet_balance}`}</Column>
-          <Column title="Credit owed" data="credit_balance">{(_value, _type, row: PaymentBalance) => `₹${row.credit_balance}`}</Column>
+          <Column title="Balance" data="wallet_balance">{(_value, _type, row: PaymentBalance) => <span className={paymentBalanceTone(row.wallet_balance, row.credit_balance)}>{formatPaymentBalance(row.wallet_balance, row.credit_balance)}</span>}</Column>
           <Column title="Exams attended" data="exams_attended" />
           <Column title="Books paid" data="books_paid" />
           <Column title="Quick Wallet Payment" data="enrollment_key">{(_value, _type, row: PaymentBalance) => amountInput(row, 'wallet')}</Column>
