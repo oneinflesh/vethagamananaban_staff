@@ -231,7 +231,6 @@ export default function MonthlyDispatchPage({
 
   async function creditProcess(row: MonthlyStudent): Promise<void> {
     if (busy || !examKey) return
-    if (!window.confirm(`Prepare ${row.book_month}. ${row.book_name} for ${row.bbs_number} on credit?`)) return
     setBusy(true)
     try {
       await candidateAction('credit-and-send', row.enrollment_key, { exam_key: examKey })
