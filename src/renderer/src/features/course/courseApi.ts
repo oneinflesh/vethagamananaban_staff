@@ -74,6 +74,7 @@ export type PaymentBalance = {
   books_sent: number
   books_paid: number
   previous_balance_entered: boolean
+  previous_balance_amount: string
   credit_send_state: 'READY' | 'NOT_AVAILABLE' | 'MONTH_NOT_OPEN' | 'ALREADY_IN_DISPATCH' | 'ALREADY_COMPLETED' | 'WALLET_AVAILABLE' | 'PRICE_UNAVAILABLE'
 }
 export type PaymentBalancePage = { count: number; page: number; page_size: number; results: PaymentBalance[] }
@@ -88,6 +89,7 @@ export type PaymentHistoryEntry = {
   credit_balance: string
   payment_key: string | null
   restored: boolean
+  corrected?: boolean
   can_restore: boolean
 }
 export type PaymentHistoryPage = {

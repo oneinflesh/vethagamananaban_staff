@@ -76,7 +76,7 @@ export default function TransactionLedger({
             <span className="course-transaction-ledger__details">
               <span>{row.details}</span>
               {row.can_restore && <Button variant="outline" disabled={!!restoring} onClick={() => void restore(row)}>Restore</Button>}
-              {row.restored && <span>Restored</span>}
+              {row.restored && <span>{row.corrected ? 'Corrected' : 'Restored'}</span>}
             </span>
           )}</Column>
           <Column title="Amount" data="amount">{(_value, _type, row: PaymentHistoryEntry) =>

@@ -21,6 +21,7 @@ export default function PreviousBalancePage({
   const query = useRef({ country, search: '' })
   const saving = useRef(new Set<string>())
   const [search, setSearch] = useState('')
+  const [editingKey, setEditingKey] = useState<string | null>(null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -39,15 +40,19 @@ export default function PreviousBalancePage({
     }
     saving.current.add(row.enrollment_key)
     input.disabled = true
+    let saved = false
     try {
+      const replacing = row.previous_balance_entered
       const updated = await candidateAction('previous-balance', row.enrollment_key, {
-        amount: Number(raw).toFixed(2)
+        amount: Number(raw).toFixed(2), replace: replacing
       }) as Candidate
       row.wallet_balance = updated.wallet_balance
       row.credit_balance = updated.credit_balance
       row.books_paid = updated.books_paid
       row.books_sent = updated.books_sent
       row.previous_balance_entered = true
+      saved = true
+      row.previous_balance_amount = Number(raw).toFixed(2)
       const balance = input.closest('tr')?.querySelector<HTMLElement>('[data-net-balance]')
       if (balance) {
         balance.textContent = formatPaymentBalance(row.wallet_balance, row.credit_balance)
@@ -59,23 +64,35 @@ export default function PreviousBalancePage({
       if (sent) sent.textContent = String(row.books_sent)
       input.value = ''
       input.placeholder = 'Entered'
-      notify.success(`${row.bbs_number} previous balance saved`)
+      setEditingKey(null)
+      table.current?.dt()?.ajax.reload(undefined, false)
+      notify.success(`${row.bbs_number} previous balance ${replacing ? 'corrected' : 'saved'}`)
     } catch (error) {
       notify.error(error instanceof Error ? error.message : 'Could not save previous balance')
     } finally {
       saving.current.delete(row.enrollment_key)
-      input.disabled = row.previous_balance_entered
+      input.disabled = saved
     }
   }
 
   function pendingInput(row: PaymentBalance): React.JSX.Element | string {
     if (row.mode !== 'OFFLINE') return '—'
-    if (row.previous_balance_entered) return 'Entered'
+    if (row.previous_balance_entered && editingKey !== row.enrollment_key) return <span>
+      ₹{Number(row.previous_balance_amount).toFixed(2)}{' '}
+      <Button variant="outline" onClick={() => setEditingKey(row.enrollment_key)}>Edit</Button>
+    </span>
     return <input
       className="course-quick-payment course-previous-balance-input"
       type="number" min="1" step="0.01" placeholder="₹ Amount"
+      defaultValue={row.previous_balance_entered ? row.previous_balance_amount : ''}
       aria-label={`Pending payment for ${row.bbs_number}`}
-      onBlur={(event) => void save(row, event.currentTarget)}
+      onBlur={(event) => {
+        if (row.previous_balance_entered && event.currentTarget.value === row.previous_balance_amount) {
+          setEditingKey(null)
+          return
+        }
+        void save(row, event.currentTarget)
+      }}
       onKeyDown={(event) => {
         if (event.key !== 'Enter') return
         event.preventDefault()
