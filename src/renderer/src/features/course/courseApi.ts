@@ -281,6 +281,8 @@ export type MonthlyStudent = {
   phone: string
   state: string
   district: string
+  book_month?: number
+  book_name?: string
 }
 export type MonthlySummary = {
   paid_count: number

@@ -229,6 +229,23 @@ export default function MonthlyDispatchPage({
     }
   }
 
+  async function creditProcess(row: MonthlyStudent): Promise<void> {
+    if (busy || !examKey) return
+    if (!window.confirm(`Prepare ${row.book_month}. ${row.book_name} for ${row.bbs_number} on credit?`)) return
+    setBusy(true)
+    try {
+      await candidateAction('credit-and-send', row.enrollment_key, { exam_key: examKey })
+      notify.success(`${row.bbs_number} moved to Processing`)
+      setStatusFilter('PROCESSING')
+      setView('dispatch')
+      refresh()
+    } catch (cause) {
+      notify.error(cause instanceof Error ? cause.message : 'Could not prepare book on credit')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function saveTracking(row: DispatchRow, rawValue: string): Promise<boolean> {
     if (row.kind !== 'allocation' || savingTrackingKey) return false
     const value = rawValue.trim()
@@ -416,6 +433,7 @@ export default function MonthlyDispatchPage({
           savingTrackingKey={savingTrackingKey}
           onParcel={(row) => void parcel(row)}
           onTrackingSave={saveTracking}
+          onCreditProcess={(row) => void creditProcess(row)}
           onCandidate={onCandidate}
           onContextMenu={openMenu}
         />

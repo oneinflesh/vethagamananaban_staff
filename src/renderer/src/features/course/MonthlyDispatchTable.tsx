@@ -21,6 +21,7 @@ export default function MonthlyDispatchTable({
   savingTrackingKey,
   onParcel,
   onTrackingSave,
+  onCreditProcess,
   onCandidate,
   onContextMenu
 }: {
@@ -30,6 +31,7 @@ export default function MonthlyDispatchTable({
   savingTrackingKey: string | null
   onParcel: (row: DispatchRow) => void
   onTrackingSave: (row: DispatchRow, value: string) => Promise<boolean>
+  onCreditProcess: (row: MonthlyStudent) => void
   onCandidate: (key: string) => void
   onContextMenu: (event: MouseEvent<HTMLDivElement>) => void
 }): React.JSX.Element {
@@ -163,6 +165,8 @@ export default function MonthlyDispatchTable({
           </Column>
           <Column title="Student" data="name" />
           <Column title="Phone" data="phone" />
+          <Column title="Book / month" data="book_name">{(_value, _type, row: MonthlyStudent) => `${row.book_month}. ${row.book_name}`}</Column>
+          <Column title="Action" data="enrollment_key">{(_value, _type, row: MonthlyStudent) => <Button variant="outline" onClick={() => onCreditProcess(row)}>Make credit and process</Button>}</Column>
         </DataTable>
       )}
     </div>

@@ -367,6 +367,14 @@
   background: white;
   color: #34261e;
 }
+.course-list-actions--month .course-list-filter select {
+  width: min(46vw, 500px);
+  max-width: none;
+  font-family: 'Anek Tamil', 'Nirmala UI', sans-serif;
+}
+.course-list-actions--month .course-list-filter select option {
+  font-family: 'Anek Tamil', 'Nirmala UI', sans-serif;
+}
 .course-list-search input {
   width: 220px;
   height: 36px;
