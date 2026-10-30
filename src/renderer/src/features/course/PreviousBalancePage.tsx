@@ -40,28 +40,34 @@ export default function PreviousBalancePage({
     saving.current.add(row.enrollment_key)
     input.disabled = true
     try {
-      const updated = await candidateAction('manual-credit', row.enrollment_key, {
-        amount: Number(raw).toFixed(2), note: 'Previous balance'
+      const updated = await candidateAction('previous-balance', row.enrollment_key, {
+        amount: Number(raw).toFixed(2)
       }) as Candidate
       row.wallet_balance = updated.wallet_balance
       row.credit_balance = updated.credit_balance
+      row.books_paid = updated.books_paid
+      row.previous_balance_entered = true
       const balance = input.closest('tr')?.querySelector<HTMLElement>('[data-net-balance]')
       if (balance) {
         balance.textContent = formatPaymentBalance(row.wallet_balance, row.credit_balance)
         balance.className = paymentBalanceTone(row.wallet_balance, row.credit_balance)
       }
+      const paid = input.closest('tr')?.querySelector<HTMLElement>('[data-books-paid]')
+      if (paid) paid.textContent = String(row.books_paid)
       input.value = ''
+      input.placeholder = 'Entered'
       notify.success(`${row.bbs_number} previous balance saved`)
     } catch (error) {
       notify.error(error instanceof Error ? error.message : 'Could not save previous balance')
     } finally {
       saving.current.delete(row.enrollment_key)
-      input.disabled = false
+      input.disabled = row.previous_balance_entered
     }
   }
 
   function pendingInput(row: PaymentBalance): React.JSX.Element | string {
     if (row.mode !== 'OFFLINE') return '—'
+    if (row.previous_balance_entered) return 'Entered'
     return <input
       className="course-quick-payment course-previous-balance-input"
       type="number" min="1" step="0.01" placeholder="₹ Amount"
@@ -106,7 +112,7 @@ export default function PreviousBalancePage({
         <Column title="Name" data="name" />
         <Column title="Balance" data="wallet_balance">{(_value, _type, row: PaymentBalance) => <span data-net-balance className={paymentBalanceTone(row.wallet_balance, row.credit_balance)}>{formatPaymentBalance(row.wallet_balance, row.credit_balance)}</span>}</Column>
         <Column title="Exams attended" data="exams_attended" />
-        <Column title="Books paid" data="books_paid" />
+        <Column title="Books paid" data="books_paid">{(_value, _type, row: PaymentBalance) => <span data-books-paid>{row.books_paid}</span>}</Column>
         <Column title="Pending Payment" data="enrollment_key">{(_value, _type, row: PaymentBalance) => pendingInput(row)}</Column>
       </DataTable>
     </div>

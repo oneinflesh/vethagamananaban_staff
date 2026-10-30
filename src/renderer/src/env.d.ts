@@ -136,6 +136,7 @@ interface Window {
         | 'update-status'
         | 'manual-purchase'
         | 'manual-credit'
+        | 'previous-balance'
         | 'credit-and-send'
         | 'restore-wallet-payment',
       key: string,
