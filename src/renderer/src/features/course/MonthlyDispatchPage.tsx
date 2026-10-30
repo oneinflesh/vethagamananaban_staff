@@ -168,7 +168,7 @@ export default function MonthlyDispatchPage({
   }
 
   async function ship(): Promise<void> {
-    if (!shipping || !tracking.trim()) return
+    if (!shipping) return
     setBusy(true)
     try {
       if (shipping.kind === 'funded') {
@@ -194,7 +194,7 @@ export default function MonthlyDispatchPage({
           tracking.trim()
         )
       }
-      notify.success(`${shipping.bbs_number} marked shipped`)
+      notify.success(`${shipping.bbs_number} marked ${tracking.trim() ? 'shipped' : 'parcelled'}`)
       setShipping(null)
       setTracking('')
       refresh()
@@ -205,25 +205,45 @@ export default function MonthlyDispatchPage({
     }
   }
 
-  async function saveTracking(row: DispatchRow, rawValue: string): Promise<void> {
-    if (row.kind !== 'allocation' || savingTrackingKey) return
+  async function parcel(row: DispatchRow): Promise<void> {
+    if (busy || row.status !== 'PROCESSING') return
+    setBusy(true)
+    try {
+      if (row.kind === 'funded') {
+        const dispatch = await getInitialDispatch(row.enrollment_key)
+        const current = dispatch.items[0]
+        if (!dispatch.wallet_funded || !current || current.dispatched || current.status === 'UNFUNDED')
+          throw new Error('The current book is not ready to parcel.')
+        await candidateAction('initial-dispatch', row.enrollment_key, {
+          allocation_keys: [current.allocation_key], tracking_number: ''
+        })
+      } else {
+        await shipMonthlyAllocation(row.allocation_key, row.delivery_address_key ?? '', '')
+      }
+      notify.success(`${row.bbs_number} marked parcelled`)
+      refresh()
+    } catch (cause) {
+      notify.error(cause instanceof Error ? cause.message : 'Could not parcel book')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function saveTracking(row: DispatchRow, rawValue: string): Promise<boolean> {
+    if (row.kind !== 'allocation' || savingTrackingKey) return false
     const value = rawValue.trim()
-    if (!value || (row.status !== 'PROCESSING' && value === (row.tracking_number ?? ''))) return
+    if (!value || value === (row.tracking_number ?? '')) return false
     setSavingTrackingKey(row.allocation_key)
     try {
-      if (row.status !== 'PROCESSING' && row.status !== 'SHIPPED')
-        throw new Error('Open this month before shipping this book.')
-      if (row.status === 'PROCESSING')
-        await shipMonthlyAllocation(row.allocation_key, row.delivery_address_key ?? '', value)
-      else await saveMonthlyTracking(row.allocation_key, value)
+      if (row.status !== 'PARCELLED' && row.status !== 'SHIPPED')
+        throw new Error('Mark this book Parcelled before adding tracking.')
+      await saveMonthlyTracking(row.allocation_key, value)
       table.current?.dt()?.ajax.reload(undefined, false)
-      notify.success(
-        row.status === 'PROCESSING'
-          ? `${row.bbs_number} marked shipped`
-          : `Tracking ID saved for ${row.bbs_number}`
-      )
+      notify.success(`Tracking ID saved for ${row.bbs_number}`)
+      return true
     } catch (cause) {
       notify.error(cause instanceof Error ? cause.message : 'Could not save tracking ID')
+      return false
     } finally {
       setSavingTrackingKey(null)
     }
@@ -291,8 +311,9 @@ export default function MonthlyDispatchPage({
             >
               <option value="">All statuses</option>
               <option value="PROCESSING">Processing</option>
+              <option value="PARCELLED">Parcelled</option>
               {filterOptions.statuses
-                .filter((status) => status !== 'PROCESSING')
+                .filter((status) => status !== 'PROCESSING' && status !== 'PARCELLED')
                 .map((status) => (
                   <option key={status} value={status}>
                     {status.replaceAll('_', ' ')}
@@ -393,7 +414,8 @@ export default function MonthlyDispatchPage({
           table={table}
           view={view}
           savingTrackingKey={savingTrackingKey}
-          onTrackingSave={(row, value) => void saveTracking(row, value)}
+          onParcel={(row) => void parcel(row)}
+          onTrackingSave={saveTracking}
           onCandidate={onCandidate}
           onContextMenu={openMenu}
         />
@@ -431,7 +453,7 @@ export default function MonthlyDispatchPage({
                 setMenu(null)
               }}
             >
-              Enter tracking and ship
+              Parcel / ship book
             </button>
           )}
           <button
@@ -460,7 +482,7 @@ export default function MonthlyDispatchPage({
             onClick={(event) => event.stopPropagation()}
           >
             <div className="course-dialog__header">
-              <h2>Ship course book</h2>
+              <h2>Parcel course book</h2>
               <Button variant="ghost" onClick={() => setShipping(null)}>
                 Close
               </Button>
@@ -469,7 +491,7 @@ export default function MonthlyDispatchPage({
               {shipping.student_name} · {shipping.bbs_number} · {shipping.exam_title}
             </p>
             <label className="course-dialog__field">
-              Tracking ID
+              Tracking ID (optional)
               <Input
                 value={tracking}
                 onChange={(event) => setTracking(event.target.value)}
@@ -480,8 +502,8 @@ export default function MonthlyDispatchPage({
               <Button variant="outline" onClick={() => setShipping(null)}>
                 Cancel
               </Button>
-              <Button disabled={busy || !tracking.trim()} onClick={() => void ship()}>
-                Save as shipped
+              <Button disabled={busy} onClick={() => void ship()}>
+                {tracking.trim() ? 'Save as shipped' : 'Mark Parcelled'}
               </Button>
             </div>
           </section>

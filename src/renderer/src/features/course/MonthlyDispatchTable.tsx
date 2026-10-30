@@ -1,5 +1,6 @@
-import { type MouseEvent, type RefObject } from 'react'
+import { useState, type MouseEvent, type RefObject } from 'react'
 import type { DataTableRef } from 'datatables.net-react'
+import { Button } from '@/components/ui/button'
 import { DataTable, Column } from './dataTable'
 import { resizeColumns } from './resizeColumns'
 import type { MonthlyAllocation, MonthlyPage, MonthlyStudent } from './courseApi'
@@ -18,6 +19,7 @@ export default function MonthlyDispatchTable({
   table,
   view,
   savingTrackingKey,
+  onParcel,
   onTrackingSave,
   onCandidate,
   onContextMenu
@@ -26,10 +28,12 @@ export default function MonthlyDispatchTable({
   table: RefObject<DataTableRef | null>
   view: DispatchView
   savingTrackingKey: string | null
-  onTrackingSave: (row: DispatchRow, value: string) => void
+  onParcel: (row: DispatchRow) => void
+  onTrackingSave: (row: DispatchRow, value: string) => Promise<boolean>
   onCandidate: (key: string) => void
   onContextMenu: (event: MouseEvent<HTMLDivElement>) => void
 }): React.JSX.Element {
+  const [editingTrackingKey, setEditingTrackingKey] = useState<string | null>(null)
   const ajax = (
     request: { start?: number; length?: number; draw?: number },
     callback: (response: unknown) => void
@@ -91,9 +95,9 @@ export default function MonthlyDispatchTable({
           <Column title="Status" data="status" />
           <Column title="Tracking ID" data="tracking_number" options={{ defaultContent: '' }}>
             {(_value, _type, row: DispatchRow) =>
-              row.kind === 'funded' ? (
-                <span>Ship book to add tracking</span>
-              ) : (
+              row.status === 'PROCESSING' ? (
+                <Button variant="outline" onClick={() => onParcel(row)}>Mark Parcelled</Button>
+              ) : row.kind === 'funded' ? '—' : editingTrackingKey === row.allocation_key ? (
                 <div className="course-tracking-cell">
                   <input
                     key={`${row.allocation_key}:${row.tracking_number}`}
@@ -101,16 +105,23 @@ export default function MonthlyDispatchTable({
                     title="Press Enter to save tracking ID"
                     defaultValue={row.tracking_number ?? ''}
                     maxLength={100}
+                    autoFocus
                     disabled={savingTrackingKey === row.allocation_key}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter') {
                         event.preventDefault()
-                        onTrackingSave(row, event.currentTarget.value)
+                        void onTrackingSave(row, event.currentTarget.value).then((saved) => {
+                          if (saved) setEditingTrackingKey(null)
+                        })
                       }
                     }}
                   />
                   {savingTrackingKey === row.allocation_key && <span>Saving…</span>}
                 </div>
+              ) : (
+                <Button variant="outline" onClick={() => setEditingTrackingKey(row.allocation_key)}>
+                  {row.tracking_number ? `Edit ${row.tracking_number}` : 'Add tracking ID'}
+                </Button>
               )
             }
           </Column>
