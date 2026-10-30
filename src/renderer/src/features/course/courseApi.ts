@@ -44,7 +44,7 @@ export type Candidate = {
   paid_books: number
   exams_attended: number
   books_sent: number
-  first_exam: { number: number; name: string } | null
+  first_exam: { number: number; name: string; scheduled_month: string | null } | null
   exam_papers_in_arrears: number
   books_paid: number
   remaining_books: number
