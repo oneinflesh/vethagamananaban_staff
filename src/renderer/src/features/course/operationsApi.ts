@@ -1,4 +1,4 @@
-export type OperationsGroup = 'individual' | 'member' | 'coordinator'
+export type OperationsGroup = 'individual' | 'member' | 'coordinator' | 'range'
 export type OperationsMetadata = {
   country: string
   fields: { key: string; label: string }[]

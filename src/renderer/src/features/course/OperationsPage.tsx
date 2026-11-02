@@ -68,15 +68,15 @@ export default function OperationsPage({
   }
   const validBbsRange = /^\d+$/.test(bbsFrom) && /^\d+$/.test(bbsTo) &&
     Number(bbsFrom) >= 1 && Number(bbsTo) >= Number(bbsFrom) && Number(bbsTo) <= 2_147_483_647
-  const bbsRange: OperationsRange = group === 'coordinator' || !validBbsRange
+  const bbsRange: OperationsRange = group !== 'range' || !validBbsRange
     ? null : { from: Number(bbsFrom), to: Number(bbsTo) }
-  const ready = !!metadata && (group === 'coordinator' || validBbsRange)
+  const ready = !!metadata && (group !== 'range' || validBbsRange)
 
   async function download(): Promise<void> {
     if (!ready || !metadata) return
     setBusy('Preparing CSV')
     try {
-      const result = await getOperationsTemplate(country, group, fields,
+      const result = await getOperationsTemplate(country, group, group === 'range' ? [] : fields,
         metadata.books.map((book) => book.key), bbsRange)
       if (!result.rows) {
         notify.error('No records found in this BBS range.')
@@ -183,8 +183,20 @@ export default function OperationsPage({
                 {item.label}
               </button>
             ))}
+            <span className="operations-group-or">OR</span>
+            <button
+              type="button"
+              className={group === 'range' ? 'is-active' : ''}
+              onClick={() => {
+                setGroup('range')
+                setFields([])
+                resetUpload()
+              }}
+            >
+              BBS range · marks
+            </button>
           </div>
-          {group !== 'coordinator' && (
+          {group === 'range' && (
             <div className="operations-bbs-range">
               <label>BBS from
                 <input type="text" inputMode="numeric" value={bbsFrom} onChange={(event) => {
@@ -200,14 +212,15 @@ export default function OperationsPage({
               </label>
             </div>
           )}
-          <p>{group === 'coordinator' ? 'C number' : 'BBS number'}, name and all marks are included.</p>
+          <p>{group === 'range' ? 'All candidates in this range, with every mark.' :
+            `${group === 'coordinator' ? 'C number' : 'BBS number'}, name and all marks are included.`}</p>
           <div className="operations-card-footer">
             <span>
-              {fields.length} fields · {metadata?.books.length ?? 0} marks
+              {group === 'range' ? 'Marks only' : `${fields.length} fields · ${metadata?.books.length ?? 0} marks`}
             </span>
-            <Button onClick={() => setPickerOpen(true)} disabled={!metadata}>
+            {group !== 'range' && <Button onClick={() => setPickerOpen(true)} disabled={!metadata}>
               Choose fields
-            </Button>
+            </Button>}
           </div>
         </article>
 
