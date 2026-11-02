@@ -39,7 +39,7 @@ export default function ShippingPage(): React.JSX.Element {
   const [state, setState] = useState('')
   const [district, setDistrict] = useState('')
   const [book, setBook] = useState('')
-  const [status, setStatus] = useState('')
+  const [status, setStatus] = useState('PARCELLED')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [search, setSearch] = useState('')
@@ -183,7 +183,7 @@ export default function ShippingPage(): React.JSX.Element {
                 setState('')
                 setDistrict('')
                 setBook('')
-                setStatus('')
+                setStatus('PARCELLED')
               }}
             >
               <option value="all">All</option>
@@ -228,6 +228,7 @@ export default function ShippingPage(): React.JSX.Element {
             Status
             <select value={status} onChange={(event) => setStatus(event.target.value)}>
               <option value="">All</option>
+              {!filterOptions.statuses.includes('PARCELLED') && <option value="PARCELLED">Parcelled</option>}
               {filterOptions.statuses.map((value) => (
                 <option key={value}>{value.replaceAll('_', ' ')}</option>
               ))}

@@ -37,7 +37,6 @@ export default function ManualBookDispatchPage({
   const [books, setBooks] = useState<ExamInfo[]>([])
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set())
   const [selectedBook, setSelectedBook] = useState('')
-  const [tracking, setTracking] = useState('')
   const [allowCredit, setAllowCredit] = useState(false)
   const [sending, setSending] = useState(false)
   const [memberRefresh, setMemberRefresh] = useState(0)
@@ -50,7 +49,6 @@ export default function ManualBookDispatchPage({
     setCandidate(null)
     setSelectedMembers(new Set())
     setSelectedBook('')
-    setTracking('')
     setAllowCredit(false)
   }
 
@@ -74,14 +72,14 @@ export default function ManualBookDispatchPage({
   }, [coordinator, memberRefresh, notify])
 
   async function sendToCoordinator(): Promise<void> {
-    if (!coordinator || !selectedBook || !selectedMembers.size || !tracking.trim() || sending) return
+    if (!coordinator || !selectedBook || !selectedMembers.size || sending) return
     setSending(true)
     try {
       const keys = [...selectedMembers]
       const options = await Promise.all(keys.map((key) => getOtherBookOptions(key)))
       const ineligible = keys.filter((_, index) => {
         const book = options[index].manual_books.find((item) => item.exam_key === selectedBook)
-        return !book || !book.active || book.assigned || book.price === null || book.stock < 1 || !options[index].manual_address
+        return !book || !book.active || book.price === null || book.stock < 1 || !options[index].manual_address
           || (!allowCredit && Number(options[index].wallet_balance) < Number(book.price))
       })
       if (ineligible.length) {
@@ -89,10 +87,11 @@ export default function ManualBookDispatchPage({
         return
       }
       let sent = 0
+      const parcelBatch = crypto.randomUUID()
       for (const key of keys) {
         try {
           await candidateAction('manual-book-dispatch', key, {
-            exam_keys: [selectedBook], tracking_number: tracking.trim(), allow_credit: allowCredit
+            exam_keys: [selectedBook], tracking_number: '', allow_credit: allowCredit, parcel_batch: parcelBatch
           })
           sent += 1
         } catch (error) {
@@ -102,9 +101,8 @@ export default function ManualBookDispatchPage({
           return
         }
       }
-      notify.success(`${sent} books sent under C-${coordinator.number}`)
+      notify.success(`${sent} books parcelled under C-${coordinator.number}`)
       setSelectedMembers(new Set())
-      setTracking('')
       setMemberRefresh((value) => value + 1)
     } finally {
       setSending(false)
@@ -149,10 +147,8 @@ export default function ManualBookDispatchPage({
         </select>
         <label className="course-manual-book-credit"><input type="checkbox" checked={allowCredit}
           onChange={(event) => setAllowCredit(event.target.checked)} /> Use credit</label>
-        <Input aria-label="Tracking number" placeholder="Tracking number" value={tracking}
-          onChange={(event) => setTracking(event.target.value)} maxLength={100} />
-        <Button disabled={!selectedBook || !selectedMembers.size || !tracking.trim() || sending}
-          onClick={() => void sendToCoordinator()}>{sending ? 'Sending…' : `Send to ${selectedMembers.size} selected`}</Button>
+        <Button disabled={!selectedBook || !selectedMembers.size || sending}
+          onClick={() => void sendToCoordinator()}>{sending ? 'Preparing…' : `Parcel for ${selectedMembers.size} selected`}</Button>
       </div>
       <div className="course-table-wrap course-table-wrap--candidates course-manual-dispatch-table course-manual-dispatch-table--members">
         <DataTable key={`${coordinator.coordinator_key}:${search}:${[...selectedMembers].sort().join(',')}`}

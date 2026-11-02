@@ -201,6 +201,7 @@ export type OtherBookOptions = {
     active: boolean
     released: boolean
     assigned: boolean
+    marks: string | number | null
   }[]
   manual_address: {
     recipient_name: string
