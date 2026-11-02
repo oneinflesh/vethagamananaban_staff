@@ -18,7 +18,7 @@ import {
 import { DataTable, Column } from './dataTable'
 import { resizeColumns } from './resizeColumns'
 import { printCoordinatorLabels } from './coordinatorLabels'
-import CoordinatorSentBooksDialog from './CoordinatorSentBooksDialog'
+import CoordinatorBookHistoryDialog from './CoordinatorBookHistoryDialog'
 
 export default function CoordinatorDetails({
   coordinatorKey,
@@ -591,11 +591,16 @@ export default function CoordinatorDetails({
           <Column title="Status" data="status" />
           <Column title="Phone" data="phone" />
           <Column title="Address" data="address" />
-          <Column title="Last book sent" data="sent_books" options={{ orderable: false, searchable: false }}>
+          <Column title="Last book / exam" data="sent_books" options={{ orderable: false, searchable: false }}>
             {(_value, _type, row: CoordinatorMember) => row.sent_books.length ? (
               <button className="course-link coordinator-last-book" onClick={() => setSentBooksPerson(row)}
                 title={`Show ${row.sent_books.length} sent book${row.sent_books.length === 1 ? '' : 's'}`}>
                 {row.sent_books[0].title}
+              </button>
+            ) : row.last_marked_exam ? (
+              <button className="course-link coordinator-last-book" onClick={() => setSentBooksPerson(row)}
+                title="Latest marked exam; sending date not recorded">
+                Exam: {row.last_marked_exam.title} ({row.last_marked_exam.score})
               </button>
             ) : '—'}
           </Column>
@@ -649,7 +654,7 @@ export default function CoordinatorDetails({
           )}
         </div>
       )}
-      {sentBooksPerson && <CoordinatorSentBooksDialog person={sentBooksPerson} onClose={() => setSentBooksPerson(null)} />}
+      {sentBooksPerson && <CoordinatorBookHistoryDialog person={sentBooksPerson} onClose={() => setSentBooksPerson(null)} />}
       {loading && <FullScreenLoader message="Loading coordinator" leaving={leaving} />}
     </section>
   )
