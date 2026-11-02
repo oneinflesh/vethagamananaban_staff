@@ -50,7 +50,7 @@ export default function CoursePage(): React.JSX.Element {
   const [coordinatorRefresh, setCoordinatorRefresh] = useState(0)
   const [manualRegistration, setManualRegistration] = useState(false)
   const [monthlyDispatch, setMonthlyDispatch] = useState(false)
-  const [manualBookDispatch, setManualBookDispatch] = useState<'individual' | 'coordinator' | null>(null)
+  const [manualBookDispatch, setManualBookDispatch] = useState(false)
   const [courseBooks, setCourseBooks] = useState(false)
   const [wholeResults, setWholeResults] = useState(false)
   const [courseLanguages, setCourseLanguages] = useState(false)
@@ -221,7 +221,7 @@ export default function CoursePage(): React.JSX.Element {
         }}
       />
     )
-  if (candidateKey && !monthlyDispatch && !coursePayments && !previousBalances && !coordinatorPayments)
+  if (candidateKey && !manualBookDispatch && !monthlyDispatch && !coursePayments && !previousBalances && !coordinatorPayments)
     return (
       <CandidateDetails
         key={candidateKey}
@@ -261,7 +261,14 @@ export default function CoursePage(): React.JSX.Element {
       />
     )
   if (manualBookDispatch)
-    return <ManualBookDispatchPage country={country} recipientType={manualBookDispatch} onBack={() => setManualBookDispatch(null)} />
+    return <>
+      <div className={candidateKey ? 'course-list-host course-list-host--hidden' : 'course-list-host'}>
+        <ManualBookDispatchPage country={country} onBack={() => setManualBookDispatch(false)}
+          onCandidate={(key) => { setCandidateTab('details'); setCandidateKey(key) }} />
+      </div>
+      {candidateKey && <CandidateDetails key={candidateKey} candidateKey={candidateKey}
+        initialTab={candidateTab} onBack={() => setCandidateKey(null)} onCoordinator={setCoordinatorKey} />}
+    </>
   if (courseBooks) return <CourseBooksPage country={country} onBack={() => setCourseBooks(false)} />
   if (wholeResults)
     return <WholeResultsPage country={country} onBack={() => setWholeResults(false)} />
@@ -406,7 +413,7 @@ export default function CoursePage(): React.JSX.Element {
       {visibleCounts && countError !== country && (
         <div className="course-card-grid course-card-grid--second">
           <button
-            className="course-nav-card course-nav-card--wide"
+            className="course-nav-card"
             onClick={() => setSection('newOffline')}
           >
             <span className="course-nav-card__count">{visibleCounts.newOffline ?? ''}</span>
@@ -423,14 +430,9 @@ export default function CoursePage(): React.JSX.Element {
               →
             </span>
           </button>
-          <button className="course-nav-card" onClick={() => setManualBookDispatch('individual')}>
-            <strong>Send individual books</strong>
-            <small>Choose an individual and send released books</small>
-            <span className="course-nav-card__arrow" aria-hidden="true">→</span>
-          </button>
-          <button className="course-nav-card" onClick={() => setManualBookDispatch('coordinator')}>
-            <strong>Send coordinator books</strong>
-            <small>Select people under a coordinator and send a released book</small>
+          <button className="course-nav-card" onClick={() => setManualBookDispatch(true)}>
+            <strong>Send released books</strong>
+            <small>Individual or coordinator</small>
             <span className="course-nav-card__arrow" aria-hidden="true">→</span>
           </button>
           <button className="course-nav-card" onClick={() => setCourseBooks(true)}>

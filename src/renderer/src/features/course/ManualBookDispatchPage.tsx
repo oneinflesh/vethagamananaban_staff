@@ -2,87 +2,76 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useNotifications } from '../notifications/Notifications'
+import { DataTable, Column } from './dataTable'
 import {
   candidateAction,
   getCandidates,
   getCoordinatorPage,
-  getCoordinatorMembers,
+  getCoordinatorWalletMembers,
   getOtherBookOptions,
+  getRegistrationOptions,
   type Candidate,
   type Coordinator,
-  type CoordinatorMember,
-  type OtherBookOption
+  type CoordinatorWalletMember,
+  type ExamInfo
 } from './courseApi'
-import SendReleasedBooksPage from './SendReleasedBooksPage'
+import ManualBookSelectionPage from './ManualBookSelectionPage'
+import CandidateActionPanel from './CandidateActionPanel'
 
 export default function ManualBookDispatchPage({
   country,
-  recipientType,
+  onCandidate,
   onBack
 }: {
   country: string
-  recipientType: 'individual' | 'coordinator'
+  onCandidate: (key: string) => void
   onBack: () => void
 }): React.JSX.Element {
+  const [recipientType, setRecipientType] = useState<'individual' | 'coordinator'>('individual')
   const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [candidates, setCandidates] = useState<Candidate[]>([])
-  const [coordinators, setCoordinators] = useState<Coordinator[]>([])
-  const [members, setMembers] = useState<CoordinatorMember[]>([])
+  const [members, setMembers] = useState<CoordinatorWalletMember[]>([])
   const [coordinator, setCoordinator] = useState<Coordinator | null>(null)
   const [candidate, setCandidate] = useState<Candidate | null>(null)
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [books, setBooks] = useState<OtherBookOption[]>([])
+  const [paymentCandidate, setPaymentCandidate] = useState<Candidate | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [books, setBooks] = useState<ExamInfo[]>([])
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set())
   const [selectedBook, setSelectedBook] = useState('')
   const [tracking, setTracking] = useState('')
+  const [allowCredit, setAllowCredit] = useState(false)
   const [sending, setSending] = useState(false)
+  const [memberRefresh, setMemberRefresh] = useState(0)
   const notify = useNotifications()
 
-  useEffect(() => {
-    if (coordinator || candidate) return
-    let active = true
-    const request = recipientType === 'individual'
-      ? getCandidates(country, page, 'OFFLINE', 'ACTIVE', search, { individualOnly: true })
-      : getCoordinatorPage(country, page, { search, status: 'ACTIVE' })
-    request.then((result) => {
-      if (!active) return
-      setTotal(result.count)
-      if (recipientType === 'individual') setCandidates(result.results as Candidate[])
-      else setCoordinators(result.results as Coordinator[])
-    }).catch((error) => {
-      if (active) notify.error(error instanceof Error ? error.message : 'Could not load recipients')
-    }).finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
-  }, [country, recipientType, search, page, coordinator, candidate, notify])
+  function changeRecipientType(type: 'individual' | 'coordinator'): void {
+    setRecipientType(type)
+    setSearch('')
+    setCoordinator(null)
+    setCandidate(null)
+    setSelectedMembers(new Set())
+    setSelectedBook('')
+    setTracking('')
+    setAllowCredit(false)
+  }
 
   useEffect(() => {
     if (!coordinator) return
     let active = true
-    getCoordinatorMembers(coordinator.coordinator_key).then((result) => {
+    getCoordinatorWalletMembers(coordinator.coordinator_key).then((result) => {
       if (active) {
-        const activeMembers = result.filter((member) => member.status === 'ACTIVE')
-        if (coordinator.enrollment_key && coordinator.enrollment_status === 'ACTIVE'
-          && !activeMembers.some((member) => member.enrollment_key === coordinator.enrollment_key)) {
-          activeMembers.unshift({ enrollment_key: coordinator.enrollment_key,
-            bbs_number: coordinator.bbs_number, name: coordinator.name, status: 'ACTIVE',
-            phone: coordinator.phone, address: '', sent_books: [], last_marked_exam: null })
-        }
+        const activeMembers = result.filter((member) => member.status === 'ACTIVE' && member.mode === 'OFFLINE')
         setMembers(activeMembers)
-        if (activeMembers.length) {
-          getOtherBookOptions(activeMembers[0].enrollment_key).then((options) => {
-            if (active) setBooks(options.books.filter((book) => book.active && book.released))
-          }).catch((error) => {
-            if (active) notify.error(error instanceof Error ? error.message : 'Could not load books')
-          })
-        }
+        getRegistrationOptions().then((options) => {
+          if (active) setBooks(options.exams.filter((book) => book.is_active))
+        }).catch((error) => {
+          if (active) notify.error(error instanceof Error ? error.message : 'Could not load books')
+        })
       }
     }).catch((error) => {
       if (active) notify.error(error instanceof Error ? error.message : 'Could not load people')
     }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [coordinator, notify])
+  }, [coordinator, memberRefresh, notify])
 
   async function sendToCoordinator(): Promise<void> {
     if (!coordinator || !selectedBook || !selectedMembers.size || !tracking.trim() || sending) return
@@ -91,8 +80,9 @@ export default function ManualBookDispatchPage({
       const keys = [...selectedMembers]
       const options = await Promise.all(keys.map((key) => getOtherBookOptions(key)))
       const ineligible = keys.filter((_, index) => {
-        const book = options[index].books.find((item) => item.exam_key === selectedBook)
-        return !book || !book.active || !book.released || book.assigned
+        const book = options[index].manual_books.find((item) => item.exam_key === selectedBook)
+        return !book || !book.active || book.assigned || book.price === null || book.stock < 1 || !options[index].manual_address
+          || (!allowCredit && Number(options[index].wallet_balance) < Number(book.price))
       })
       if (ineligible.length) {
         notify.error(`${ineligible.length} selected people cannot receive this book. No books were sent.`)
@@ -101,26 +91,28 @@ export default function ManualBookDispatchPage({
       let sent = 0
       for (const key of keys) {
         try {
-          await candidateAction('other-book-dispatch', key, {
-            exam_keys: [selectedBook], tracking_number: tracking.trim()
+          await candidateAction('manual-book-dispatch', key, {
+            exam_keys: [selectedBook], tracking_number: tracking.trim(), allow_credit: allowCredit
           })
           sent += 1
         } catch (error) {
           notify.error(`${sent} sent; ${keys.length - sent} not sent. ${error instanceof Error ? error.message : 'Dispatch failed'}`)
           setSelectedMembers(new Set(keys.slice(sent)))
+          if (sent) setMemberRefresh((value) => value + 1)
           return
         }
       }
       notify.success(`${sent} books sent under C-${coordinator.number}`)
       setSelectedMembers(new Set())
       setTracking('')
+      setMemberRefresh((value) => value + 1)
     } finally {
       setSending(false)
     }
   }
 
   if (candidate) return (
-    <SendReleasedBooksPage
+    <ManualBookSelectionPage
       candidate={candidate}
       onBack={() => {
         setCandidate(null)
@@ -130,55 +122,135 @@ export default function ManualBookDispatchPage({
   )
 
   return <section className="page course-page">
-    <div className="course-toolbar">
+    <div className="course-toolbar course-toolbar--manual-dispatch">
       <Button variant="outline" onClick={coordinator ? () => { setCoordinator(null); setSelectedMembers(new Set()) } : onBack}>← Course</Button>
-      <h1>{recipientType === 'coordinator' ? 'Send coordinator books' : 'Send individual books'}</h1>
+      <h1>Send released books</h1>
+      <div className="course-manual-dispatch-tabs" role="tablist" aria-label="Recipient type">
+        <button type="button" role="tab" aria-selected={recipientType === 'individual'}
+          className={recipientType === 'individual' ? 'active' : ''}
+          onClick={() => changeRecipientType('individual')}>Individual</button>
+        <button type="button" role="tab" aria-selected={recipientType === 'coordinator'}
+          className={recipientType === 'coordinator' ? 'active' : ''}
+          onClick={() => changeRecipientType('coordinator')}>Coordinator</button>
+      </div>
+      <Input className="course-manual-dispatch-search" aria-label="Search recipients"
+        placeholder={coordinator ? 'Search members' : 'Search name or number'} value={search}
+        onChange={(event) => setSearch(event.target.value)} />
     </div>
     {coordinator ? <>
       <h2>{coordinator.name} · C-{coordinator.number}</h2>
+      <p className="course-manual-dispatch-address">
+        Parcel address: {coordinator.address_line1 || 'No address'}, {coordinator.district}, {coordinator.state} {coordinator.postal_code}
+      </p>
       <div className="course-manual-dispatch-controls">
         <select aria-label="Released book" value={selectedBook} onChange={(event) => setSelectedBook(event.target.value)}>
-          <option value="">Choose released book</option>
-          {books.map((book) => <option key={book.exam_key} value={book.exam_key}>{book.sequence}. {book.exam_title}</option>)}
+          <option value="">Choose book</option>
+          {books.map((book) => <option key={book.exam_key} value={book.exam_key}>{book.sequence}. {book.title}</option>)}
         </select>
+        <label className="course-manual-book-credit"><input type="checkbox" checked={allowCredit}
+          onChange={(event) => setAllowCredit(event.target.checked)} /> Use credit</label>
         <Input aria-label="Tracking number" placeholder="Tracking number" value={tracking}
           onChange={(event) => setTracking(event.target.value)} maxLength={100} />
         <Button disabled={!selectedBook || !selectedMembers.size || !tracking.trim() || sending}
           onClick={() => void sendToCoordinator()}>{sending ? 'Sending…' : `Send to ${selectedMembers.size} selected`}</Button>
       </div>
-      <div className="course-manual-dispatch-list">
-        {members.map((member) => <label className="course-manual-dispatch-member" key={member.enrollment_key}>
-          <input type="checkbox" checked={selectedMembers.has(member.enrollment_key)} disabled={sending}
-            onChange={(event) => setSelectedMembers((current) => {
-              const next = new Set(current)
-              if (event.target.checked) next.add(member.enrollment_key)
-              else next.delete(member.enrollment_key)
-              return next
-            })} />
-          {member.bbs_number} · {member.name}
-        </label>)}
-        {!loading && members.length === 0 && <p>No active people under this coordinator.</p>}
+      <div className="course-table-wrap course-table-wrap--candidates course-manual-dispatch-table course-manual-dispatch-table--members">
+        <DataTable key={`${coordinator.coordinator_key}:${search}:${[...selectedMembers].sort().join(',')}`}
+          data={members.filter((member) => `${member.bbs_number} ${member.name}`.toLowerCase().includes(search.toLowerCase()))}
+          className="display course-table" options={{
+            pageLength: 20, lengthChange: false, searching: false, autoWidth: false,
+            scrollX: true, scrollY: 'calc(100vh - 340px)', scrollCollapse: true,
+            order: [[1, 'asc']],
+            columnDefs: [
+              { targets: 0, orderable: false, width: '65px' },
+              { targets: [4, 5, 6], width: '86px' },
+              { targets: 7, orderable: false, width: '230px' }
+            ],
+            layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' }
+          }}>
+          <Column title="Select" data="enrollment_key">{(_value, _type, row: CoordinatorWalletMember) =>
+            <input type="checkbox" aria-label={`Select ${row.bbs_number}`}
+              checked={selectedMembers.has(row.enrollment_key)} disabled={sending}
+              onChange={() => setSelectedMembers((current) => {
+                const next = new Set(current)
+                if (next.has(row.enrollment_key)) next.delete(row.enrollment_key)
+                else next.add(row.enrollment_key)
+                return next
+              })} />}</Column>
+          <Column title="BBS number" data="bbs_number">{(value, type) =>
+            type === 'sort' || type === 'type' ? Number(String(value).replace(/\D/g, '')) : String(value)}</Column>
+          <Column title="Name" data="name" />
+          <Column title="District" data="district" />
+          <Column title="Exams attended" data="exams_attended" />
+          <Column title="Books sent" data="books_sent" />
+          <Column title="Books paid" data="books_paid" />
+          <Column title="Options" data="enrollment_key">{(_value, _type, row: CoordinatorWalletMember) =>
+            <span className="course-manual-dispatch-actions">
+              <Button variant="outline" onClick={() => onCandidate(row.enrollment_key)}>View candidate</Button>
+              <Button variant="outline" onClick={() => setPaymentCandidate({ enrollment_key: row.enrollment_key,
+                bbs_identifier: row.bbs_number, full_name: row.name, mode: row.mode } as Candidate)}>Record payment</Button>
+            </span>}</Column>
+        </DataTable>
       </div>
     </> : <>
-      <div className="course-manual-dispatch-controls">
-        <Input aria-label="Search recipients" placeholder="Search name or number" value={search}
-          onChange={(event) => { setLoading(true); setSearch(event.target.value); setPage(1) }} />
-      </div>
-      <div className="course-manual-dispatch-list">
-        {recipientType === 'individual'
-          ? candidates.map((person) =>
-            <button key={person.enrollment_key} onClick={() => setCandidate(person)}>
-              {person.bbs_identifier} · {person.full_name}
-            </button>)
-          : coordinators.map((person) => <button key={person.coordinator_key}
-            onClick={() => { setLoading(true); setCoordinator(person) }}>C-{person.number} · {person.name}</button>)}
-      </div>
-      <div className="course-manual-dispatch-pages">
-        <Button variant="outline" disabled={page === 1 || loading} onClick={() => { setLoading(true); setPage(page - 1) }}>Previous</Button>
-        <span>Page {page} · {total} recipients</span>
-        <Button variant="outline" disabled={page * 20 >= total || loading} onClick={() => { setLoading(true); setPage(page + 1) }}>Next</Button>
+      <div className="course-table-wrap course-table-wrap--candidates course-manual-dispatch-table">
+        <DataTable key={`${recipientType}:${country}:${search}:${memberRefresh}`} className="display course-table" options={{
+          serverSide: true, processing: true, pageLength: 20, lengthChange: false,
+          searching: false, autoWidth: false, order: [[0, 'asc']],
+          scrollX: true, scrollY: 'calc(100vh - 260px)', scrollCollapse: true,
+          columnDefs: recipientType === 'individual' ? [
+            { targets: [2, 3, 4], orderable: false, width: '86px' },
+            { targets: 7, orderable: false, width: '340px' }
+          ] : [{ targets: 2, width: '86px' }],
+          layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' },
+          ajax: (request, callback) => {
+            const page = Math.floor((request.start ?? 0) / (request.length || 20)) + 1
+            const column = request.order?.[0]?.column ?? 0
+            const direction = request.order?.[0]?.dir === 'desc' ? '-' : ''
+            const fields = recipientType === 'individual'
+              ? ['bbs_number', 'full_name', '', '', '', 'district', 'state']
+              : ['number', 'name', 'active_member_count', 'district', 'state']
+            const ordering = `${direction}${fields[column] || fields[0]}`
+            const result = recipientType === 'individual'
+              ? getCandidates(country, page, 'OFFLINE', 'ACTIVE', search, { individualOnly: true, ordering })
+              : getCoordinatorPage(country, page, { search, status: 'ACTIVE', ordering })
+            void result.then((response) => callback({ draw: request.draw,
+              recordsTotal: response.count, recordsFiltered: response.count, data: response.results }))
+              .catch((error) => {
+                notify.error(error instanceof Error ? error.message : 'Could not load recipients')
+                callback({ draw: request.draw, recordsTotal: 0, recordsFiltered: 0, data: [] })
+              })
+          }
+        }}>
+          {recipientType === 'individual' ? [
+            <Column key="bbs" title="BBS number" data="bbs_identifier">{(_value, _type, row: Candidate) =>
+              <button className="course-link" onClick={() => onCandidate(row.enrollment_key)}>{row.bbs_identifier}</button>}</Column>
+            , <Column key="name" title="Name" data="full_name" />
+            , <Column key="exams" title="Exams attended" data="exams_attended" />
+            , <Column key="sent" title="Books sent" data="books_sent" />
+            , <Column key="paid" title="Books paid" data="books_paid" />
+            , <Column key="district" title="District" data="district" />
+            , <Column key="state" title="State" data="state" />
+            , <Column key="options" title="Options" data="enrollment_key">{(_value, _type, row: Candidate) =>
+              <span className="course-manual-dispatch-actions">
+                <Button variant="outline" onClick={() => onCandidate(row.enrollment_key)}>View candidate</Button>
+                <Button variant="outline" onClick={() => setPaymentCandidate(row)}>Record payment</Button>
+                <Button onClick={() => setCandidate(row)}>Send books</Button>
+              </span>}</Column>
+          ] : [
+            <Column key="number" title="C number" data="number">{(_value, _type, row: Coordinator) =>
+              <button className="course-link" onClick={() => { setLoading(true); setSearch(''); setCoordinator(row) }}>C-{row.number}</button>}</Column>
+            , <Column key="name" title="Coordinator" data="name" />
+            , <Column key="people" title="People" data="active_member_count" />
+            , <Column key="district" title="District" data="district" />
+            , <Column key="state" title="State" data="state" />
+          ]}
+        </DataTable>
       </div>
     </>}
     {loading && <p role="status">Loading…</p>}
+    {paymentCandidate && <CandidateActionPanel action="payment" candidate={paymentCandidate}
+      onClose={() => setPaymentCandidate(null)}
+      onChanged={() => { setPaymentCandidate(null); setMemberRefresh((value) => value + 1) }} />}
   </section>
 }

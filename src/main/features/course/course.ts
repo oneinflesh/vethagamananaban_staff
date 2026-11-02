@@ -202,6 +202,7 @@ export function candidateAction(
   action:
     | 'initial-dispatch'
     | 'other-book-dispatch'
+    | 'manual-book-dispatch'
     | 'set-password'
     | 'update-status'
     | 'manual-purchase'

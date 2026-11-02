@@ -190,6 +190,27 @@ export type OtherBookOptions = {
   books: OtherBookOption[]
   funded_prices: string[]
   funded_book_prices: Record<string, string>
+  manual_books: {
+    exam_key: string
+    sequence: number
+    exam_title: string
+    book_name: string
+    stock: number
+    price: string | null
+    active: boolean
+    released: boolean
+    assigned: boolean
+  }[]
+  manual_address: {
+    recipient_name: string
+    line1: string
+    line2: string
+    landmark: string
+    city: string
+    state: string
+    postal_code: string
+  } | null
+  wallet_balance: string
 }
 export type Payment = {
   payment_key: string
@@ -276,6 +297,7 @@ export type CoordinatorWalletMember = {
   enrollment_key: string
   bbs_number: string
   name: string
+  district: string
   status: string
   mode: string
   wallet_balance: string
@@ -423,6 +445,7 @@ export const candidateAction = (
   action:
     | 'initial-dispatch'
     | 'other-book-dispatch'
+    | 'manual-book-dispatch'
     | 'set-password'
     | 'update-status'
     | 'manual-purchase'
