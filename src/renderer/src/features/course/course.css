@@ -42,12 +42,31 @@
 .course-manual-dispatch-address { margin: 0 0 10px; color: #684c3a; }
 .page.course-manual-dispatch-page { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .course-manual-dispatch-page .course-toolbar { flex: none; }
-.course-manual-dispatch-page .course-table-wrap { flex: 0 1 auto; min-height: 0; }
+.course-manual-dispatch-page .course-table-wrap { flex: 1 1 auto; min-height: 0; }
 .course-table-wrap.course-manual-dispatch-table { max-height: none; overflow: hidden; }
 .course-table-wrap--candidates.course-manual-dispatch-table table.dataTable {
-  width: max-content !important;
-  min-width: 0;
+  width: 100% !important;
+  min-width: 100%;
   table-layout: auto;
+}
+.course-manual-dispatch-table .dt-container,
+.course-manual-dispatch-table .dt-layout-row.dt-layout-table,
+.course-manual-dispatch-table .dt-layout-cell.dt-layout-full,
+.course-manual-dispatch-table .dt-scroll {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.course-manual-dispatch-table .dt-container { height: 100%; }
+.course-manual-dispatch-table .dt-container > .dt-layout-row:last-child:not(.dt-layout-table) { flex: 0 0 auto; }
+.course-manual-dispatch-table .dt-scroll-head { flex: 0 0 auto; }
+.course-manual-dispatch-table .dt-scroll-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: auto !important;
 }
 .course-manual-dispatch-table .dt-scroll-body { overflow-x: auto !important; scrollbar-width: auto; scrollbar-color: #b87a48 #f4e9df; }
 .course-manual-dispatch-table .dt-scroll-body::-webkit-scrollbar { width: 12px; height: 12px; }
