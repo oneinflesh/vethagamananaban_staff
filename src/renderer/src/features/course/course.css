@@ -40,15 +40,18 @@
 .course-manual-dispatch-actions { display: flex; gap: 6px; white-space: nowrap; }
 .course-manual-dispatch-actions button { padding: 5px 8px; font-size: 11px; }
 .course-manual-dispatch-address { margin: 0 0 10px; color: #684c3a; }
+.course-manual-dispatch-page { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.course-manual-dispatch-page .course-toolbar { flex: none; }
+.course-manual-dispatch-page .course-table-wrap { flex: 1; min-height: 0; }
 .course-manual-dispatch-table { max-height: none; overflow: hidden; }
-.course-table-wrap--candidates.course-manual-dispatch-table table.dataTable { min-width: 0; table-layout: auto; }
+.course-table-wrap--candidates.course-manual-dispatch-table table.dataTable { table-layout: auto; }
+.course-table-wrap--candidates.course-manual-dispatch-table--individual table.dataTable,
+.course-table-wrap--candidates.course-manual-dispatch-table--members table.dataTable { min-width: 1450px; }
 .course-manual-dispatch-table .dt-scroll-body { overflow-x: scroll !important; scrollbar-width: auto; scrollbar-color: #b87a48 #f4e9df; }
 .course-manual-dispatch-table .dt-scroll-body::-webkit-scrollbar { width: 12px; height: 12px; }
 .course-manual-dispatch-table .dt-scroll-body::-webkit-scrollbar-thumb { border: 2px solid #f4e9df; border-radius: 8px; background: #b87a48; }
 .course-manual-dispatch-table .dt-scroll-body::-webkit-scrollbar-track { background: #f4e9df; }
-.course-manual-dispatch-table table.dataTable th:nth-child(3),
-.course-manual-dispatch-table table.dataTable th:nth-child(4),
-.course-manual-dispatch-table table.dataTable th:nth-child(5) { white-space: normal; }
+.course-manual-dispatch-table table.dataTable th { white-space: nowrap; }
 .course-manual-book-page { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .course-manual-book-page .course-toolbar { flex: none; margin-bottom: 12px; }
 .course-manual-book-summary { display: grid; grid-template-columns: repeat(3, minmax(100px, 1fr)) minmax(250px, 2fr); gap: 10px; margin-bottom: 12px; }

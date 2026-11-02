@@ -121,7 +121,7 @@ export default function ManualBookDispatchPage({
     />
   )
 
-  return <section className="page course-page">
+  return <section className="page course-page course-manual-dispatch-page">
     <div className="course-toolbar course-toolbar--manual-dispatch">
       <Button variant="outline" onClick={coordinator ? () => { setCoordinator(null); setSelectedMembers(new Set()) } : onBack}>← Course</Button>
       <h1>Send released books</h1>
@@ -159,7 +159,7 @@ export default function ManualBookDispatchPage({
           data={members.filter((member) => `${member.bbs_number} ${member.name}`.toLowerCase().includes(search.toLowerCase()))}
           className="display course-table" options={{
             pageLength: 20, lengthChange: false, searching: false, autoWidth: false,
-            scrollX: true, scrollY: 'calc(100vh - 340px)', scrollCollapse: true,
+            scrollX: true, scrollY: 'calc(100vh - 340px)', scrollCollapse: false,
             order: [[1, 'asc']],
             columnDefs: [
               { targets: 0, orderable: false, width: '65px' },
@@ -181,9 +181,9 @@ export default function ManualBookDispatchPage({
             type === 'sort' || type === 'type' ? Number(String(value).replace(/\D/g, '')) : String(value)}</Column>
           <Column title="Name" data="name" />
           <Column title="District" data="district" />
-          <Column title="Exams attended" data="exams_attended" />
-          <Column title="Books sent" data="books_sent" />
-          <Column title="Books paid" data="books_paid" />
+          <Column title="Exams" data="exams_attended" />
+          <Column title="Sent" data="books_sent" />
+          <Column title="Paid" data="books_paid" />
           <Column title="Options" data="enrollment_key">{(_value, _type, row: CoordinatorWalletMember) =>
             <span className="course-manual-dispatch-actions">
               <Button variant="outline" onClick={() => onCandidate(row.enrollment_key)}>View candidate</Button>
@@ -193,13 +193,13 @@ export default function ManualBookDispatchPage({
         </DataTable>
       </div>
     </> : <>
-      <div className="course-table-wrap course-table-wrap--candidates course-manual-dispatch-table">
+      <div className={`course-table-wrap course-table-wrap--candidates course-manual-dispatch-table${recipientType === 'individual' ? ' course-manual-dispatch-table--individual' : ''}`}>
         <DataTable key={`${recipientType}:${country}:${search}:${memberRefresh}`} className="display course-table" options={{
           serverSide: true, processing: true, pageLength: 20, lengthChange: false,
           searching: false, autoWidth: false, order: [[0, 'asc']],
-          scrollX: true, scrollY: 'calc(100vh - 260px)', scrollCollapse: true,
+          scrollX: true, scrollY: 'calc(100vh - 260px)', scrollCollapse: false,
           columnDefs: recipientType === 'individual' ? [
-            { targets: [2, 3, 4], orderable: false, width: '86px' },
+            { targets: [2, 3, 4], orderable: false, width: '86px', defaultContent: '—' },
             { targets: 7, orderable: false, width: '340px' }
           ] : [{ targets: 2, width: '86px' }],
           layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' },
@@ -212,7 +212,7 @@ export default function ManualBookDispatchPage({
               : ['number', 'name', 'active_member_count', 'district', 'state']
             const ordering = `${direction}${fields[column] || fields[0]}`
             const result = recipientType === 'individual'
-              ? getCandidates(country, page, 'OFFLINE', 'ACTIVE', search, { individualOnly: true, ordering })
+              ? getCandidates(country, page, 'OFFLINE', 'ACTIVE', search, { individualOnly: true, includeProgress: true, ordering })
               : getCoordinatorPage(country, page, { search, status: 'ACTIVE', ordering })
             void result.then((response) => callback({ draw: request.draw,
               recordsTotal: response.count, recordsFiltered: response.count, data: response.results }))
@@ -226,9 +226,9 @@ export default function ManualBookDispatchPage({
             <Column key="bbs" title="BBS number" data="bbs_identifier">{(_value, _type, row: Candidate) =>
               <button className="course-link" onClick={() => onCandidate(row.enrollment_key)}>{row.bbs_identifier}</button>}</Column>
             , <Column key="name" title="Name" data="full_name" />
-            , <Column key="exams" title="Exams attended" data="exams_attended" />
-            , <Column key="sent" title="Books sent" data="books_sent" />
-            , <Column key="paid" title="Books paid" data="books_paid" />
+            , <Column key="exams" title="Exams" data="exams_attended" />
+            , <Column key="sent" title="Sent" data="books_sent" />
+            , <Column key="paid" title="Paid" data="books_paid" />
             , <Column key="district" title="District" data="district" />
             , <Column key="state" title="State" data="state" />
             , <Column key="options" title="Options" data="enrollment_key">{(_value, _type, row: Candidate) =>

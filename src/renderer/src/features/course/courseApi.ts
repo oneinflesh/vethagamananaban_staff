@@ -108,6 +108,7 @@ export const getPaymentHistory = (key: string, page: number): Promise<PaymentHis
   window.office.coursePaymentHistory(key, page)
 export type CandidateFilters = {
   individualOnly?: boolean
+  includeProgress?: boolean
   state?: string
   district?: string
   initialDispatch?: boolean

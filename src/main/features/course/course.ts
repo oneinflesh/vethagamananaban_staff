@@ -6,14 +6,14 @@ export function getCandidates(
   mode: string,
   status: string,
   search: string,
-  filters: { state?: string; district?: string; initialDispatch?: boolean; individualOnly?: boolean; ordering?: string } = {}
+  filters: { state?: string; district?: string; initialDispatch?: boolean; individualOnly?: boolean; includeProgress?: boolean; ordering?: string } = {}
 ): Promise<unknown> {
   const params = new URLSearchParams({
     country,
     page: String(page),
     page_size: '20',
     scope: 'course',
-    view: 'compact'
+    view: filters.includeProgress ? 'dispatch' : 'compact'
   })
   if (mode) params.set('mode', mode)
   if (status) params.set('status', status)
