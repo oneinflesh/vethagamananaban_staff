@@ -417,7 +417,7 @@ export default function OperationsPage({
                             'church_background_other',
                             'language'
                           ].includes(item.key)
-                        : !['bbs_number', 'name'].includes(item.key)
+                        : !['bbs_number', 'name', 'coordinator_number'].includes(item.key)
                     )
                     .map((item) => (
                       <label key={item.key}>
