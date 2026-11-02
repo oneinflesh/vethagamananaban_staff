@@ -33,12 +33,30 @@
 }
 .course-manual-dispatch-controls input { max-width: 300px; }
 .course-manual-dispatch-controls select { margin-left: 8px; padding: 8px; border: 1px solid #d9c8b9; border-radius: 6px; background: white; }
-.course-coordinator-book-picker { width: min(920px, calc(100vw - 40px)); display: flex; flex-direction: column; gap: 14px; }
-.course-coordinator-book-picker__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; overflow: auto; }
-.course-coordinator-book-picker__book { display: flex; align-items: flex-start; gap: 8px; min-width: 0; padding: 10px; border: 1px solid #eaded2; border-radius: 8px; cursor: pointer; }
-.course-coordinator-book-picker__book:has(input:checked) { border-color: #c7783c; background: #fff1e5; }
-.course-coordinator-book-picker__book span { overflow-wrap: anywhere; }
-@media (max-width: 760px) { .course-coordinator-book-picker__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.course-dialog.course-coordinator-book-picker { width: min(980px, calc(100vw - 40px)); height: min(720px, calc(100vh - 64px)); max-height: none; display: flex; flex-direction: column; gap: 0; padding: 0; overflow: hidden; border: 1px solid #e9d8ca; }
+.course-coordinator-book-picker__header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 24px 16px; border-bottom: 1px solid #f0e2d7; }
+.course-coordinator-book-picker__header h2 { margin: 0 0 3px; font-size: 21px; color: #34261e; }
+.course-coordinator-book-picker__header span { font-size: 12px; color: #98613b; }
+.course-coordinator-book-picker__close { width: 32px; height: 32px; border: 1px solid #e9d8ca; border-radius: 8px; background: #fff; color: #765943; font-size: 22px; line-height: 1; cursor: pointer; }
+.course-coordinator-book-picker__close:hover { background: #fff2e8; }
+.course-coordinator-book-picker__toolbar { display: flex; align-items: center; gap: 12px; padding: 16px 24px; }
+.course-coordinator-book-picker__toolbar input { flex: 1; min-width: 0; }
+.course-coordinator-book-picker__tabs { display: flex; gap: 3px; padding: 3px; border: 1px solid #eadbd0; border-radius: 9px; background: #f8f3ee; white-space: nowrap; }
+.course-coordinator-book-picker__tabs button { padding: 7px 11px; border: 0; border-radius: 6px; background: transparent; color: #705440; cursor: pointer; }
+.course-coordinator-book-picker__tabs button.active { background: #fff; color: #913d0b; box-shadow: 0 1px 4px #3924161a; font-weight: 650; }
+.course-coordinator-book-picker__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-content: start; gap: 10px; flex: 1; min-height: 0; padding: 4px 24px 20px; overflow: auto; }
+.course-coordinator-book-picker__book { position: relative; display: flex; flex-direction: column; gap: 9px; min-width: 0; min-height: 108px; padding: 12px 37px 12px 13px; border: 1px solid #eaded2; border-radius: 10px; background: #fff; cursor: pointer; transition: border-color .15s, background .15s, box-shadow .15s; }
+.course-coordinator-book-picker__book:hover { border-color: #d19a70; box-shadow: 0 3px 12px #48291412; }
+.course-coordinator-book-picker__book:has(input:checked) { border-color: #c7783c; background: #fff1e5; box-shadow: inset 0 0 0 1px #c7783c; }
+.course-coordinator-book-picker__book:focus-within { outline: 2px solid #c7783c; outline-offset: 2px; }
+.course-coordinator-book-picker__book input { position: absolute; top: 12px; right: 12px; width: 16px; height: 16px; margin: 0; accent-color: #ad551c; cursor: pointer; }
+.course-coordinator-book-picker__number { width: fit-content; padding: 3px 7px; border-radius: 5px; background: #f7ebe0; color: #a6531d; font-size: 12px; font-weight: 700; }
+.course-coordinator-book-picker__book strong { overflow-wrap: anywhere; font-size: 13px; font-weight: 600; line-height: 1.35; }
+.course-coordinator-book-picker__empty { grid-column: 1 / -1; justify-self: center; align-self: center; color: #806957; }
+.course-coordinator-book-picker__footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; border-top: 1px solid #f0e2d7; background: #fffdfb; }
+.course-coordinator-book-picker__footer > span { color: #806957; font-size: 12px; }
+.course-coordinator-book-picker__footer > div { display: flex; gap: 8px; }
+@media (max-width: 760px) { .course-coordinator-book-picker__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .course-coordinator-book-picker__toolbar { flex-wrap: wrap; } }
 .course-manual-dispatch-tabs { display: flex; gap: 8px; margin-left: auto; }
 .course-manual-dispatch-tabs button { padding: 9px 18px; border: 1px solid #d9c8b9; border-radius: 8px; background: white; color: #694a36; cursor: pointer; }
 .course-manual-dispatch-tabs button.active { border-color: #a95321; background: #fff0e4; color: #783709; font-weight: 700; }
