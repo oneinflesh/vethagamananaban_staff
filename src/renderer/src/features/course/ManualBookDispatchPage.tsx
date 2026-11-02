@@ -154,14 +154,12 @@ export default function ManualBookDispatchPage({
         <DataTable key={`${coordinator.coordinator_key}:${search}:${[...selectedMembers].sort().join(',')}`}
           data={members.filter((member) => `${member.bbs_number} ${member.name}`.toLowerCase().includes(search.toLowerCase()))}
           className="display course-table" options={{
-            pageLength: 20, lengthChange: false, searching: false, autoWidth: false,
+            pageLength: 20, lengthChange: false, searching: false, autoWidth: true,
             scrollX: true, scrollY: 'max(120px, calc(100vh - 470px))', scrollCollapse: false,
             order: [[1, 'asc']],
             columnDefs: [
-              { targets: 0, orderable: false, width: '65px' },
-              { targets: 1, width: '105px' },
-              { targets: [4, 5, 6], width: '86px' },
-              { targets: 7, orderable: false, width: '230px' }
+              { targets: 0, orderable: false },
+              { targets: 7, orderable: false }
             ],
             layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' }
           }}>
@@ -193,13 +191,11 @@ export default function ManualBookDispatchPage({
       <div className={`course-table-wrap course-table-wrap--candidates course-manual-dispatch-table${recipientType === 'individual' ? ' course-manual-dispatch-table--individual' : ''}`}>
         <DataTable key={`${recipientType}:${country}:${search}:${memberRefresh}`} className="display course-table" options={{
           serverSide: true, processing: true, pageLength: 20, lengthChange: false,
-          searching: false, autoWidth: false, order: [[0, 'asc']],
+          searching: false, autoWidth: true, order: [[0, 'asc']],
           scrollX: true, scrollY: 'max(120px, calc(100vh - 390px))', scrollCollapse: false,
           columnDefs: recipientType === 'individual' ? [
-            { targets: 0, width: '105px' },
-            { targets: [2, 3, 4], orderable: false, width: '86px', defaultContent: '—' },
-            { targets: 7, orderable: false, width: '340px' }
-          ] : [{ targets: 2, width: '86px' }],
+            { targets: [2, 3, 4], orderable: false, defaultContent: '—' }
+          ] : [],
           layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' },
           ajax: (request, callback) => {
             const page = Math.floor((request.start ?? 0) / (request.length || 20)) + 1
