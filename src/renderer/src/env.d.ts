@@ -123,9 +123,11 @@ interface Window {
       data: unknown
     ): Promise<import('./features/course/courseApi').Candidate>
     courseOperationsMetadata(country: string): Promise<import('./features/course/operationsApi').OperationsMetadata>
-    courseOperationsTemplate(country: string, group: string, fields: string[], examKeys: string[]): Promise<import('./features/course/operationsApi').OperationsTemplate>
+    courseOperationsTemplate(country: string, group: string, fields: string[], examKeys: string[],
+      bbsRange: import('./features/course/operationsApi').OperationsRange): Promise<import('./features/course/operationsApi').OperationsTemplate>
     courseOperationsUpload(action: 'preview' | 'apply', country: string, group: string,
-      bytes: Uint8Array, filename: string, token: string): Promise<import('./features/course/operationsApi').OperationsPreview & import('./features/course/operationsApi').OperationsApply>
+      bytes: Uint8Array, filename: string, token: string,
+      bbsRange: import('./features/course/operationsApi').OperationsRange): Promise<import('./features/course/operationsApi').OperationsPreview & import('./features/course/operationsApi').OperationsApply>
     courseOperationsHistory(country: string, page: number): Promise<import('./features/course/operationsApi').OperationsHistory>
     courseOperationsHistoryDetails(key: string, page: number): Promise<import('./features/course/operationsApi').OperationsHistoryDetails>
     courseInitialDispatch(

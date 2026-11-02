@@ -9,12 +9,14 @@ export const makeOperationsTemplate = (
   country: string,
   group: string,
   fields: string[],
-  examKeys: string[]
+  examKeys: string[],
+  bbsRange: { from: number; to: number } | null
 ): Promise<unknown> =>
   authorizedRequest(`${base}template/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ country, group, fields, exam_keys: examKeys })
+    body: JSON.stringify({ country, group, fields, exam_keys: examKeys,
+      bbs_from: bbsRange?.from, bbs_to: bbsRange?.to })
   })
 
 export const uploadOperationsCsv = (
@@ -23,12 +25,17 @@ export const uploadOperationsCsv = (
   group: string,
   bytes: Uint8Array,
   filename: string,
-  token = ''
+  token = '',
+  bbsRange: { from: number; to: number } | null = null
 ): Promise<unknown> => {
   const form = new FormData()
   form.append('country', country)
   form.append('group', group)
   form.append('token', token)
+  if (bbsRange) {
+    form.append('bbs_from', String(bbsRange.from))
+    form.append('bbs_to', String(bbsRange.to))
+  }
   form.append('file', new Blob([Uint8Array.from(bytes)], { type: 'text/csv' }), filename)
   return authorizedRequest(`${base}${action}/`, { method: 'POST', body: form })
 }

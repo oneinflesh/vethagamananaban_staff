@@ -10,7 +10,8 @@ import {
   uploadOperations,
   type OperationsGroup,
   type OperationsMetadata,
-  type OperationsPreview
+  type OperationsPreview,
+  type OperationsRange
 } from './operationsApi'
 import './operations.css'
 
@@ -31,8 +32,8 @@ export default function OperationsPage({
   const [metadata, setMetadata] = useState<OperationsMetadata | null>(null)
   const [group, setGroup] = useState<OperationsGroup>('individual')
   const [fields, setFields] = useState<string[]>([])
-  const [books, setBooks] = useState<string[]>([])
-  const [selectionReady, setSelectionReady] = useState(false)
+  const [bbsFrom, setBbsFrom] = useState('')
+  const [bbsTo, setBbsTo] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [busy, setBusy] = useState('')
   const [file, setFile] = useState<File | null>(null)
@@ -44,7 +45,11 @@ export default function OperationsPage({
     let active = true
     getOperationsMetadata(country)
       .then((result) => {
-        if (active) setMetadata(result)
+        if (active) {
+          setMetadata(result)
+          setBbsFrom(String(result.bbs_range?.from ?? ''))
+          setBbsTo(String(result.bbs_range?.to ?? ''))
+        }
       })
       .catch((error: unknown) => notify.error(String(error)))
     return () => {
@@ -59,15 +64,24 @@ export default function OperationsPage({
   }
   const toggle = (key: string, values: string[], update: (value: string[]) => void): void => {
     update(values.includes(key) ? values.filter((item) => item !== key) : [...values, key])
-    setSelectionReady(false)
     resetUpload()
   }
+  const validBbsRange = /^\d+$/.test(bbsFrom) && /^\d+$/.test(bbsTo) &&
+    Number(bbsFrom) >= 1 && Number(bbsTo) >= Number(bbsFrom) && Number(bbsTo) <= 2_147_483_647
+  const bbsRange: OperationsRange = group === 'coordinator' || !validBbsRange
+    ? null : { from: Number(bbsFrom), to: Number(bbsTo) }
+  const ready = !!metadata && (group === 'coordinator' || validBbsRange)
 
   async function download(): Promise<void> {
-    if (!selectionReady) return
+    if (!ready || !metadata) return
     setBusy('Preparing CSV')
     try {
-      const result = await getOperationsTemplate(country, group, fields, books)
+      const result = await getOperationsTemplate(country, group, fields,
+        metadata.books.map((book) => book.key), bbsRange)
+      if (!result.rows) {
+        notify.error('No records found in this BBS range.')
+        return
+      }
       const link = document.createElement('a')
       const url = URL.createObjectURL(new Blob([result.csv], { type: 'text/csv;charset=utf-8' }))
       link.href = url
@@ -85,11 +99,11 @@ export default function OperationsPage({
   }
 
   async function validate(): Promise<void> {
-    if (!file) return
+    if (!file || !ready) return
     setBusy('Checking CSV')
     try {
       const data = new Uint8Array(await file.arrayBuffer())
-      const result = await uploadOperations('preview', country, group, data, file.name)
+      const result = await uploadOperations('preview', country, group, data, file.name, '', bbsRange)
       setBytes(data)
       setPreview(result)
       if (result.error_count) notify.error(`${result.error_count} validation errors`)
@@ -102,7 +116,7 @@ export default function OperationsPage({
   }
 
   async function applyChanges(): Promise<void> {
-    if (!file || !bytes || !preview?.token || preview.error_count || !preview.change_count) return
+    if (!file || !bytes || !preview?.token || preview.error_count || !preview.change_count || !ready) return
     setBusy('Applying changes on server')
     try {
       const result = await uploadOperations(
@@ -111,7 +125,8 @@ export default function OperationsPage({
         group,
         bytes,
         file.name,
-        preview.token
+        preview.token,
+        bbsRange
       )
       notify.success(`${result.changes} changes saved`)
       resetUpload()
@@ -162,8 +177,6 @@ export default function OperationsPage({
                 onClick={() => {
                   setGroup(item.key)
                   setFields([])
-                  setBooks([])
-                  setSelectionReady(false)
                   resetUpload()
                 }}
               >
@@ -171,10 +184,26 @@ export default function OperationsPage({
               </button>
             ))}
           </div>
-          <p>BBS/C number and name are included.</p>
+          {group !== 'coordinator' && (
+            <div className="operations-bbs-range">
+              <label>BBS from
+                <input type="text" inputMode="numeric" value={bbsFrom} onChange={(event) => {
+                  setBbsFrom(event.target.value)
+                  resetUpload()
+                }} />
+              </label>
+              <label>BBS to
+                <input type="text" inputMode="numeric" value={bbsTo} onChange={(event) => {
+                  setBbsTo(event.target.value)
+                  resetUpload()
+                }} />
+              </label>
+            </div>
+          )}
+          <p>{group === 'coordinator' ? 'C number' : 'BBS number'}, name and all marks are included.</p>
           <div className="operations-card-footer">
             <span>
-              {fields.length} fields · {books.length} marks
+              {fields.length} fields · {metadata?.books.length ?? 0} marks
             </span>
             <Button onClick={() => setPickerOpen(true)} disabled={!metadata}>
               Choose fields
@@ -182,19 +211,19 @@ export default function OperationsPage({
           </div>
         </article>
 
-        <article className={`operations-card${selectionReady ? '' : ' operations-card--disabled'}`}>
+        <article className={`operations-card${ready ? '' : ' operations-card--disabled'}`}>
           <div className="operations-step">2 · Download</div>
           <h2>CSV model</h2>
           <p>Download current records with the selected columns.</p>
           <div className="operations-card-footer">
             <span>UTF-8 CSV with headers</span>
-            <Button onClick={() => void download()} disabled={!selectionReady || !!busy}>
+            <Button onClick={() => void download()} disabled={!ready || !!busy}>
               Download CSV
             </Button>
           </div>
         </article>
 
-        <article className={`operations-card${selectionReady ? '' : ' operations-card--disabled'}`}>
+        <article className={`operations-card${ready ? '' : ' operations-card--disabled'}`}>
           <div className="operations-step">3 · Upload</div>
           <h2>Check and apply</h2>
           <p>Blank cells leave existing data unchanged.</p>
@@ -202,7 +231,7 @@ export default function OperationsPage({
             aria-label="Choose CSV"
             type="file"
             accept=".csv,text/csv"
-            disabled={!selectionReady || !!busy}
+            disabled={!ready || !!busy}
             onChange={(event) => {
               setFile(event.target.files?.[0] ?? null)
               setPreview(null)
@@ -211,7 +240,7 @@ export default function OperationsPage({
           />
           <div className="operations-card-footer">
             <span>{file?.name ?? 'No file selected'}</span>
-            <Button disabled={!file || !!busy} onClick={() => void validate()}>
+            <Button disabled={!file || !ready || !!busy} onClick={() => void validate()}>
               Validate
             </Button>
           </div>
@@ -291,29 +320,13 @@ export default function OperationsPage({
                     ))}
                 </div>
               </section>
-              <section>
-                <h3>Marks · choose books</h3>
-                <div className="operations-options operations-options--books">
-                  {metadata.books.map((book) => (
-                    <label key={book.key}>
-                      <input
-                        type="checkbox"
-                        checked={books.includes(book.key)}
-                        onChange={() => toggle(book.key, books, setBooks)}
-                      />
-                      {book.sequence}. {book.title}
-                    </label>
-                  ))}
-                </div>
-              </section>
             </div>
             <div className="operations-modal-footer">
               <span>
-                {fields.length} fields · {books.length} books
+                {fields.length} fields · {metadata.books.length} marks
               </span>
               <Button
                 onClick={() => {
-                  setSelectionReady(true)
                   setPickerOpen(false)
                 }}
               >

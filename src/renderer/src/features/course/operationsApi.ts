@@ -3,7 +3,9 @@ export type OperationsMetadata = {
   country: string
   fields: { key: string; label: string }[]
   books: { key: string; sequence: number; title: string }[]
+  bbs_range: { from: number | null; to: number | null }
 }
+export type OperationsRange = { from: number; to: number } | null
 export type OperationsTemplate = { filename: string; csv: string; rows: number }
 export type OperationsChange = {
   row: number
@@ -51,18 +53,20 @@ export const getOperationsTemplate = (
   country: string,
   group: OperationsGroup,
   fields: string[],
-  books: string[]
+  books: string[],
+  bbsRange: OperationsRange
 ): Promise<OperationsTemplate> =>
-  window.office.courseOperationsTemplate(country, group, fields, books)
+  window.office.courseOperationsTemplate(country, group, fields, books, bbsRange)
 export const uploadOperations = (
   action: 'preview' | 'apply',
   country: string,
   group: OperationsGroup,
   bytes: Uint8Array,
   filename: string,
-  token = ''
+  token = '',
+  bbsRange: OperationsRange = null
 ): Promise<OperationsPreview & OperationsApply> =>
-  window.office.courseOperationsUpload(action, country, group, bytes, filename, token)
+  window.office.courseOperationsUpload(action, country, group, bytes, filename, token, bbsRange)
 export const getOperationsHistory = (country: string, page: number): Promise<OperationsHistory> =>
   window.office.courseOperationsHistory(country, page)
 export const getOperationsHistoryDetails = (

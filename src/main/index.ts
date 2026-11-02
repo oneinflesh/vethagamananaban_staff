@@ -215,10 +215,10 @@ app.whenReady().then(() => {
     createManualRegistration(courseKey, data)
   )
   ipcMain.handle('course:operations-metadata', (_event, country) => getOperationsMetadata(country))
-  ipcMain.handle('course:operations-template', (_event, country, group, fields, examKeys) =>
-    makeOperationsTemplate(country, group, fields, examKeys))
-  ipcMain.handle('course:operations-upload', (_event, action, country, group, bytes, filename, token) =>
-    uploadOperationsCsv(action, country, group, bytes, filename, token))
+  ipcMain.handle('course:operations-template', (_event, country, group, fields, examKeys, bbsRange) =>
+    makeOperationsTemplate(country, group, fields, examKeys, bbsRange))
+  ipcMain.handle('course:operations-upload', (_event, action, country, group, bytes, filename, token, bbsRange) =>
+    uploadOperationsCsv(action, country, group, bytes, filename, token, bbsRange))
   ipcMain.handle('course:operations-history', (_event, country, page) => getOperationsHistory(country, page))
   ipcMain.handle('course:operations-history-details', (_event, key, page) => getOperationsHistoryDetails(key, page))
   ipcMain.handle('course:initial-dispatch', (_event, key) => getInitialDispatch(key))

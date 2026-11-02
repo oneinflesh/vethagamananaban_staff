@@ -88,6 +88,26 @@
   color: #974107;
   font-weight: 700;
 }
+.operations-bbs-range {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.operations-bbs-range label {
+  display: grid;
+  gap: 4px;
+  color: #765846;
+  font-size: 12px;
+}
+.operations-bbs-range input {
+  width: 100%;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid #e4d4c5;
+  border-radius: 7px;
+  background: #fff;
+  color: #34261e;
+}
 .operations-modal-backdrop {
   position: fixed;
   z-index: 90;

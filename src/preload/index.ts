@@ -98,11 +98,12 @@ const api = {
   courseManualRegistration: (courseKey: string, data: unknown) =>
     ipcRenderer.invoke('course:manual-registration', courseKey, data),
   courseOperationsMetadata: (country: string) => ipcRenderer.invoke('course:operations-metadata', country),
-  courseOperationsTemplate: (country: string, group: string, fields: string[], examKeys: string[]) =>
-    ipcRenderer.invoke('course:operations-template', country, group, fields, examKeys),
+  courseOperationsTemplate: (country: string, group: string, fields: string[], examKeys: string[],
+    bbsRange: { from: number; to: number } | null) =>
+    ipcRenderer.invoke('course:operations-template', country, group, fields, examKeys, bbsRange),
   courseOperationsUpload: (action: 'preview' | 'apply', country: string, group: string,
-    bytes: Uint8Array, filename: string, token: string) =>
-    ipcRenderer.invoke('course:operations-upload', action, country, group, bytes, filename, token),
+    bytes: Uint8Array, filename: string, token: string, bbsRange: { from: number; to: number } | null) =>
+    ipcRenderer.invoke('course:operations-upload', action, country, group, bytes, filename, token, bbsRange),
   courseOperationsHistory: (country: string, page: number) => ipcRenderer.invoke('course:operations-history', country, page),
   courseOperationsHistoryDetails: (key: string, page: number) => ipcRenderer.invoke('course:operations-history-details', key, page),
   courseInitialDispatch: (key: string) => ipcRenderer.invoke('course:initial-dispatch', key),
