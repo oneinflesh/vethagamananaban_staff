@@ -155,7 +155,7 @@ export default function ManualBookDispatchPage({
           data={members.filter((member) => `${member.bbs_number} ${member.name}`.toLowerCase().includes(search.toLowerCase()))}
           className="display course-table" options={{
             pageLength: 20, lengthChange: false, searching: false, autoWidth: true,
-            scrollX: true, scrollY: 'max(120px, calc(100vh - 340px))', scrollCollapse: false,
+            scrollX: true, scrollY: 'max(120px, calc(100vh - 305px))', scrollCollapse: false,
             order: [[1, 'asc']],
             columnDefs: [
               { targets: 0, orderable: false },
@@ -192,7 +192,7 @@ export default function ManualBookDispatchPage({
         <DataTable key={`${recipientType}:${country}:${search}:${memberRefresh}`} className="display course-table" options={{
           serverSide: true, processing: true, pageLength: 20, lengthChange: false,
           searching: false, autoWidth: true, order: [[0, 'asc']],
-          scrollX: true, scrollY: 'max(120px, calc(100vh - 260px))', scrollCollapse: false,
+          scrollX: true, scrollY: 'max(120px, calc(100vh - 225px))', scrollCollapse: false,
           columnDefs: recipientType === 'individual' ? [
             { targets: [2, 3, 4], orderable: false, defaultContent: '—' }
           ] : [],
