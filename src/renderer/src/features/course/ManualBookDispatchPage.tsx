@@ -18,6 +18,7 @@ import {
 import ManualBookSelectionPage from './ManualBookSelectionPage'
 import CandidateActionPanel from './CandidateActionPanel'
 import useDispatchTableHeight from './useDispatchTableHeight'
+import CoordinatorBookPicker from './CoordinatorBookPicker'
 
 export default function ManualBookDispatchPage({
   country,
@@ -39,7 +40,8 @@ export default function ManualBookDispatchPage({
   const [loading, setLoading] = useState(false)
   const [books, setBooks] = useState<ExamInfo[]>([])
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set())
-  const [selectedBook, setSelectedBook] = useState('')
+  const [selectedBooks, setSelectedBooks] = useState<Set<string>>(new Set())
+  const [choosingBooks, setChoosingBooks] = useState(false)
   const [allowCredit, setAllowCredit] = useState(false)
   const [sending, setSending] = useState(false)
   const [memberRefresh, setMemberRefresh] = useState(0)
@@ -50,7 +52,7 @@ export default function ManualBookDispatchPage({
     setLoading(true)
     setSearch('')
     setSelectedMembers(new Set())
-    setSelectedBook('')
+    setSelectedBooks(new Set())
     setAllowCredit(false)
     setCoordinator(row)
   }
@@ -61,7 +63,7 @@ export default function ManualBookDispatchPage({
     setCoordinator(null)
     setCandidate(null)
     setSelectedMembers(new Set())
-    setSelectedBook('')
+    setSelectedBooks(new Set())
     setAllowCredit(false)
   }
 
@@ -85,18 +87,33 @@ export default function ManualBookDispatchPage({
   }, [coordinator, memberRefresh, notify])
 
   async function sendToCoordinator(): Promise<void> {
-    if (!coordinator || !selectedBook || !selectedMembers.size || sending) return
+    if (!coordinator || !selectedBooks.size || !selectedMembers.size || sending) return
     setSending(true)
     try {
       const keys = [...selectedMembers]
+      const examKeys = [...selectedBooks]
       const options = await Promise.all(keys.map((key) => getOtherBookOptions(key)))
+      const stockByBook = new Map<number, { required: number; stock: number }>()
       const ineligible = keys.filter((_, index) => {
-        const book = options[index].manual_books.find((item) => item.exam_key === selectedBook)
-        return !book || !book.active || book.price === null || book.stock < 1 || !options[index].manual_address
-          || (!allowCredit && Number(options[index].wallet_balance) < Number(book.price))
+        const chosen = examKeys.map((examKey) => options[index].manual_books.find((item) => item.exam_key === examKey))
+        const invalid = chosen.some((book) => !book || !book.active || book.price === null || book.stock < 1)
+        for (const book of chosen) {
+          if (book?.book_id == null) continue
+          const current = stockByBook.get(book.book_id) ?? { required: 0, stock: book.stock }
+          current.required += 1
+          current.stock = Math.min(current.stock, book.stock)
+          stockByBook.set(book.book_id, current)
+        }
+        const total = chosen.reduce((sum, book) => sum + Number(book?.price ?? 0), 0)
+        return invalid || !options[index].manual_address
+          || (!allowCredit && Number(options[index].wallet_balance) < total)
       })
       if (ineligible.length) {
-        notify.error(`${ineligible.length} selected people cannot receive this book. No books were sent.`)
+        notify.error(`${ineligible.length} selected people cannot receive these books. No books were sent.`)
+        return
+      }
+      if ([...stockByBook.values()].some(({ required, stock }) => required > stock)) {
+        notify.error('Not enough stock for every selected person. No books were sent.')
         return
       }
       let sent = 0
@@ -104,7 +121,7 @@ export default function ManualBookDispatchPage({
       for (const key of keys) {
         try {
           await candidateAction('manual-book-dispatch', key, {
-            exam_keys: [selectedBook], tracking_number: '', allow_credit: allowCredit, parcel_batch: parcelBatch
+            exam_keys: examKeys, tracking_number: '', allow_credit: allowCredit, parcel_batch: parcelBatch
           })
           sent += 1
         } catch (error) {
@@ -114,8 +131,9 @@ export default function ManualBookDispatchPage({
           return
         }
       }
-      notify.success(`${sent} books parcelled under C-${coordinator.number}`)
+      notify.success(`${examKeys.length} books parcelled for ${sent} people under C-${coordinator.number}`)
       setSelectedMembers(new Set())
+      setSelectedBooks(new Set())
       setMemberRefresh((value) => value + 1)
     } finally {
       setSending(false)
@@ -154,14 +172,11 @@ export default function ManualBookDispatchPage({
         Parcel address: {coordinator.address_line1 || 'No address'}, {coordinator.district}, {coordinator.state} {coordinator.postal_code}
       </p>
       <div className="course-manual-dispatch-controls">
-        <select aria-label="Released book" value={selectedBook} onChange={(event) => setSelectedBook(event.target.value)}>
-          <option value="">Choose book</option>
-          {books.map((book) => <option key={book.exam_key} value={book.exam_key}>{book.sequence}. {book.title}</option>)}
-        </select>
+        <Button variant="outline" onClick={() => setChoosingBooks(true)}>Choose books ({selectedBooks.size})</Button>
         <label className="course-manual-book-credit"><input type="checkbox" checked={allowCredit}
           onChange={(event) => setAllowCredit(event.target.checked)} /> Use credit</label>
-        <Button disabled={!selectedBook || !selectedMembers.size || sending}
-          onClick={() => void sendToCoordinator()}>{sending ? 'Preparing…' : `Parcel for ${selectedMembers.size} selected`}</Button>
+        <Button disabled={!selectedBooks.size || !selectedMembers.size || sending}
+          onClick={() => void sendToCoordinator()}>{sending ? 'Preparing…' : `Parcel ${selectedBooks.size} books for ${selectedMembers.size} people`}</Button>
       </div>
       <div className="course-table-wrap course-table-wrap--candidates course-manual-dispatch-table course-manual-dispatch-table--members">
         <DataTable key={`${coordinator.coordinator_key}:${search}:${[...selectedMembers].sort().join(',')}`}
@@ -268,6 +283,8 @@ export default function ManualBookDispatchPage({
       </div>
     </>}
     {loading && <p role="status">Loading…</p>}
+    {choosingBooks && <CoordinatorBookPicker books={books} selected={selectedBooks}
+      onChange={setSelectedBooks} onClose={() => setChoosingBooks(false)} />}
     {paymentCandidate && <CandidateActionPanel action="payment" candidate={paymentCandidate}
       onClose={() => setPaymentCandidate(null)}
       onChanged={() => { setPaymentCandidate(null); setMemberRefresh((value) => value + 1) }} />}

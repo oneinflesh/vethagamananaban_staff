@@ -196,6 +196,7 @@ export type OtherBookOptions = {
     sequence: number
     exam_title: string
     book_name: string
+    book_id: number | null
     stock: number
     price: string | null
     active: boolean
