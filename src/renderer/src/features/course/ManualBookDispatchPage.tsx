@@ -22,10 +22,12 @@ import useDispatchTableHeight from './useDispatchTableHeight'
 export default function ManualBookDispatchPage({
   country,
   onCandidate,
+  onCoordinator,
   onBack
 }: {
   country: string
   onCandidate: (key: string) => void
+  onCoordinator: (key: string) => void
   onBack: () => void
 }): React.JSX.Element {
   const [recipientType, setRecipientType] = useState<'individual' | 'coordinator'>('individual')
@@ -43,6 +45,15 @@ export default function ManualBookDispatchPage({
   const [memberRefresh, setMemberRefresh] = useState(0)
   const notify = useNotifications()
   const pageRef = useDispatchTableHeight(`${recipientType}:${coordinator?.coordinator_key ?? ''}`)
+
+  function selectCoordinatorPeople(row: Coordinator): void {
+    setLoading(true)
+    setSearch('')
+    setSelectedMembers(new Set())
+    setSelectedBook('')
+    setAllowCredit(false)
+    setCoordinator(row)
+  }
 
   function changeRecipientType(type: 'individual' | 'coordinator'): void {
     setRecipientType(type)
@@ -190,14 +201,21 @@ export default function ManualBookDispatchPage({
         </DataTable>
       </div>
     </> : <>
-      <div className={`course-table-wrap course-table-wrap--candidates course-manual-dispatch-table${recipientType === 'individual' ? ' course-manual-dispatch-table--individual' : ''}`}>
+      <div className={`course-table-wrap course-table-wrap--candidates course-manual-dispatch-table course-manual-dispatch-table--${recipientType === 'individual' ? 'individual' : 'coordinators'}`}>
         <DataTable key={`${recipientType}:${country}:${search}:${memberRefresh}`} className="display course-table" options={{
           serverSide: true, processing: true, pageLength: 20, lengthChange: false,
           searching: false, autoWidth: true, order: [[0, 'asc']],
           scrollX: true, scrollY: 'var(--dispatch-table-height, 400px)', scrollCollapse: false,
           columnDefs: recipientType === 'individual' ? [
             { targets: [2, 3, 4], orderable: false, defaultContent: '—' }
-          ] : [],
+          ] : [
+            { targets: 0, width: '8%' },
+            { targets: 1, width: '19%' },
+            { targets: 2, width: '8%' },
+            { targets: 3, width: '15%' },
+            { targets: 4, width: '15%' },
+            { targets: 5, orderable: false, width: '35%' }
+          ],
           layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' },
           ajax: (request, callback) => {
             const page = Math.floor((request.start ?? 0) / (request.length || 20)) + 1
@@ -234,12 +252,17 @@ export default function ManualBookDispatchPage({
                 <Button onClick={() => setCandidate(row)}>Send books</Button>
               </span>}</Column>
           ] : [
-            <Column key="number" title="C number" data="number">{(_value, _type, row: Coordinator) =>
-              <button className="course-link" onClick={() => { setLoading(true); setSearch(''); setCoordinator(row) }}>C-{row.number}</button>}</Column>
+            <Column key="number" title="C no." data="number">{(_value, _type, row: Coordinator) =>
+              <button className="course-link" onClick={() => onCoordinator(row.coordinator_key)}>C-{row.number}</button>}</Column>
             , <Column key="name" title="Coordinator" data="name" />
             , <Column key="people" title="People" data="active_member_count" />
             , <Column key="district" title="District" data="district" />
             , <Column key="state" title="State" data="state" />
+            , <Column key="options" title="Options" data="coordinator_key">{(_value, _type, row: Coordinator) =>
+              <span className="course-manual-dispatch-actions">
+                <Button variant="outline" onClick={() => onCoordinator(row.coordinator_key)}>View coordinator</Button>
+                <Button onClick={() => selectCoordinatorPeople(row)}>Select people</Button>
+              </span>}</Column>
           ]}
         </DataTable>
       </div>
