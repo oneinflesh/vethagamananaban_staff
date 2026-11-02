@@ -53,7 +53,26 @@ function apiErrorMessage(data: unknown, status: number): string {
 
 async function request<T>(path: string, init: RequestInit): Promise<T> {
   const timeout = path.startsWith('staff/course-operations/') ? 120000 : 15000
-  const response = await fetch(`${apiBase}${path}`, { ...init, signal: AbortSignal.timeout(timeout) })
+  const method = (init.method || 'GET').toUpperCase()
+  const readOnly = method === 'GET' || (method === 'POST' && [
+    'staff/course-operations/template/',
+    'staff/course-operations/preview/'
+  ].includes(path))
+  let response: Response
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      response = await fetch(`${apiBase}${path}`, { ...init, signal: AbortSignal.timeout(timeout) })
+      break
+    } catch (error) {
+      if (readOnly && attempt === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        continue
+      }
+      throw new Error('Cannot connect to the server. Check your internet connection and try again.', {
+        cause: error
+      })
+    }
+  }
   const data: unknown = await response.json().catch(() => null)
   if (!response.ok) throw new ApiError(apiErrorMessage(data, response.status), response.status)
   return data as T
