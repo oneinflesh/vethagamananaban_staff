@@ -168,12 +168,24 @@ export default function CandidateDetails({
               </label>
               {editable.map(({ key, label, type }) => (
                 <label key={key}>
-                  {label}
-                  <Input
-                    type={type || 'text'}
-                    value={String(form[key] ?? '')}
-                    onChange={(event) => setForm({ ...form, [key]: event.target.value })}
-                  />
+                  {key === 'gender' ? 'Gender (optional)' : label}
+                  {key === 'gender' ? (
+                    <select value={form.gender || ''} onChange={(event) => setForm({ ...form, gender: event.target.value })}>
+                      <option value="">Not specified</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                      {form.gender && !['Male', 'Female', 'Other'].includes(form.gender) && (
+                        <option value={form.gender}>{form.gender}</option>
+                      )}
+                    </select>
+                  ) : (
+                    <Input
+                      type={type || 'text'}
+                      value={String(form[key] ?? '')}
+                      onChange={(event) => setForm({ ...form, [key]: event.target.value })}
+                    />
+                  )}
                 </label>
               ))}
             </div>
