@@ -18,6 +18,7 @@ import {
 import { DataTable, Column } from './dataTable'
 import { resizeColumns } from './resizeColumns'
 import { printCoordinatorLabels } from './coordinatorLabels'
+import CoordinatorSentBooksDialog from './CoordinatorSentBooksDialog'
 
 export default function CoordinatorDetails({
   coordinatorKey,
@@ -42,6 +43,7 @@ export default function CoordinatorDetails({
   >(new Map())
   const [search, setSearch] = useState('')
   const [menu, setMenu] = useState<{ x: number; y: number; person: CoordinatorMember } | null>(null)
+  const [sentBooksPerson, setSentBooksPerson] = useState<CoordinatorMember | null>(null)
   const table = useRef<DataTableRef>(null)
   const tableWrap = useRef<HTMLDivElement>(null)
   const tableReady = useRef(false)
@@ -589,6 +591,14 @@ export default function CoordinatorDetails({
           <Column title="Status" data="status" />
           <Column title="Phone" data="phone" />
           <Column title="Address" data="address" />
+          <Column title="Last book sent" data="sent_books" options={{ orderable: false, searchable: false }}>
+            {(_value, _type, row: CoordinatorMember) => row.sent_books.length ? (
+              <button className="course-link coordinator-last-book" onClick={() => setSentBooksPerson(row)}
+                title={`Show ${row.sent_books.length} sent book${row.sent_books.length === 1 ? '' : 's'}`}>
+                {row.sent_books[0].title}
+              </button>
+            ) : '—'}
+          </Column>
           <Column
             title="Select"
             data="enrollment_key"
@@ -639,6 +649,7 @@ export default function CoordinatorDetails({
           )}
         </div>
       )}
+      {sentBooksPerson && <CoordinatorSentBooksDialog person={sentBooksPerson} onClose={() => setSentBooksPerson(null)} />}
       {loading && <FullScreenLoader message="Loading coordinator" leaving={leaving} />}
     </section>
   )

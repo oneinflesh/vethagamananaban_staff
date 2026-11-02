@@ -1352,6 +1352,38 @@
   color: #806857;
   font-size: 12px;
 }
+.coordinator-last-book {
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.coordinator-sent-books-dialog {
+  width: min(620px, calc(100vw - 40px));
+}
+.coordinator-sent-books-list {
+  display: grid;
+  gap: 0;
+  max-height: min(60vh, 520px);
+  margin-top: 16px;
+  overflow-y: auto;
+  border: 1px solid #e7ddd3;
+  border-radius: 8px;
+}
+.coordinator-sent-books-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0e8df;
+}
+.coordinator-sent-books-list > div:last-child {
+  border-bottom: 0;
+}
+.coordinator-sent-books-list time {
+  flex: none;
+  color: #806857;
+}
 @media (max-width: 900px) {
   .coordinator-detail-layout {
     grid-template-columns: minmax(0, 1fr);

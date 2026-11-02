@@ -268,6 +268,7 @@ export type CoordinatorMember = {
   status: string
   phone: string
   address: string
+  sent_books: { title: string; dispatched_at: string }[]
 }
 export type CoordinatorWalletMember = {
   enrollment_key: string
