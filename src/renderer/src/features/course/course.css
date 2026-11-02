@@ -52,23 +52,14 @@
 .course-manual-dispatch-table .dt-scroll-body::-webkit-scrollbar-thumb { border: 2px solid #f4e9df; border-radius: 8px; background: #b87a48; }
 .course-manual-dispatch-table .dt-scroll-body::-webkit-scrollbar-track { background: #f4e9df; }
 .course-manual-dispatch-table table.dataTable th { white-space: nowrap; }
-.course-manual-dispatch-table .dt-container,
-.course-manual-dispatch-table .dt-layout-row.dt-layout-table,
-.course-manual-dispatch-table .dt-layout-cell,
-.course-manual-dispatch-table .dt-scroll {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-.course-manual-dispatch-table .dt-container { height: 100%; }
-.course-manual-dispatch-table .dt-container > .dt-layout-row:last-child:not(.dt-layout-table) { flex: 0 0 auto; }
-.course-manual-dispatch-table .dt-scroll-head { flex: 0 0 auto; }
-.course-manual-dispatch-table .dt-scroll-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  height: auto !important;
-  max-height: none !important;
+.course-manual-dispatch-table--individual table.dataTable th:first-child,
+.course-manual-dispatch-table--individual table.dataTable td:first-child,
+.course-manual-dispatch-table--members table.dataTable th:nth-child(2),
+.course-manual-dispatch-table--members table.dataTable td:nth-child(2) {
+  box-sizing: border-box;
+  width: 105px !important;
+  min-width: 105px !important;
+  max-width: 105px !important;
 }
 .course-manual-book-page { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .course-manual-book-page .course-toolbar { flex: none; margin-bottom: 12px; }

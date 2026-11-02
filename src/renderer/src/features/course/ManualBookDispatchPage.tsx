@@ -155,10 +155,11 @@ export default function ManualBookDispatchPage({
           data={members.filter((member) => `${member.bbs_number} ${member.name}`.toLowerCase().includes(search.toLowerCase()))}
           className="display course-table" options={{
             pageLength: 20, lengthChange: false, searching: false, autoWidth: false,
-            scrollX: true, scrollY: 'calc(100vh - 430px)', scrollCollapse: false,
+            scrollX: true, scrollY: 'max(120px, calc(100vh - 470px))', scrollCollapse: false,
             order: [[1, 'asc']],
             columnDefs: [
               { targets: 0, orderable: false, width: '65px' },
+              { targets: 1, width: '105px' },
               { targets: [4, 5, 6], width: '86px' },
               { targets: 7, orderable: false, width: '230px' }
             ],
@@ -173,7 +174,7 @@ export default function ManualBookDispatchPage({
                 else next.add(row.enrollment_key)
                 return next
               })} />}</Column>
-          <Column title="BBS number" data="bbs_number">{(value, type) =>
+          <Column title="BBS no." data="bbs_number">{(value, type) =>
             type === 'sort' || type === 'type' ? Number(String(value).replace(/\D/g, '')) : String(value)}</Column>
           <Column title="Name" data="name" />
           <Column title="District" data="district" />
@@ -193,8 +194,9 @@ export default function ManualBookDispatchPage({
         <DataTable key={`${recipientType}:${country}:${search}:${memberRefresh}`} className="display course-table" options={{
           serverSide: true, processing: true, pageLength: 20, lengthChange: false,
           searching: false, autoWidth: false, order: [[0, 'asc']],
-          scrollX: true, scrollY: 'calc(100vh - 320px)', scrollCollapse: false,
+          scrollX: true, scrollY: 'max(120px, calc(100vh - 390px))', scrollCollapse: false,
           columnDefs: recipientType === 'individual' ? [
+            { targets: 0, width: '105px' },
             { targets: [2, 3, 4], orderable: false, width: '86px', defaultContent: '—' },
             { targets: 7, orderable: false, width: '340px' }
           ] : [{ targets: 2, width: '86px' }],
@@ -219,7 +221,7 @@ export default function ManualBookDispatchPage({
           }
         }}>
           {recipientType === 'individual' ? [
-            <Column key="bbs" title="BBS number" data="bbs_identifier">{(_value, _type, row: Candidate) =>
+            <Column key="bbs" title="BBS no." data="bbs_identifier">{(_value, _type, row: Candidate) =>
               <button className="course-link" onClick={() => onCandidate(row.enrollment_key)}>{row.bbs_identifier}</button>}</Column>
             , <Column key="name" title="Name" data="full_name" />
             , <Column key="exams" title="Exams" data="exams_attended" />
