@@ -66,6 +66,8 @@ import {
   saveMonthlyTracking
 } from './features/course/monthlyDispatch'
 import { getCoordinatorWalletMembers, distributeCoordinatorWallet } from './features/course/coordinatorPayments'
+import { getOperationsMetadata, makeOperationsTemplate, uploadOperationsCsv,
+  getOperationsHistory, getOperationsHistoryDetails } from './features/course/operations'
 
 function createWindow(): void {
   // Create the browser window.
@@ -212,6 +214,13 @@ app.whenReady().then(() => {
   ipcMain.handle('course:manual-registration', (_event, courseKey, data) =>
     createManualRegistration(courseKey, data)
   )
+  ipcMain.handle('course:operations-metadata', (_event, country) => getOperationsMetadata(country))
+  ipcMain.handle('course:operations-template', (_event, country, group, fields, examKeys) =>
+    makeOperationsTemplate(country, group, fields, examKeys))
+  ipcMain.handle('course:operations-upload', (_event, action, country, group, bytes, filename, token) =>
+    uploadOperationsCsv(action, country, group, bytes, filename, token))
+  ipcMain.handle('course:operations-history', (_event, country, page) => getOperationsHistory(country, page))
+  ipcMain.handle('course:operations-history-details', (_event, key, page) => getOperationsHistoryDetails(key, page))
   ipcMain.handle('course:initial-dispatch', (_event, key) => getInitialDispatch(key))
   ipcMain.handle('course:other-book-options', (_event, key) => getOtherBookOptions(key))
   ipcMain.handle('course:candidate-action', (_event, action, key, data) =>

@@ -8,6 +8,7 @@ import CoordinatorCreatePage from './CoordinatorCreatePage'
 import CoordinatorPeoplePage from './CoordinatorPeoplePage'
 import CoordinatorList from './CoordinatorList'
 import ManualRegistrationPage from './ManualRegistrationPage'
+import OperationsPage from './OperationsPage'
 import MonthlyDispatchPage from './MonthlyDispatchPage'
 import SendReleasedBooksPage from './SendReleasedBooksPage'
 import ManualBookDispatchPage from './ManualBookDispatchPage'
@@ -49,6 +50,7 @@ export default function CoursePage(): React.JSX.Element {
   const [peopleCoordinator, setPeopleCoordinator] = useState<Coordinator | null>(null)
   const [coordinatorRefresh, setCoordinatorRefresh] = useState(0)
   const [manualRegistration, setManualRegistration] = useState(false)
+  const [operations, setOperations] = useState(false)
   const [monthlyDispatch, setMonthlyDispatch] = useState(false)
   const [manualBookDispatch, setManualBookDispatch] = useState(false)
   const [courseBooks, setCourseBooks] = useState(false)
@@ -74,6 +76,7 @@ export default function CoursePage(): React.JSX.Element {
       creatingCoordinator ||
       peopleCoordinator ||
       manualRegistration ||
+      operations ||
       monthlyDispatch ||
       manualBookDispatch ||
       courseBooks ||
@@ -112,6 +115,7 @@ export default function CoursePage(): React.JSX.Element {
     creatingCoordinator,
     peopleCoordinator,
     manualRegistration,
+    operations,
     monthlyDispatch,
     manualBookDispatch,
     courseBooks,
@@ -260,6 +264,7 @@ export default function CoursePage(): React.JSX.Element {
         }}
       />
     )
+  if (operations) return <OperationsPage country={country} onBack={() => { setOperations(false); setCounts(null) }} />
   if (manualBookDispatch)
     return <>
       <div className={candidateKey ? 'course-list-host course-list-host--hidden' : 'course-list-host'}>
@@ -356,6 +361,7 @@ export default function CoursePage(): React.JSX.Element {
         <Button className="course-new-registration" onClick={() => setManualRegistration(true)}>
           New manual registration
         </Button>
+        <Button variant="outline" onClick={() => setOperations(true)}>Operations</Button>
       </div>
       {countError === country ? (
         <div className="course-error">

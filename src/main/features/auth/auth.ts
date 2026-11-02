@@ -52,7 +52,8 @@ function apiErrorMessage(data: unknown, status: number): string {
 }
 
 async function request<T>(path: string, init: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBase}${path}`, { ...init, signal: AbortSignal.timeout(15000) })
+  const timeout = path.startsWith('staff/course-operations/') ? 120000 : 15000
+  const response = await fetch(`${apiBase}${path}`, { ...init, signal: AbortSignal.timeout(timeout) })
   const data: unknown = await response.json().catch(() => null)
   if (!response.ok) throw new ApiError(apiErrorMessage(data, response.status), response.status)
   return data as T
@@ -115,7 +116,7 @@ async function performRefresh(): Promise<void> {
   } catch (error) {
     if (error instanceof ApiError && [400, 401, 403].includes(error.status)) {
       expireSession()
-      throw new Error('Session expired. Please sign in again.')
+      throw new Error('Session expired. Please sign in again.', { cause: error })
     }
     throw error
   }
