@@ -50,7 +50,7 @@ export default function CoursePage(): React.JSX.Element {
   const [coordinatorRefresh, setCoordinatorRefresh] = useState(0)
   const [manualRegistration, setManualRegistration] = useState(false)
   const [monthlyDispatch, setMonthlyDispatch] = useState(false)
-  const [manualBookDispatch, setManualBookDispatch] = useState(false)
+  const [manualBookDispatch, setManualBookDispatch] = useState<'individual' | 'coordinator' | null>(null)
   const [courseBooks, setCourseBooks] = useState(false)
   const [wholeResults, setWholeResults] = useState(false)
   const [courseLanguages, setCourseLanguages] = useState(false)
@@ -261,7 +261,7 @@ export default function CoursePage(): React.JSX.Element {
       />
     )
   if (manualBookDispatch)
-    return <ManualBookDispatchPage country={country} onBack={() => setManualBookDispatch(false)} />
+    return <ManualBookDispatchPage country={country} recipientType={manualBookDispatch} onBack={() => setManualBookDispatch(null)} />
   if (courseBooks) return <CourseBooksPage country={country} onBack={() => setCourseBooks(false)} />
   if (wholeResults)
     return <WholeResultsPage country={country} onBack={() => setWholeResults(false)} />
@@ -423,9 +423,14 @@ export default function CoursePage(): React.JSX.Element {
               →
             </span>
           </button>
-          <button className="course-nav-card" onClick={() => setManualBookDispatch(true)}>
-            <strong>Send released books</strong>
-            <small>Choose an individual or coordinator and send released books</small>
+          <button className="course-nav-card" onClick={() => setManualBookDispatch('individual')}>
+            <strong>Send individual books</strong>
+            <small>Choose an individual and send released books</small>
+            <span className="course-nav-card__arrow" aria-hidden="true">→</span>
+          </button>
+          <button className="course-nav-card" onClick={() => setManualBookDispatch('coordinator')}>
+            <strong>Send coordinator books</strong>
+            <small>Select people under a coordinator and send a released book</small>
             <span className="course-nav-card__arrow" aria-hidden="true">→</span>
           </button>
           <button className="course-nav-card" onClick={() => setCourseBooks(true)}>
