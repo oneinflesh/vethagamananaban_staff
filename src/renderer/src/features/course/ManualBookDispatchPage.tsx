@@ -17,6 +17,7 @@ import {
 } from './courseApi'
 import ManualBookSelectionPage from './ManualBookSelectionPage'
 import CandidateActionPanel from './CandidateActionPanel'
+import useDispatchTableHeight from './useDispatchTableHeight'
 
 export default function ManualBookDispatchPage({
   country,
@@ -41,6 +42,7 @@ export default function ManualBookDispatchPage({
   const [sending, setSending] = useState(false)
   const [memberRefresh, setMemberRefresh] = useState(0)
   const notify = useNotifications()
+  const pageRef = useDispatchTableHeight(`${recipientType}:${coordinator?.coordinator_key ?? ''}`)
 
   function changeRecipientType(type: 'individual' | 'coordinator'): void {
     setRecipientType(type)
@@ -119,7 +121,7 @@ export default function ManualBookDispatchPage({
     />
   )
 
-  return <section className="page course-page course-manual-dispatch-page">
+  return <section ref={pageRef} className="page course-page course-manual-dispatch-page">
     <div className="course-toolbar course-toolbar--manual-dispatch">
       <Button variant="outline" onClick={coordinator ? () => { setCoordinator(null); setSelectedMembers(new Set()) } : onBack}>← Course</Button>
       <h1>Send released books</h1>
@@ -155,7 +157,7 @@ export default function ManualBookDispatchPage({
           data={members.filter((member) => `${member.bbs_number} ${member.name}`.toLowerCase().includes(search.toLowerCase()))}
           className="display course-table" options={{
             pageLength: 20, lengthChange: false, searching: false, autoWidth: true,
-            scrollX: true, scrollY: 'max(120px, calc(100vh - 305px))', scrollCollapse: false,
+            scrollX: true, scrollY: 'var(--dispatch-table-height, 320px)', scrollCollapse: false,
             order: [[1, 'asc']],
             columnDefs: [
               { targets: 0, orderable: false },
@@ -192,7 +194,7 @@ export default function ManualBookDispatchPage({
         <DataTable key={`${recipientType}:${country}:${search}:${memberRefresh}`} className="display course-table" options={{
           serverSide: true, processing: true, pageLength: 20, lengthChange: false,
           searching: false, autoWidth: true, order: [[0, 'asc']],
-          scrollX: true, scrollY: 'max(120px, calc(100vh - 225px))', scrollCollapse: false,
+          scrollX: true, scrollY: 'var(--dispatch-table-height, 400px)', scrollCollapse: false,
           columnDefs: recipientType === 'individual' ? [
             { targets: [2, 3, 4], orderable: false, defaultContent: '—' }
           ] : [],

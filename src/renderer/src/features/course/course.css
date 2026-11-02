@@ -45,9 +45,16 @@
 .course-manual-dispatch-page .course-table-wrap { flex: 0 1 auto; min-height: 0; }
 .course-table-wrap.course-manual-dispatch-table { max-height: none; overflow: hidden; }
 .course-table-wrap--candidates.course-manual-dispatch-table table.dataTable {
-  width: 100% !important;
-  min-width: 100%;
+  min-width: 0;
   table-layout: auto;
+}
+.course-manual-dispatch-table--individual table.dataTable th:nth-child(2),
+.course-manual-dispatch-table--individual table.dataTable td:nth-child(2),
+.course-manual-dispatch-table--members table.dataTable th:nth-child(3),
+.course-manual-dispatch-table--members table.dataTable td:nth-child(3) {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .course-manual-dispatch-table .dt-scroll-body { overflow-x: auto !important; scrollbar-width: auto; scrollbar-color: #b87a48 #f4e9df; }
 .course-manual-dispatch-table .dt-scroll-body::-webkit-scrollbar { width: 12px; height: 12px; }
@@ -941,10 +948,11 @@
 .course-table tbody tr:hover {
   background: #fffaf4;
 }
-.course-table-wrap table.dataTable {
+.course-table-wrap:not(.course-manual-dispatch-table) table.dataTable {
   width: 100% !important;
   border-collapse: collapse;
 }
+.course-manual-dispatch-table table.dataTable { border-collapse: collapse; }
 .course-table-wrap table.dataTable thead th {
   background: #fff4e8;
   color: #694a36;
