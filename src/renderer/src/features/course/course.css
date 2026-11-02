@@ -25,6 +25,18 @@
 .course-new-registration {
   margin-left: auto;
 }
+.course-manual-dispatch-controls,
+.course-manual-dispatch-pages {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+.course-manual-dispatch-controls input { max-width: 300px; }
+.course-manual-dispatch-controls select { margin-left: 8px; padding: 8px; border: 1px solid #d9c8b9; border-radius: 6px; background: white; }
+.course-manual-dispatch-list { display: grid; gap: 6px; }
+.course-manual-dispatch-list button { padding: 12px; border: 1px solid #e4d5c6; border-radius: 7px; background: white; text-align: left; cursor: pointer; }
+.course-manual-dispatch-list button:hover { background: #fff2e7; }
 .course-card-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

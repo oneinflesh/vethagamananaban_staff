@@ -107,6 +107,7 @@ export const getPaymentBalances = (country: string, page: number, search: string
 export const getPaymentHistory = (key: string, page: number): Promise<PaymentHistoryPage> =>
   window.office.coursePaymentHistory(key, page)
 export type CandidateFilters = {
+  individualOnly?: boolean
   state?: string
   district?: string
   initialDispatch?: boolean

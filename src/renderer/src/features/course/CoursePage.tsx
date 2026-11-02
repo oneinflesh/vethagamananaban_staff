@@ -10,6 +10,7 @@ import CoordinatorList from './CoordinatorList'
 import ManualRegistrationPage from './ManualRegistrationPage'
 import MonthlyDispatchPage from './MonthlyDispatchPage'
 import SendReleasedBooksPage from './SendReleasedBooksPage'
+import ManualBookDispatchPage from './ManualBookDispatchPage'
 import CourseBooksPage from './CourseBooksPage'
 import WholeResultsPage from './WholeResultsPage'
 import CourseLanguagesPage from './CourseLanguagesPage'
@@ -49,6 +50,7 @@ export default function CoursePage(): React.JSX.Element {
   const [coordinatorRefresh, setCoordinatorRefresh] = useState(0)
   const [manualRegistration, setManualRegistration] = useState(false)
   const [monthlyDispatch, setMonthlyDispatch] = useState(false)
+  const [manualBookDispatch, setManualBookDispatch] = useState(false)
   const [courseBooks, setCourseBooks] = useState(false)
   const [wholeResults, setWholeResults] = useState(false)
   const [courseLanguages, setCourseLanguages] = useState(false)
@@ -73,6 +75,7 @@ export default function CoursePage(): React.JSX.Element {
       peopleCoordinator ||
       manualRegistration ||
       monthlyDispatch ||
+      manualBookDispatch ||
       courseBooks ||
       wholeResults ||
       courseLanguages ||
@@ -110,6 +113,7 @@ export default function CoursePage(): React.JSX.Element {
     peopleCoordinator,
     manualRegistration,
     monthlyDispatch,
+    manualBookDispatch,
     courseBooks,
     wholeResults,
     courseLanguages,
@@ -256,6 +260,8 @@ export default function CoursePage(): React.JSX.Element {
         }}
       />
     )
+  if (manualBookDispatch)
+    return <ManualBookDispatchPage country={country} onBack={() => setManualBookDispatch(false)} />
   if (courseBooks) return <CourseBooksPage country={country} onBack={() => setCourseBooks(false)} />
   if (wholeResults)
     return <WholeResultsPage country={country} onBack={() => setWholeResults(false)} />
@@ -416,6 +422,11 @@ export default function CoursePage(): React.JSX.Element {
             <span className="course-nav-card__arrow" aria-hidden="true">
               →
             </span>
+          </button>
+          <button className="course-nav-card" onClick={() => setManualBookDispatch(true)}>
+            <strong>Send released books</strong>
+            <small>Choose an individual or coordinator and send released books</small>
+            <span className="course-nav-card__arrow" aria-hidden="true">→</span>
           </button>
           <button className="course-nav-card" onClick={() => setCourseBooks(true)}>
             <strong>Course books</strong>

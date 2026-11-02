@@ -6,7 +6,7 @@ export function getCandidates(
   mode: string,
   status: string,
   search: string,
-  filters: { state?: string; district?: string; initialDispatch?: boolean; ordering?: string } = {}
+  filters: { state?: string; district?: string; initialDispatch?: boolean; individualOnly?: boolean; ordering?: string } = {}
 ): Promise<unknown> {
   const params = new URLSearchParams({
     country,
@@ -21,6 +21,7 @@ export function getCandidates(
   if (filters.state) params.set('state', filters.state)
   if (filters.district) params.set('district', filters.district)
   if (filters.initialDispatch) params.set('initial_dispatch', 'pending')
+  if (filters.individualOnly) params.set('individual_only', 'true')
   if (filters.ordering) params.set('ordering', filters.ordering)
   return authorizedGet(`staff/course-enrollments/?${params}`)
 }
