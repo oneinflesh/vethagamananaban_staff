@@ -2,15 +2,13 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useNotifications } from '../notifications/Notifications'
 import FullScreenLoader from '../shell/FullScreenLoader'
+import OperationsValidationPage from './OperationsValidationPage'
+import OperationsHistoryPage from './OperationsHistoryPage'
 import {
-  getOperationsHistory,
-  getOperationsHistoryDetails,
   getOperationsMetadata,
   getOperationsTemplate,
   uploadOperations,
   type OperationsGroup,
-  type OperationsHistory,
-  type OperationsHistoryDetails,
   type OperationsMetadata,
   type OperationsPreview
 } from './operationsApi'
@@ -40,12 +38,6 @@ export default function OperationsPage({
   const [file, setFile] = useState<File | null>(null)
   const [bytes, setBytes] = useState<Uint8Array | null>(null)
   const [preview, setPreview] = useState<OperationsPreview | null>(null)
-  const [history, setHistory] = useState<OperationsHistory | null>(null)
-  const [historyPage, setHistoryPage] = useState(1)
-  const [historyRefresh, setHistoryRefresh] = useState(0)
-  const [historyKey, setHistoryKey] = useState('')
-  const [details, setDetails] = useState<OperationsHistoryDetails | null>(null)
-  const [detailsPage, setDetailsPage] = useState(1)
   const [showHistory, setShowHistory] = useState(false)
 
   useEffect(() => {
@@ -59,32 +51,6 @@ export default function OperationsPage({
       active = false
     }
   }, [country, notify])
-
-  useEffect(() => {
-    if (!showHistory) return
-    let active = true
-    getOperationsHistory(country, historyPage)
-      .then((result) => {
-        if (active) setHistory(result)
-      })
-      .catch((error: unknown) => notify.error(String(error)))
-    return () => {
-      active = false
-    }
-  }, [country, historyPage, historyRefresh, showHistory, notify])
-
-  useEffect(() => {
-    if (!historyKey) return
-    let active = true
-    getOperationsHistoryDetails(historyKey, detailsPage)
-      .then((result) => {
-        if (active) setDetails(result)
-      })
-      .catch((error: unknown) => notify.error(String(error)))
-    return () => {
-      active = false
-    }
-  }, [historyKey, detailsPage, notify])
 
   const resetUpload = (): void => {
     setFile(null)
@@ -149,15 +115,29 @@ export default function OperationsPage({
       )
       notify.success(`${result.changes} changes saved`)
       resetUpload()
-      setHistoryPage(1)
-      setHistory(null)
-      setHistoryRefresh((value) => value + 1)
       setShowHistory(true)
     } catch (error) {
       notify.error(String(error))
     } finally {
       setBusy('')
     }
+  }
+
+  if (preview) {
+    return (
+      <OperationsValidationPage
+        country={country}
+        filename={file?.name ?? ''}
+        preview={preview}
+        busy={busy}
+        onBack={resetUpload}
+        onApply={() => void applyChanges()}
+      />
+    )
+  }
+
+  if (showHistory) {
+    return <OperationsHistoryPage country={country} onBack={() => setShowHistory(false)} />
   }
 
   return (
@@ -243,8 +223,8 @@ export default function OperationsPage({
           <p>Past imports and every changed field.</p>
           <div className="operations-card-footer">
             <span>Audit trail</span>
-            <Button variant="outline" onClick={() => setShowHistory((value) => !value)}>
-              {showHistory ? 'Hide' : 'View history'}
+            <Button variant="outline" onClick={() => setShowHistory(true)}>
+              View history
             </Button>
           </div>
         </article>
@@ -259,126 +239,6 @@ export default function OperationsPage({
           <p>Coming soon</p>
         </article>
       </div>
-
-      {preview && (
-        <section className="operations-panel">
-          <div className="operations-panel-heading">
-            <h2>Validation</h2>
-            <span>
-              {preview.rows} rows · {preview.change_count} changes · {preview.error_count} errors
-            </span>
-          </div>
-          {preview.error_count > 0 && (
-            <div className="operations-preview-list">
-              {preview.errors.map((item, index) => (
-                <div className="operations-error" key={index}>
-                  Row {item.row} · {item.field}: {item.message}
-                </div>
-              ))}
-              {preview.error_count > preview.errors.length && (
-                <p>Showing the first {preview.errors.length} errors.</p>
-              )}
-            </div>
-          )}
-          <div className="operations-preview-list">
-            {preview.changes.map((item, index) => (
-              <div className="operations-change" key={index}>
-                <strong>{item.identifier}</strong>
-                <span>{item.label}</span>
-                <del>{item.before || 'Empty'}</del>
-                <b>→ {item.after}</b>
-              </div>
-            ))}
-            {preview.change_count > preview.changes.length && (
-              <p>Showing the first {preview.changes.length} changes.</p>
-            )}
-          </div>
-          <Button
-            onClick={() => void applyChanges()}
-            disabled={!!busy || !!preview.error_count || !preview.change_count}
-          >
-            Apply {preview.change_count} changes
-          </Button>
-        </section>
-      )}
-
-      {showHistory && (
-        <section className="operations-panel">
-          <div className="operations-panel-heading">
-            <h2>History</h2>
-            <span>{history?.count ?? 0} imports</span>
-          </div>
-          {history?.results.map((item) => (
-            <button
-              type="button"
-              className="operations-history-item"
-              key={item.operation_key}
-              onClick={() => {
-                setHistoryKey(item.operation_key)
-                setDetailsPage(1)
-                setDetails(null)
-              }}
-            >
-              <strong>{item.filename}</strong>
-              <span>{new Date(item.created_at).toLocaleString('en-IN')}</span>
-              <span>{item.actor}</span>
-              <span>{item.change_count} changes</span>
-            </button>
-          ))}
-          <div className="operations-pager">
-            <Button
-              variant="outline"
-              disabled={historyPage <= 1}
-              onClick={() => setHistoryPage(historyPage - 1)}
-            >
-              Previous
-            </Button>
-            <span>Page {historyPage}</span>
-            <Button
-              variant="outline"
-              disabled={!history || historyPage * 20 >= history.count}
-              onClick={() => setHistoryPage(historyPage + 1)}
-            >
-              Next
-            </Button>
-          </div>
-          {historyKey && (
-            <div className="operations-history-details">
-              <div className="operations-panel-heading">
-                <h3>Changes</h3>
-                <Button variant="outline" onClick={() => setHistoryKey('')}>
-                  Close
-                </Button>
-              </div>
-              {details?.results.map((item, index) => (
-                <div className="operations-change" key={index}>
-                  <strong>{item.identifier}</strong>
-                  <span>{item.field}</span>
-                  <del>{item.before || 'Empty'}</del>
-                  <b>→ {item.after}</b>
-                </div>
-              ))}
-              <div className="operations-pager">
-                <Button
-                  variant="outline"
-                  disabled={detailsPage <= 1}
-                  onClick={() => setDetailsPage(detailsPage - 1)}
-                >
-                  Previous
-                </Button>
-                <span>Page {detailsPage}</span>
-                <Button
-                  variant="outline"
-                  disabled={!details || detailsPage * 100 >= details.count}
-                  onClick={() => setDetailsPage(detailsPage + 1)}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
-        </section>
-      )}
 
       {pickerOpen && metadata && (
         <div

@@ -1,0 +1,134 @@
+.operations-validation-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  overflow: auto;
+  padding: 18px 22px 26px;
+  background: #faf8f5;
+  color: #34261e;
+}
+
+.operations-validation-heading,
+.operations-validation-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.operations-validation-heading h1,
+.operations-validation-section-heading h2 {
+  margin: 0;
+}
+.operations-validation-heading h1 {
+  font-size: 24px;
+}
+.operations-validation-heading > span {
+  color: #967b69;
+}
+.operations-validation-heading > strong {
+  margin-left: auto;
+  max-width: 32vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.operations-validation-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(110px, 1fr)) auto;
+  gap: 12px;
+  align-items: stretch;
+}
+.operations-validation-summary > div {
+  display: flex;
+  flex-direction: column;
+  padding: 13px 16px;
+  border: 1px solid #ead9ca;
+  border-radius: 10px;
+  background: #fff;
+}
+.operations-validation-summary strong {
+  font-size: 23px;
+}
+.operations-validation-summary span {
+  color: #8c7566;
+  font-size: 12px;
+}
+.operations-validation-summary .operations-validation-summary--error {
+  border-color: #e9aea7;
+  background: #fff0ee;
+  color: #9d2727;
+}
+.operations-validation-summary > button {
+  align-self: center;
+}
+
+.operations-validation-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 150px;
+  border: 1px solid #ead9ca;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+.operations-validation-section:last-of-type {
+  flex: 1;
+}
+.operations-validation-section-heading {
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-bottom: 1px solid #ead9ca;
+}
+.operations-validation-section-heading h2 {
+  font-size: 17px;
+}
+.operations-validation-section-heading span {
+  font-size: 12px;
+  color: #8c7566;
+}
+.operations-validation-table-wrap {
+  min-height: 0;
+  max-height: 52vh;
+  overflow: auto;
+}
+.operations-validation-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+.operations-validation-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 10px 12px;
+  background: #fff3e9;
+  white-space: nowrap;
+}
+.operations-validation-table td {
+  padding: 9px 12px;
+  border-top: 1px solid #f1e4da;
+}
+.operations-validation-table td:first-child {
+  width: 65px;
+  white-space: nowrap;
+}
+.operations-validation-error {
+  background: #fff0ee;
+  color: #8f2525;
+}
+.operations-validation-change {
+  background: #fff6f3;
+}
+.operations-validation-change td:last-child {
+  font-weight: 650;
+  color: #9f3e19;
+}
+.operations-validation-empty {
+  margin: 16px;
+  color: #8c7566;
+}

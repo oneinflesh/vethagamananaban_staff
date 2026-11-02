@@ -1,0 +1,125 @@
+.operations-history-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  overflow: auto;
+  padding: 18px 22px 26px;
+  background: #faf8f5;
+  color: #34261e;
+}
+.operations-history-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.operations-history-heading h1 {
+  margin: 0;
+  font-size: 24px;
+}
+.operations-history-heading > span {
+  color: #967b69;
+}
+.operations-history-total {
+  margin-left: auto;
+}
+.operations-history-list,
+.operations-history-details {
+  border: 1px solid #ead9ca;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+.operations-history-list-header,
+.operations-history-list-row {
+  display: grid;
+  grid-template-columns: 150px minmax(170px, 2fr) 115px minmax(130px, 1fr) 70px 80px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  text-align: left;
+  font-size: 13px;
+}
+.operations-history-list-header {
+  background: #fff3e9;
+  color: #744128;
+  font-weight: 700;
+}
+.operations-history-list-row {
+  border: 0;
+  border-top: 1px solid #f1e4da;
+  background: #fff;
+  color: inherit;
+  cursor: pointer;
+}
+.operations-history-list-row:hover,
+.operations-history-list-row.is-selected {
+  background: #fff4ea;
+}
+.operations-history-list-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.operations-history-empty {
+  padding: 16px;
+  color: #8c7566;
+}
+.operations-history-pager {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-top: 1px solid #f1e4da;
+}
+.operations-history-details {
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+}
+.operations-history-details-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid #ead9ca;
+}
+.operations-history-details-heading h2 {
+  margin: 0;
+  font-size: 17px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.operations-history-details-heading span {
+  margin-left: auto;
+  color: #8c7566;
+  font-size: 12px;
+}
+.operations-history-details-scroll {
+  max-height: 45vh;
+  overflow: auto;
+}
+.operations-history-details table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+.operations-history-details th {
+  position: sticky;
+  top: 0;
+  padding: 10px 12px;
+  background: #fff3e9;
+}
+.operations-history-details td {
+  padding: 9px 12px;
+  border-top: 1px solid #f1e4da;
+  overflow-wrap: anywhere;
+}
+.operations-history-details td:last-child {
+  color: #9f3e19;
+  font-weight: 650;
+}
