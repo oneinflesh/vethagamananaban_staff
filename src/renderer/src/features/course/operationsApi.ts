@@ -6,7 +6,7 @@ export type OperationsMetadata = {
   bbs_range: { from: number | null; to: number | null }
 }
 export type OperationsRange = { from: number; to: number } | null
-export type OperationsTemplate = { filename: string; csv: string; rows: number }
+export type OperationsTemplate = { filename: string; file_base64: string; rows: number }
 export type OperationsChange = {
   row: number
   identifier: string

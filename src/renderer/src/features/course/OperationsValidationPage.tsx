@@ -28,7 +28,7 @@ export default function OperationsValidationPage({
         <Button variant="outline" onClick={onBack} disabled={!!busy}>
           ← Operations
         </Button>
-        <h1>Validate CSV</h1>
+        <h1>Validate Excel file</h1>
         <span>{country}</span>
         <strong title={filename}>{filename}</strong>
       </div>

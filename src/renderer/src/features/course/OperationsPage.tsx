@@ -75,7 +75,7 @@ export default function OperationsPage({
 
   async function download(): Promise<void> {
     if (!ready || !metadata) return
-    setBusy('Preparing CSV')
+    setBusy('Preparing Excel file')
     try {
       const result = await getOperationsTemplate(country, group, group === 'range' ? [] : fields,
         metadata.books.map((book) => book.key), bbsRange)
@@ -84,7 +84,8 @@ export default function OperationsPage({
         return
       }
       const link = document.createElement('a')
-      const url = URL.createObjectURL(new Blob([result.csv], { type: 'text/csv;charset=utf-8' }))
+      const bytes = Uint8Array.from(atob(result.file_base64), (character) => character.charCodeAt(0))
+      const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
       link.href = url
       link.download = result.filename
       document.body.appendChild(link)
@@ -101,7 +102,7 @@ export default function OperationsPage({
 
   async function validate(): Promise<void> {
     if (!file || !ready) return
-    setBusy('Checking CSV')
+    setBusy('Checking Excel file')
     try {
       const data = new Uint8Array(await file.arrayBuffer())
       const result = await uploadOperations('preview', country, group, data, file.name, '', bbsRange)
@@ -227,12 +228,12 @@ export default function OperationsPage({
 
         <article className={`operations-card${ready ? '' : ' operations-card--disabled'}`}>
           <div className="operations-step">2 · Download</div>
-          <h2>CSV model</h2>
+          <h2>Excel model</h2>
           <p>Download current records with the selected columns.</p>
           <div className="operations-card-footer">
-            <span>UTF-8 CSV with headers</span>
+            <span>Excel workbook</span>
             <Button onClick={() => void download()} disabled={!ready || !!busy}>
-              Download CSV
+              Download Excel
             </Button>
           </div>
         </article>
@@ -242,9 +243,9 @@ export default function OperationsPage({
           <h2>Check and apply</h2>
           <p>Blank cells leave existing data unchanged.</p>
           <input
-            aria-label="Choose CSV"
+            aria-label="Choose Excel file"
             type="file"
-            accept=".csv,text/csv"
+            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             disabled={!ready || !!busy}
             onChange={(event) => {
               const selected = event.target.files?.[0] ?? null
@@ -252,7 +253,7 @@ export default function OperationsPage({
               setPreview(null)
               setBytes(null)
               if (source && source.country !== country) {
-                notify.error(`This CSV is for ${source.country}. Select that country in the title bar first.`)
+                notify.error(`This file is for ${source.country}. Select that country in the title bar first.`)
                 event.target.value = ''
                 setFile(null)
                 return

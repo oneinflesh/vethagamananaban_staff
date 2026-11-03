@@ -19,7 +19,7 @@ export const makeOperationsTemplate = (
       bbs_from: bbsRange?.from, bbs_to: bbsRange?.to })
   })
 
-export const uploadOperationsCsv = (
+export const uploadOperationsFile = (
   action: 'preview' | 'apply',
   country: string,
   group: string,
@@ -36,7 +36,7 @@ export const uploadOperationsCsv = (
     form.append('bbs_from', String(bbsRange.from))
     form.append('bbs_to', String(bbsRange.to))
   }
-  form.append('file', new Blob([Uint8Array.from(bytes)], { type: 'text/csv' }), filename)
+  form.append('file', new Blob([Uint8Array.from(bytes)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename)
   return authorizedRequest(`${base}${action}/`, { method: 'POST', body: form })
 }
 

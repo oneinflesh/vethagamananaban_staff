@@ -66,7 +66,7 @@ import {
   saveMonthlyTracking
 } from './features/course/monthlyDispatch'
 import { getCoordinatorWalletMembers, distributeCoordinatorWallet } from './features/course/coordinatorPayments'
-import { getOperationsMetadata, makeOperationsTemplate, uploadOperationsCsv,
+import { getOperationsMetadata, makeOperationsTemplate, uploadOperationsFile,
   getOperationsHistory, getOperationsHistoryDetails } from './features/course/operations'
 
 function createWindow(): void {
@@ -218,7 +218,7 @@ app.whenReady().then(() => {
   ipcMain.handle('course:operations-template', (_event, country, group, fields, examKeys, bbsRange) =>
     makeOperationsTemplate(country, group, fields, examKeys, bbsRange))
   ipcMain.handle('course:operations-upload', (_event, action, country, group, bytes, filename, token, bbsRange) =>
-    uploadOperationsCsv(action, country, group, bytes, filename, token, bbsRange))
+    uploadOperationsFile(action, country, group, bytes, filename, token, bbsRange))
   ipcMain.handle('course:operations-history', (_event, country, page) => getOperationsHistory(country, page))
   ipcMain.handle('course:operations-history-details', (_event, key, page) => getOperationsHistoryDetails(key, page))
   ipcMain.handle('course:initial-dispatch', (_event, key) => getInitialDispatch(key))
