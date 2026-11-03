@@ -147,7 +147,8 @@ interface Window {
         | 'manual-credit'
         | 'previous-balance'
         | 'credit-and-send'
-        | 'restore-wallet-payment',
+        | 'restore-wallet-payment'
+        | 'change-mode',
       key: string,
       data: unknown
     ): Promise<unknown>

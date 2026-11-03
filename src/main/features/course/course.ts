@@ -205,6 +205,7 @@ export function candidateAction(
     | 'manual-book-dispatch'
     | 'set-password'
     | 'update-status'
+    | 'change-mode'
     | 'manual-purchase'
     | 'manual-credit'
     | 'previous-balance'

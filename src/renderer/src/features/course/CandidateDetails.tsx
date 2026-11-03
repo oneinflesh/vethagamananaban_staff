@@ -11,6 +11,7 @@ import ExamResultsTable from './ExamResultsTable'
 import CandidateCoordinatorAssignment from './CandidateCoordinatorAssignment'
 import { formatPaymentBalance, paymentBalanceTone } from './paymentBalance'
 import {
+  candidateAction,
   getCandidate,
   updateCandidate,
   uploadPhoto,
@@ -52,6 +53,7 @@ export default function CandidateDetails({
   const [form, setForm] = useState<Candidate | null>(null)
   const [tab, setTab] = useState<Tab>(initialTab)
   const [saving, setSaving] = useState(false)
+  const [modeChoice, setModeChoice] = useState('')
   const [addingPayment, setAddingPayment] = useState(false)
   const [showTransactions, setShowTransactions] = useState(false)
   const notify = useNotifications()
@@ -64,6 +66,7 @@ export default function CandidateDetails({
         if (active) {
           setSummary(value)
           setForm(value.candidate)
+          setModeChoice(value.candidate.mode)
         }
       })
       .catch((error) => {
@@ -114,10 +117,25 @@ export default function CandidateDetails({
       setSaving(false)
     }
   }
+  async function changeMode(): Promise<void> {
+    if (!form || modeChoice === form.mode) return
+    setSaving(true)
+    try {
+      const saved = await candidateAction('change-mode', candidateKey, { mode: modeChoice }) as Candidate
+      setForm((current) => current ? { ...current, mode: saved.mode } : saved)
+      setSummary((current) => current ? { ...current, candidate: saved } : current)
+      notify.success(`Candidate changed to ${saved.mode.toLowerCase()}`)
+    } catch (error) {
+      notify.error(error instanceof Error ? error.message : 'Could not change mode')
+    } finally {
+      setSaving(false)
+    }
+  }
   async function reloadCandidate(): Promise<void> {
     const updated = await getCandidate(candidateKey)
     setSummary(updated)
     setForm(updated.candidate)
+    setModeChoice(updated.candidate.mode)
   }
 
   return (
@@ -152,6 +170,18 @@ export default function CandidateDetails({
               <span>Status: {form.status}</span>
             </div>
             <div className="candidate-form__grid">
+              <label>
+                Course mode
+                <select value={modeChoice} onChange={(event) => setModeChoice(event.target.value)} disabled={saving}>
+                  <option value="OFFLINE">Offline</option>
+                  <option value="ONLINE">Online</option>
+                </select>
+              </label>
+              <div className="candidate-mode-action">
+                <Button variant="outline" disabled={saving || modeChoice === form.mode} onClick={() => void changeMode()}>
+                  Change mode
+                </Button>
+              </div>
               <label>
                 Status
                 <select

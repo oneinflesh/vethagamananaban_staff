@@ -1591,6 +1591,10 @@
   background: white;
   color: #34261e;
 }
+.candidate-mode-action {
+  display: flex;
+  align-items: end;
+}
 .candidate-photo img,
 .candidate-photo__empty {
   width: 100%;
