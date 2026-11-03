@@ -4,6 +4,7 @@ import { useNotifications } from '../notifications/Notifications'
 import FullScreenLoader from '../shell/FullScreenLoader'
 import OperationsValidationPage from './OperationsValidationPage'
 import OperationsHistoryPage from './OperationsHistoryPage'
+import { operationsFileSelection } from './operationsFileSelection'
 import {
   getOperationsMetadata,
   getOperationsTemplate,
@@ -246,9 +247,25 @@ export default function OperationsPage({
             accept=".csv,text/csv"
             disabled={!ready || !!busy}
             onChange={(event) => {
-              setFile(event.target.files?.[0] ?? null)
+              const selected = event.target.files?.[0] ?? null
+              const source = selected ? operationsFileSelection(selected.name) : null
               setPreview(null)
               setBytes(null)
+              if (source && source.country !== country) {
+                notify.error(`This CSV is for ${source.country}. Select that country in the title bar first.`)
+                event.target.value = ''
+                setFile(null)
+                return
+              }
+              if (source) {
+                setGroup(source.group)
+                setFields([])
+                if (source.bbsRange) {
+                  setBbsFrom(String(source.bbsRange.from))
+                  setBbsTo(String(source.bbsRange.to))
+                }
+              }
+              setFile(selected)
             }}
           />
           <div className="operations-card-footer">
