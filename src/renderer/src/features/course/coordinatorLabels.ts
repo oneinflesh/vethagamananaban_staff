@@ -5,6 +5,7 @@ type LabelRow = { size: LabelSize; coordinators: Coordinator[]; height: number }
 
 const rowHeight: Record<LabelSize, number> = { normal: 50, a6: 138, a5: 141, a4: 287 }
 const labelsPerRow: Record<LabelSize, number> = { normal: 3, a6: 2, a5: 1, a4: 1 }
+const sizeOrder: Record<LabelSize, number> = { normal: 0, a6: 1, a5: 2, a4: 3 }
 const sheetHeight = 287
 const rowGap = 2
 
@@ -16,7 +17,9 @@ function labelSize(memberCount: number): LabelSize {
 }
 
 function packSheets(coordinators: Coordinator[]): LabelRow[][] {
-  const ordered = [...coordinators].sort((left, right) => left.number - right.number)
+  const ordered = [...coordinators].sort((left, right) =>
+    sizeOrder[labelSize(left.member_count)] - sizeOrder[labelSize(right.member_count)] || left.number - right.number
+  )
   const rows: LabelRow[] = []
   for (const coordinator of ordered) {
     const size = labelSize(coordinator.member_count)
