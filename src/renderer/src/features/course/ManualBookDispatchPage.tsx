@@ -136,6 +136,7 @@ export default function ManualBookDispatchPage({
       }
       notify.success(`${examKeys.length} books parcelled for ${sent} people under C-${coordinator.number}`)
       setSelectedMembers(new Set())
+      setSelectedBooks(new Set())
       setMemberRefresh((value) => value + 1)
     } finally {
       setSending(false)
@@ -151,6 +152,7 @@ export default function ManualBookDispatchPage({
         exam_keys: [...selectedBooks], tracking_number: '', allow_credit: true
       })
       notify.success(`${count} book${count === 1 ? '' : 's'} parcelled for ${row.bbs_identifier}`)
+      setSelectedBooks(new Set())
       recipientTable.current?.dt()?.ajax.reload(undefined, false)
     } catch (error) {
       notify.error(error instanceof Error ? error.message : 'Could not send books')
