@@ -19,6 +19,8 @@ import {
 import CandidateActionPanel from './CandidateActionPanel'
 import useDispatchTableHeight from './useDispatchTableHeight'
 import CoordinatorBookPicker from './CoordinatorBookPicker'
+import ManualBookSendButton from './ManualBookSendButton'
+import { ManualBookSendContext } from './manualBookSendContext'
 
 export default function ManualBookDispatchPage({
   country,
@@ -232,6 +234,8 @@ export default function ManualBookDispatchPage({
       </div>
     </> : <>
       <div className={`course-table-wrap course-table-wrap--candidates course-manual-dispatch-table course-manual-dispatch-table--${recipientType === 'individual' ? 'individual' : 'coordinators'}`}>
+        <ManualBookSendContext.Provider value={{ selectedCount: selectedBooks.size, sendingCandidate,
+          onSend: (candidate) => { void sendToCandidate(candidate) } }}>
         <DataTable ref={recipientTable} key={`${recipientType}:${country}:${search}`} className="display course-table" options={{
           serverSide: true, processing: true, pageLength: 20, lengthChange: false,
           searching: false, autoWidth: true, order: [[0, 'asc']],
@@ -283,8 +287,7 @@ export default function ManualBookDispatchPage({
               <span className="course-manual-dispatch-actions">
                 <Button variant="outline" onClick={() => onCandidate(row.enrollment_key)}>View candidate</Button>
                 <Button variant="outline" onClick={() => setPaymentCandidate(row)}>Record payment</Button>
-                <Button disabled={!selectedBooks.size || !!sendingCandidate}
-                  onClick={() => void sendToCandidate(row)}>{sendingCandidate === row.enrollment_key ? 'Preparing…' : 'Send books'}</Button>
+                <ManualBookSendButton candidate={row} />
               </span>}</Column>
           ] : [
             <Column key="number" title="C no." data="number">{(_value, _type, row: Coordinator) =>
@@ -300,6 +303,7 @@ export default function ManualBookDispatchPage({
               </span>}</Column>
           ]}
         </DataTable>
+        </ManualBookSendContext.Provider>
       </div>
     </>}
     {loading && <p role="status">Loading…</p>}
