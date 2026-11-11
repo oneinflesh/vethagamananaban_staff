@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useNotifications } from '../notifications/Notifications'
@@ -15,7 +16,6 @@ import {
   type CoordinatorWalletMember,
   type ExamInfo
 } from './courseApi'
-import ManualBookSelectionPage from './ManualBookSelectionPage'
 import CandidateActionPanel from './CandidateActionPanel'
 import useDispatchTableHeight from './useDispatchTableHeight'
 import CoordinatorBookPicker from './CoordinatorBookPicker'
@@ -35,16 +35,16 @@ export default function ManualBookDispatchPage({
   const [search, setSearch] = useState('')
   const [members, setMembers] = useState<CoordinatorWalletMember[]>([])
   const [coordinator, setCoordinator] = useState<Coordinator | null>(null)
-  const [candidate, setCandidate] = useState<Candidate | null>(null)
   const [paymentCandidate, setPaymentCandidate] = useState<Candidate | null>(null)
   const [loading, setLoading] = useState(false)
   const [books, setBooks] = useState<ExamInfo[]>([])
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set())
   const [selectedBooks, setSelectedBooks] = useState<Set<string>>(new Set())
   const [choosingBooks, setChoosingBooks] = useState(false)
-  const [allowCredit, setAllowCredit] = useState(false)
   const [sending, setSending] = useState(false)
+  const [sendingCandidate, setSendingCandidate] = useState<string | null>(null)
   const [memberRefresh, setMemberRefresh] = useState(0)
+  const recipientTable = useRef<DataTableRef>(null)
   const notify = useNotifications()
   const pageRef = useDispatchTableHeight(`${recipientType}:${coordinator?.coordinator_key ?? ''}`)
 
@@ -52,8 +52,6 @@ export default function ManualBookDispatchPage({
     setLoading(true)
     setSearch('')
     setSelectedMembers(new Set())
-    setSelectedBooks(new Set())
-    setAllowCredit(false)
     setCoordinator(row)
   }
 
@@ -61,11 +59,20 @@ export default function ManualBookDispatchPage({
     setRecipientType(type)
     setSearch('')
     setCoordinator(null)
-    setCandidate(null)
     setSelectedMembers(new Set())
-    setSelectedBooks(new Set())
-    setAllowCredit(false)
   }
+
+  useEffect(() => {
+    let active = true
+    setBooks([])
+    setSelectedBooks(new Set())
+    getRegistrationOptions().then((options) => {
+      if (active) setBooks(options.exams.filter((book) => book.is_active))
+    }).catch((error) => {
+      if (active) notify.error(error instanceof Error ? error.message : 'Could not load books')
+    })
+    return () => { active = false }
+  }, [country, notify])
 
   useEffect(() => {
     if (!coordinator) return
@@ -74,11 +81,6 @@ export default function ManualBookDispatchPage({
       if (active) {
         const activeMembers = result.filter((member) => member.status === 'ACTIVE' && member.mode === 'OFFLINE')
         setMembers(activeMembers)
-        getRegistrationOptions().then((options) => {
-          if (active) setBooks(options.exams.filter((book) => book.is_active))
-        }).catch((error) => {
-          if (active) notify.error(error instanceof Error ? error.message : 'Could not load books')
-        })
       }
     }).catch((error) => {
       if (active) notify.error(error instanceof Error ? error.message : 'Could not load people')
@@ -105,8 +107,7 @@ export default function ManualBookDispatchPage({
           stockByBook.set(book.book_id, current)
         }
         const total = chosen.reduce((sum, book) => sum + Number(book?.price ?? 0), 0)
-        return invalid || !options[index].manual_address
-          || (!allowCredit && Number(options[index].wallet_balance) < total)
+        return invalid || !options[index].manual_address || !Number.isFinite(total)
       })
       if (ineligible.length) {
         notify.error(`${ineligible.length} selected people cannot receive these books. No books were sent.`)
@@ -121,7 +122,7 @@ export default function ManualBookDispatchPage({
       for (const key of keys) {
         try {
           await candidateAction('manual-book-dispatch', key, {
-            exam_keys: examKeys, tracking_number: '', allow_credit: allowCredit, parcel_batch: parcelBatch
+            exam_keys: examKeys, tracking_number: '', allow_credit: true, parcel_batch: parcelBatch
           })
           sent += 1
         } catch (error) {
@@ -133,27 +134,39 @@ export default function ManualBookDispatchPage({
       }
       notify.success(`${examKeys.length} books parcelled for ${sent} people under C-${coordinator.number}`)
       setSelectedMembers(new Set())
-      setSelectedBooks(new Set())
       setMemberRefresh((value) => value + 1)
     } finally {
       setSending(false)
     }
   }
 
-  if (candidate) return (
-    <ManualBookSelectionPage
-      candidate={candidate}
-      onBack={() => {
-        setCandidate(null)
-        setCoordinator(null)
-      }}
-    />
-  )
+  async function sendToCandidate(row: Candidate): Promise<void> {
+    if (!selectedBooks.size || sendingCandidate) return
+    setSendingCandidate(row.enrollment_key)
+    try {
+      const count = selectedBooks.size
+      await candidateAction('manual-book-dispatch', row.enrollment_key, {
+        exam_keys: [...selectedBooks], tracking_number: '', allow_credit: true
+      })
+      notify.success(`${count} book${count === 1 ? '' : 's'} parcelled for ${row.bbs_identifier}`)
+      recipientTable.current?.dt()?.ajax.reload(undefined, false)
+    } catch (error) {
+      notify.error(error instanceof Error ? error.message : 'Could not send books')
+    } finally {
+      setSendingCandidate(null)
+    }
+  }
+
+  function signedAmount(value: number): string {
+    return `${value < 0 ? '−' : ''}₹${Math.abs(value).toFixed(2)}`
+  }
 
   return <section ref={pageRef} className="page course-page course-manual-dispatch-page">
     <div className="course-toolbar course-toolbar--manual-dispatch">
       <Button variant="outline" onClick={coordinator ? () => { setCoordinator(null); setSelectedMembers(new Set()) } : onBack}>← Course</Button>
       <h1>Send released books</h1>
+      <Button variant="outline" disabled={!books.length || sending || !!sendingCandidate}
+        onClick={() => setChoosingBooks(true)}>Choose books ({selectedBooks.size})</Button>
       <div className="course-manual-dispatch-tabs" role="tablist" aria-label="Recipient type">
         <button type="button" role="tab" aria-selected={recipientType === 'individual'}
           className={recipientType === 'individual' ? 'active' : ''}
@@ -172,9 +185,6 @@ export default function ManualBookDispatchPage({
         Parcel address: {coordinator.address_line1 || 'No address'}, {coordinator.district}, {coordinator.state} {coordinator.postal_code}
       </p>
       <div className="course-manual-dispatch-controls">
-        <Button variant="outline" onClick={() => setChoosingBooks(true)}>Choose books ({selectedBooks.size})</Button>
-        <label className="course-manual-book-credit"><input type="checkbox" checked={allowCredit}
-          onChange={(event) => setAllowCredit(event.target.checked)} /> Use credit</label>
         <Button disabled={!selectedBooks.size || !selectedMembers.size || sending}
           onClick={() => void sendToCoordinator()}>{sending ? 'Preparing…' : `Parcel ${selectedBooks.size} books for ${selectedMembers.size} people`}</Button>
       </div>
@@ -187,7 +197,7 @@ export default function ManualBookDispatchPage({
             order: [[1, 'asc']],
             columnDefs: [
               { targets: 0, orderable: false },
-              { targets: 7, orderable: false }
+              { targets: 8, orderable: false }
             ],
             layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' }
           }}>
@@ -203,6 +213,11 @@ export default function ManualBookDispatchPage({
           <Column title="BBS no." data="bbs_number">{(value, type) =>
             type === 'sort' || type === 'type' ? Number(String(value).replace(/\D/g, '')) : String(value)}</Column>
           <Column title="Name" data="name" />
+          <Column title="Balance" data="wallet_balance">{(_value, type, row: CoordinatorWalletMember) => {
+            const amount = Number(row.wallet_balance) - Number(row.credit_balance)
+            if (type === 'sort' || type === 'type') return amount
+            return <span className={amount < 0 ? 'course-balance--negative' : 'course-balance--positive'}>{signedAmount(amount)}</span>
+          }}</Column>
           <Column title="District" data="district" />
           <Column title="Exams" data="exams_attended" />
           <Column title="Sent" data="books_sent" />
@@ -217,12 +232,12 @@ export default function ManualBookDispatchPage({
       </div>
     </> : <>
       <div className={`course-table-wrap course-table-wrap--candidates course-manual-dispatch-table course-manual-dispatch-table--${recipientType === 'individual' ? 'individual' : 'coordinators'}`}>
-        <DataTable key={`${recipientType}:${country}:${search}:${memberRefresh}`} className="display course-table" options={{
+        <DataTable ref={recipientTable} key={`${recipientType}:${country}:${search}`} className="display course-table" options={{
           serverSide: true, processing: true, pageLength: 20, lengthChange: false,
           searching: false, autoWidth: true, order: [[0, 'asc']],
           scrollX: true, scrollY: 'var(--dispatch-table-height, 400px)', scrollCollapse: false,
           columnDefs: recipientType === 'individual' ? [
-            { targets: [2, 3, 4], orderable: false, defaultContent: '—' }
+            { targets: [2, 3, 4, 5, 8], orderable: false, defaultContent: '—' }
           ] : [
             { targets: 0, width: '8%' },
             { targets: 1, width: '19%' },
@@ -237,7 +252,7 @@ export default function ManualBookDispatchPage({
             const column = request.order?.[0]?.column ?? 0
             const direction = request.order?.[0]?.dir === 'desc' ? '-' : ''
             const fields = recipientType === 'individual'
-              ? ['bbs_number', 'full_name', '', '', '', 'district', 'state']
+              ? ['bbs_number', 'full_name', '', '', '', '', 'district', 'state']
               : ['number', 'name', 'active_member_count', 'district', 'state']
             const ordering = `${direction}${fields[column] || fields[0]}`
             const result = recipientType === 'individual'
@@ -255,6 +270,10 @@ export default function ManualBookDispatchPage({
             <Column key="bbs" title="BBS no." data="bbs_identifier">{(_value, _type, row: Candidate) =>
               <button className="course-link" onClick={() => onCandidate(row.enrollment_key)}>{row.bbs_identifier}</button>}</Column>
             , <Column key="name" title="Name" data="full_name" />
+            , <Column key="balance" title="Balance" data="signed_balance">{(value) => {
+              const amount = Number(value ?? 0)
+              return <span className={amount < 0 ? 'course-balance--negative' : 'course-balance--positive'}>{signedAmount(amount)}</span>
+            }}</Column>
             , <Column key="exams" title="Exams" data="exams_attended" />
             , <Column key="sent" title="Sent" data="books_sent" />
             , <Column key="paid" title="Paid" data="books_paid" />
@@ -264,7 +283,8 @@ export default function ManualBookDispatchPage({
               <span className="course-manual-dispatch-actions">
                 <Button variant="outline" onClick={() => onCandidate(row.enrollment_key)}>View candidate</Button>
                 <Button variant="outline" onClick={() => setPaymentCandidate(row)}>Record payment</Button>
-                <Button onClick={() => setCandidate(row)}>Send books</Button>
+                <Button disabled={!selectedBooks.size || !!sendingCandidate}
+                  onClick={() => void sendToCandidate(row)}>{sendingCandidate === row.enrollment_key ? 'Preparing…' : 'Send books'}</Button>
               </span>}</Column>
           ] : [
             <Column key="number" title="C no." data="number">{(_value, _type, row: Coordinator) =>
@@ -287,6 +307,10 @@ export default function ManualBookDispatchPage({
       onChange={setSelectedBooks} onClose={() => setChoosingBooks(false)} />}
     {paymentCandidate && <CandidateActionPanel action="payment" candidate={paymentCandidate}
       onClose={() => setPaymentCandidate(null)}
-      onChanged={() => { setPaymentCandidate(null); setMemberRefresh((value) => value + 1) }} />}
+      onChanged={() => {
+        setPaymentCandidate(null)
+        if (coordinator) setMemberRefresh((value) => value + 1)
+        else recipientTable.current?.dt()?.ajax.reload(undefined, false)
+      }} />}
   </section>
 }
