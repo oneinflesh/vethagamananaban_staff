@@ -63,6 +63,7 @@
 .course-manual-dispatch-search { max-width: 260px; }
 .course-manual-dispatch-actions { display: flex; gap: 6px; white-space: nowrap; }
 .course-manual-dispatch-actions button { padding: 5px 8px; font-size: 11px; }
+.course-manual-dispatch-payment { width: 105px; }
 .course-manual-dispatch-address { margin: 0 0 10px; color: #684c3a; }
 .page.course-manual-dispatch-page { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .course-manual-dispatch-page .course-toolbar { flex: none; }

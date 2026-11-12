@@ -20,6 +20,7 @@ import CandidateActionPanel from './CandidateActionPanel'
 import useDispatchTableHeight from './useDispatchTableHeight'
 import CoordinatorBookPicker from './CoordinatorBookPicker'
 import ManualBookSendButton from './ManualBookSendButton'
+import ManualBookPaymentInput from './ManualBookPaymentInput'
 import { ManualBookSendContext } from './manualBookSendContext'
 
 export default function ManualBookDispatchPage({
@@ -205,7 +206,7 @@ export default function ManualBookDispatchPage({
             order: [[1, 'asc']],
             columnDefs: [
               { targets: 0, orderable: false },
-              { targets: 8, orderable: false }
+              { targets: [8, 9], orderable: false }
             ],
             layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' }
           }}>
@@ -230,6 +231,9 @@ export default function ManualBookDispatchPage({
           <Column title="Exams" data="exams_attended" />
           <Column title="Sent" data="books_sent" />
           <Column title="Paid" data="books_paid" />
+          <Column title="Cash payment" data="enrollment_key">{(_value, _type, row: CoordinatorWalletMember) =>
+            <ManualBookPaymentInput enrollmentKey={row.enrollment_key} bbsNumber={row.bbs_number}
+              onSaved={() => setMemberRefresh((value) => value + 1)} />}</Column>
           <Column title="Options" data="enrollment_key">{(_value, _type, row: CoordinatorWalletMember) =>
             <span className="course-manual-dispatch-actions">
               <Button variant="outline" onClick={() => onCandidate(row.enrollment_key)}>View candidate</Button>
@@ -247,7 +251,7 @@ export default function ManualBookDispatchPage({
           searching: false, autoWidth: true, order: [[0, 'asc']],
           scrollX: true, scrollY: 'var(--dispatch-table-height, 400px)', scrollCollapse: false,
           columnDefs: recipientType === 'individual' ? [
-            { targets: [2, 3, 4, 5, 8], orderable: false, defaultContent: '—' }
+            { targets: [2, 3, 4, 5, 8, 9], orderable: false, defaultContent: '—' }
           ] : [
             { targets: 0, width: '8%' },
             { targets: 1, width: '19%' },
@@ -289,6 +293,9 @@ export default function ManualBookDispatchPage({
             , <Column key="paid" title="Paid" data="books_paid" />
             , <Column key="district" title="District" data="district" />
             , <Column key="state" title="State" data="state" />
+            , <Column key="cash-payment" title="Cash payment" data="enrollment_key">{(_value, _type, row: Candidate) =>
+              <ManualBookPaymentInput enrollmentKey={row.enrollment_key} bbsNumber={row.bbs_identifier}
+                onSaved={() => recipientTable.current?.dt()?.ajax.reload(undefined, false)} />}</Column>
             , <Column key="options" title="Options" data="enrollment_key">{(_value, _type, row: Candidate) =>
               <span className="course-manual-dispatch-actions">
                 <Button variant="outline" onClick={() => onCandidate(row.enrollment_key)}>View candidate</Button>
