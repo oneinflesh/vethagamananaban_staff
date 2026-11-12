@@ -12,10 +12,18 @@ export default function ManualBookSendButton({
 
   return (
     <Button
-      disabled={!state?.selectedCount || !!state.sendingCandidate}
+      disabled={
+        !state?.selectedCount ||
+        !!state.sendingCandidate ||
+        state.sentCandidates.has(candidate.enrollment_key)
+      }
       onClick={() => state?.onSend(candidate)}
     >
-      {state?.sendingCandidate === candidate.enrollment_key ? 'Preparing…' : 'Send books'}
+      {state?.sendingCandidate === candidate.enrollment_key
+        ? 'Preparing…'
+        : state?.sentCandidates.has(candidate.enrollment_key)
+          ? 'Sent'
+          : 'Send books'}
     </Button>
   )
 }

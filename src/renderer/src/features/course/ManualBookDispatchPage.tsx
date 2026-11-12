@@ -42,11 +42,13 @@ export default function ManualBookDispatchPage({
   const [books, setBooks] = useState<ExamInfo[]>([])
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set())
   const [selectedBooks, setSelectedBooks] = useState<Set<string>>(new Set())
+  const [sentCandidates, setSentCandidates] = useState<Set<string>>(new Set())
   const [choosingBooks, setChoosingBooks] = useState(false)
   const [sending, setSending] = useState(false)
   const [sendingCandidate, setSendingCandidate] = useState<string | null>(null)
   const [memberRefresh, setMemberRefresh] = useState(0)
   const recipientTable = useRef<DataTableRef>(null)
+  const sendingCandidateRef = useRef(false)
   const notify = useNotifications()
   const pageRef = useDispatchTableHeight(`${recipientType}:${coordinator?.coordinator_key ?? ''}`)
 
@@ -68,6 +70,7 @@ export default function ManualBookDispatchPage({
     let active = true
     setBooks([])
     setSelectedBooks(new Set())
+    setSentCandidates(new Set())
     getRegistrationOptions().then((options) => {
       if (active) setBooks(options.exams.filter((book) => book.is_active))
     }).catch((error) => {
@@ -136,7 +139,6 @@ export default function ManualBookDispatchPage({
       }
       notify.success(`${examKeys.length} books parcelled for ${sent} people under C-${coordinator.number}`)
       setSelectedMembers(new Set())
-      setSelectedBooks(new Set())
       setMemberRefresh((value) => value + 1)
     } finally {
       setSending(false)
@@ -144,7 +146,8 @@ export default function ManualBookDispatchPage({
   }
 
   async function sendToCandidate(row: Candidate): Promise<void> {
-    if (!selectedBooks.size || sendingCandidate) return
+    if (!selectedBooks.size || sendingCandidateRef.current || sentCandidates.has(row.enrollment_key)) return
+    sendingCandidateRef.current = true
     setSendingCandidate(row.enrollment_key)
     try {
       const count = selectedBooks.size
@@ -152,11 +155,12 @@ export default function ManualBookDispatchPage({
         exam_keys: [...selectedBooks], tracking_number: '', allow_credit: true
       })
       notify.success(`${count} book${count === 1 ? '' : 's'} parcelled for ${row.bbs_identifier}`)
-      setSelectedBooks(new Set())
+      setSentCandidates((current) => new Set(current).add(row.enrollment_key))
       recipientTable.current?.dt()?.ajax.reload(undefined, false)
     } catch (error) {
       notify.error(error instanceof Error ? error.message : 'Could not send books')
     } finally {
+      sendingCandidateRef.current = false
       setSendingCandidate(null)
     }
   }
@@ -236,7 +240,7 @@ export default function ManualBookDispatchPage({
       </div>
     </> : <>
       <div className={`course-table-wrap course-table-wrap--candidates course-manual-dispatch-table course-manual-dispatch-table--${recipientType === 'individual' ? 'individual' : 'coordinators'}`}>
-        <ManualBookSendContext.Provider value={{ selectedCount: selectedBooks.size, sendingCandidate,
+        <ManualBookSendContext.Provider value={{ selectedCount: selectedBooks.size, sendingCandidate, sentCandidates,
           onSend: (candidate) => { void sendToCandidate(candidate) } }}>
         <DataTable ref={recipientTable} key={`${recipientType}:${country}:${search}`} className="display course-table" options={{
           serverSide: true, processing: true, pageLength: 20, lengthChange: false,
@@ -310,7 +314,8 @@ export default function ManualBookDispatchPage({
     </>}
     {loading && <p role="status">Loading…</p>}
     {choosingBooks && <CoordinatorBookPicker books={books} selected={selectedBooks}
-      onChange={setSelectedBooks} onClose={() => setChoosingBooks(false)} />}
+      onChange={(next) => { setSelectedBooks(next); setSentCandidates(new Set()) }}
+      onClose={() => setChoosingBooks(false)} />}
     {paymentCandidate && <CandidateActionPanel action="payment" candidate={paymentCandidate}
       onClose={() => setPaymentCandidate(null)}
       onChanged={() => {
