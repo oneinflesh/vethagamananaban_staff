@@ -245,12 +245,20 @@ export default function ManualBookDispatchPage({
         <DataTable key={`${coordinator.coordinator_key}:${search}:${[...selectedMembers].sort().join(',')}`}
           data={members.filter((member) => `${member.bbs_number} ${member.name}`.toLowerCase().includes(search.toLowerCase()))}
           className="display course-table" options={{
-            pageLength: 500, rowId: 'enrollment_key', lengthChange: false, searching: false, autoWidth: true,
-            scrollX: true, scrollY: 'var(--dispatch-table-height, 320px)', scrollCollapse: false,
+            pageLength: 500, rowId: 'enrollment_key', lengthChange: false, searching: false, autoWidth: false,
+            scrollY: 'var(--dispatch-table-height, 320px)', scrollCollapse: false,
             order: [[1, 'asc']],
             columnDefs: [
-              { targets: 0, orderable: false },
-              { targets: [8, 9], orderable: false }
+              { targets: 0, orderable: false, width: '5%' },
+              { targets: 1, width: '8%' },
+              { targets: 2, width: '19%' },
+              { targets: 3, width: '9%' },
+              { targets: 4, width: '14%' },
+              { targets: 5, width: '6%' },
+              { targets: 6, width: '5%' },
+              { targets: 7, width: '5%' },
+              { targets: 8, orderable: false, width: '11%' },
+              { targets: 9, orderable: false, width: '18%' }
             ],
             layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' }
           }}>
@@ -290,17 +298,25 @@ export default function ManualBookDispatchPage({
         <DataTable ref={recipientTable} key={`${recipientType}:${country}:${search}`} className="display course-table" options={{
           serverSide: true, processing: true, pageLength: 500, displayStart: getManualDispatchHistory(country).starts[recipientType],
           rowId: recipientType === 'individual' ? 'enrollment_key' : 'coordinator_key', lengthChange: false,
-          searching: false, autoWidth: true, order: [[0, 'asc']],
-          scrollX: true, scrollY: 'var(--dispatch-table-height, 400px)', scrollCollapse: false,
+          searching: false, autoWidth: false, order: [[0, 'asc']],
+          scrollY: 'var(--dispatch-table-height, 400px)', scrollCollapse: false,
           columnDefs: recipientType === 'individual' ? [
+            { targets: 0, width: '7%' },
+            { targets: 1, width: '16%' },
+            { targets: 2, width: '8%' },
+            { targets: [3, 4, 5], width: '5%' },
+            { targets: 6, width: '12%' },
+            { targets: 7, width: '10%' },
+            { targets: 8, width: '10%' },
+            { targets: 9, width: '22%' },
             { targets: [2, 3, 4, 5, 8, 9], orderable: false, defaultContent: '—' }
           ] : [
-            { targets: 0, width: '8%' },
-            { targets: 1, width: '19%' },
+            { targets: 0, width: '7%' },
+            { targets: 1, width: '22%' },
             { targets: 2, width: '8%' },
-            { targets: 3, width: '15%' },
+            { targets: 3, width: '16%' },
             { targets: 4, width: '15%' },
-            { targets: 5, orderable: false, width: '35%' }
+            { targets: 5, orderable: false, width: '32%' }
           ],
           layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' },
           ajax: (request, callback) => {

@@ -62,8 +62,8 @@
 .course-manual-dispatch-tabs button.active { border-color: #a95321; background: #fff0e4; color: #783709; font-weight: 700; }
 .course-manual-dispatch-search { max-width: 260px; }
 .course-manual-dispatch-actions { display: flex; gap: 6px; white-space: nowrap; }
-.course-manual-dispatch-actions button { padding: 5px 8px; font-size: 11px; }
-.course-manual-dispatch-payment { width: 105px; }
+.course-manual-dispatch-actions button { padding: 4px 6px; font-size: 10px; }
+.course-manual-dispatch-payment { box-sizing: border-box; width: 100%; max-width: 95px; }
 .course-manual-dispatch-address { margin: 0 0 10px; color: #684c3a; }
 .page.course-manual-dispatch-page { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .course-manual-dispatch-page .course-toolbar { flex: none; }
@@ -71,8 +71,14 @@
 .course-table-wrap.course-manual-dispatch-table { max-height: none; overflow: hidden; }
 .course-table-wrap--candidates.course-manual-dispatch-table table.dataTable {
   min-width: 0;
-  table-layout: auto;
+  width: 100% !important;
+  table-layout: fixed;
 }
+.course-manual-dispatch-table .dt-scroll-head,
+.course-manual-dispatch-table .dt-scroll-body { width: 100% !important; }
+.course-manual-dispatch-table .dt-scroll-head th,
+.course-manual-dispatch-table .dt-scroll-body td { box-sizing: border-box; padding: 7px 6px; }
+.course-manual-dispatch-table .dt-scroll-body td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .course-manual-dispatch-table--individual table.dataTable th:nth-child(2),
 .course-manual-dispatch-table--individual table.dataTable td:nth-child(2),
 .course-manual-dispatch-table--members table.dataTable th:nth-child(3),
@@ -81,7 +87,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.course-manual-dispatch-table .dt-scroll-body { overflow-x: auto !important; scrollbar-width: auto; scrollbar-color: #b87a48 #f4e9df; }
+.course-manual-dispatch-table .dt-scroll-body { overflow-x: hidden !important; scrollbar-width: auto; scrollbar-color: #b87a48 #f4e9df; }
 .course-manual-dispatch-table .dt-scroll-body::-webkit-scrollbar { width: 12px; height: 12px; }
 .course-manual-dispatch-table .dt-scroll-body::-webkit-scrollbar-thumb { border: 2px solid #f4e9df; border-radius: 8px; background: #b87a48; }
 .course-manual-dispatch-table .dt-scroll-body::-webkit-scrollbar-track { background: #f4e9df; }
