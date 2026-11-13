@@ -22,6 +22,8 @@ import ManualBookSendButton from './ManualBookSendButton'
 import ManualBookPaymentInput from './ManualBookPaymentInput'
 import { ManualBookSendContext } from './manualBookSendContext'
 import { getManualDispatchHistory } from './manualBookDispatchHistory'
+import ManualBookMemberCheckbox from './ManualBookMemberSelection'
+import { ManualBookMemberSelectionContext } from './manualBookMemberSelectionContext'
 
 export default function ManualBookDispatchPage({
   country,
@@ -54,8 +56,34 @@ export default function ManualBookDispatchPage({
   const notify = useNotifications()
   const pageRef = useDispatchTableHeight(`${recipientType}:${coordinator?.coordinator_key ?? ''}`)
   const selectedSequences = useMemo(() => new Set(books.filter((book) => selectedBooks.has(book.exam_key)).map((book) => book.sequence)), [books, selectedBooks])
+  const visibleMembers = useMemo(() => members.filter((member) =>
+    `${member.bbs_number} ${member.name}`.toLowerCase().includes(search.toLowerCase())
+  ), [members, search])
+  const allVisibleSelected = visibleMembers.length > 0 && visibleMembers.every((member) => selectedMembers.has(member.enrollment_key))
+
+  function toggleMember(key: string): void {
+    setSelectedMembers((current) => {
+      const next = new Set(current)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  function toggleVisibleMembers(): void {
+    setSelectedMembers((current) => {
+      const next = new Set(current)
+      for (const member of visibleMembers) {
+        if (allVisibleSelected) next.delete(member.enrollment_key)
+        else next.add(member.enrollment_key)
+      }
+      return next
+    })
+  }
 
   function selectCoordinatorPeople(row: Coordinator): void {
+    const scrollBody = recipientTable.current?.dt()?.table().container().querySelector<HTMLElement>('.dt-scroll-body')
+    getManualDispatchHistory(country).coordinatorScrollTop = scrollBody?.scrollTop ?? 0
     setLoading(true)
     setSelectedMembers(new Set())
     setCoordinator(row)
@@ -75,6 +103,7 @@ export default function ManualBookDispatchPage({
     const saved = getManualDispatchHistory(country)
     saved.search = value
     saved.starts[recipientType] = 0
+    if (recipientType === 'coordinator' && !coordinator) saved.coordinatorScrollTop = 0
     setSearch(value)
   }
 
@@ -238,12 +267,16 @@ export default function ManualBookDispatchPage({
         Parcel address: {coordinator.address_line1 || 'No address'}, {coordinator.district}, {coordinator.state} {coordinator.postal_code}
       </p>
       <div className="course-manual-dispatch-controls">
+        <Button variant="outline" disabled={!visibleMembers.length || sending} onClick={toggleVisibleMembers}>
+          {allVisibleSelected ? 'Deselect all' : 'Select all'}
+        </Button>
         <Button disabled={!selectedBooks.size || selectedSequences.size !== selectedBooks.size || !selectedMembers.size || sending}
           onClick={() => void sendToCoordinator()}>{sending ? 'Preparing…' : `Parcel ${selectedBooks.size} books for ${selectedMembers.size} people`}</Button>
       </div>
       <div className="course-table-wrap course-table-wrap--candidates course-manual-dispatch-table course-manual-dispatch-table--members" onContextMenu={openResendMenu}>
-        <DataTable key={`${coordinator.coordinator_key}:${search}:${[...selectedMembers].sort().join(',')}`}
-          data={members.filter((member) => `${member.bbs_number} ${member.name}`.toLowerCase().includes(search.toLowerCase()))}
+        <ManualBookMemberSelectionContext.Provider value={{ selected: selectedMembers, disabled: sending, toggle: toggleMember }}>
+        <DataTable key={`${coordinator.coordinator_key}:${search}`}
+          data={visibleMembers}
           className="display course-table" options={{
             pageLength: 500, rowId: 'enrollment_key', lengthChange: false, searching: false, autoWidth: false,
             scrollY: 'var(--dispatch-table-height, 320px)', scrollCollapse: false,
@@ -263,14 +296,7 @@ export default function ManualBookDispatchPage({
             layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' }
           }}>
           <Column title="Select" data="enrollment_key">{(_value, _type, row: CoordinatorWalletMember) =>
-            <input type="checkbox" aria-label={`Select ${row.bbs_number}`}
-              checked={selectedMembers.has(row.enrollment_key)} disabled={sending}
-              onChange={() => setSelectedMembers((current) => {
-                const next = new Set(current)
-                if (next.has(row.enrollment_key)) next.delete(row.enrollment_key)
-                else next.add(row.enrollment_key)
-                return next
-              })} />}</Column>
+            <ManualBookMemberCheckbox memberKey={row.enrollment_key} bbsNumber={row.bbs_number} />}</Column>
           <Column title="BBS no." data="bbs_number">{(value, type) =>
             type === 'sort' || type === 'type' ? Number(String(value).replace(/\D/g, '')) : String(value)}</Column>
           <Column title="Name" data="name" />
@@ -290,6 +316,7 @@ export default function ManualBookDispatchPage({
               <Button variant="outline" onClick={() => onCandidate(row.enrollment_key)}>View candidate</Button>
             </span>}</Column>
         </DataTable>
+        </ManualBookMemberSelectionContext.Provider>
       </div>
     </> : <>
       <div className={`course-table-wrap course-table-wrap--candidates course-manual-dispatch-table course-manual-dispatch-table--${recipientType === 'individual' ? 'individual' : 'coordinators'}`} onContextMenu={openResendMenu}>
@@ -319,6 +346,11 @@ export default function ManualBookDispatchPage({
             { targets: 5, orderable: false, width: '32%' }
           ],
           layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' },
+          drawCallback: function () {
+            if (recipientType !== 'coordinator') return
+            const body = this.api().table().container().querySelector<HTMLElement>('.dt-scroll-body')
+            if (body) body.scrollTop = getManualDispatchHistory(country).coordinatorScrollTop
+          },
           ajax: (request, callback) => {
             const page = Math.floor((request.start ?? 0) / (request.length || 500)) + 1
             const column = request.order?.[0]?.column ?? 0

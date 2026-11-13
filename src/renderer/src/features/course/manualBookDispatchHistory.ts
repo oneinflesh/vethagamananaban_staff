@@ -4,6 +4,7 @@ type DispatchHistory = {
   search: string
   selectedBooks: string[]
   starts: Record<RecipientType, number>
+  coordinatorScrollTop: number
 }
 
 const history = new Map<string, DispatchHistory>()
@@ -15,7 +16,8 @@ export function getManualDispatchHistory(country: string): DispatchHistory {
       recipientType: 'individual',
       search: '',
       selectedBooks: [],
-      starts: { individual: 0, coordinator: 0 }
+      starts: { individual: 0, coordinator: 0 },
+      coordinatorScrollTop: 0
     }
     history.set(country, saved)
   }
