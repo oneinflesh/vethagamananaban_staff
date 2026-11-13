@@ -11,6 +11,7 @@ import {
   type CandidateFilterOptions
 } from './courseApi'
 import { DataTable, Column } from './dataTable'
+import { rememberTable, useRememberedState } from '../table/tableMemory'
 import { resizeColumns } from './resizeColumns'
 import { statusLabel } from './tableFilters'
 import { printCoordinatorLabels } from './coordinatorLabels'
@@ -38,15 +39,15 @@ export default function CoordinatorList({
   const [exporting, setExporting] = useState(false)
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [stateFilter, setStateFilter] = useState('')
-  const [districtFilter, setDistrictFilter] = useState('')
+  const [search, setSearch] = useRememberedState(`coordinators:${country}:search`, '')
+  const [statusFilter, setStatusFilter] = useRememberedState(`coordinators:${country}:status`, '')
+  const [stateFilter, setStateFilter] = useRememberedState(`coordinators:${country}:state`, '')
+  const [districtFilter, setDistrictFilter] = useRememberedState(`coordinators:${country}:district`, '')
   const table = useRef<DataTableRef>(null)
-  const tableReady = useRef(false)
   const requestSequence = useRef(0)
   const { loading, leaving, finish } = useSmoothLoading()
   const query = useRef({ country, search, statusFilter, stateFilter, districtFilter })
+  const lastQuery = useRef(JSON.stringify({ country, search, statusFilter, stateFilter, districtFilter }))
   useLayoutEffect(() => {
     query.current = { country, search, statusFilter, stateFilter, districtFilter }
   }, [country, search, statusFilter, stateFilter, districtFilter])
@@ -64,10 +65,9 @@ export default function CoordinatorList({
     }
   }, [country, stateFilter])
   useEffect(() => {
-    if (!tableReady.current) {
-      tableReady.current = true
-      return
-    }
+    const current = JSON.stringify(query.current)
+    if (lastQuery.current === current) return
+    lastQuery.current = current
     const timer = window.setTimeout(() => table.current?.dt()?.ajax.reload(), search ? 300 : 0)
     return () => window.clearTimeout(timer)
   }, [country, search, statusFilter, stateFilter, districtFilter])
@@ -185,6 +185,7 @@ export default function CoordinatorList({
           ref={table}
           className="display course-table"
           options={{
+            ...rememberTable(`coordinators:${country}`),
             pageLength: 20,
             serverSide: true,
             processing: true,

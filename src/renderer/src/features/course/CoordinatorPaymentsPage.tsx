@@ -3,6 +3,7 @@ import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
 import { useNotifications } from '../notifications/Notifications'
 import { DataTable, Column } from './dataTable'
+import { rememberTable, useRememberedState } from '../table/tableMemory'
 import PaymentHistoryDialog from './PaymentHistoryDialog'
 import { formatPaymentBalance, paymentBalanceTone } from './paymentBalance'
 import { resizeColumns } from './resizeColumns'
@@ -32,7 +33,8 @@ export default function CoordinatorPaymentsPage({ country, onBack, onCandidate, 
   const [members, setMembers] = useState<CoordinatorWalletMember[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [amount, setAmount] = useState('')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useRememberedState(`coordinator-payments:${country}:search`, '')
+  const appliedSearch = useRef({ country, search })
   const [memberSearch, setMemberSearch] = useState('')
   const [memberStart, setMemberStart] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -45,6 +47,8 @@ export default function CoordinatorPaymentsPage({ country, onBack, onCandidate, 
   const memberTable = useRef<DataTableRef>(null)
 
   useEffect(() => {
+    if (appliedSearch.current.country === country && appliedSearch.current.search === search) return
+    appliedSearch.current = { country, search }
     coordinatorTable.current?.dt()?.ajax.reload()
   }, [country, search])
 
@@ -190,6 +194,7 @@ export default function CoordinatorPaymentsPage({ country, onBack, onCandidate, 
     </div>
     <div className="course-table-wrap course-table-wrap--candidates" onPointerDown={resizeColumns}>
       <DataTable ref={coordinatorTable} className="display course-table" options={{
+        ...rememberTable(`coordinator-payments:${country}`),
         serverSide: true, processing: true, pageLength: 20, lengthChange: false, searching: false,
         ordering: false, autoWidth: false,
         layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' },
@@ -246,6 +251,7 @@ export default function CoordinatorPaymentsPage({ country, onBack, onCandidate, 
       <div className="course-table-wrap course-table-wrap--candidates" onPointerDown={resizeColumns}>
         <DataTable ref={memberTable} key={`${coordinator?.coordinator_key}:${[...selected].sort().join(',')}:${memberSearch}`}
           data={visibleMembers} className="display course-table" options={{
+          ...rememberTable(`coordinator-payment-members:${coordinator?.coordinator_key}`),
           pageLength: 20, displayStart: memberStart, lengthChange: false, searching: false, ordering: false, autoWidth: false,
           layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' }
         }}>

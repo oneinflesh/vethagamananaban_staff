@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
 import { useNotifications } from '../notifications/Notifications'
 import { DataTable, Column } from './dataTable'
+import { rememberTable, useRememberedState } from '../table/tableMemory'
 import { candidateAction, getPaymentBalances, type Candidate, type PaymentBalance } from './courseApi'
 import { formatPaymentBalance, paymentBalanceTone } from './paymentBalance'
 import { resizeColumns } from './resizeColumns'
@@ -18,12 +19,15 @@ export default function PreviousBalancePage({
 }): React.JSX.Element {
   const notify = useNotifications()
   const table = useRef<DataTableRef>(null)
-  const query = useRef({ country, search: '' })
+  const [search, setSearch] = useRememberedState(`previous-balances:${country}:search`, '')
+  const query = useRef({ country, search: search.trim() })
+  const appliedSearch = useRef({ country, search })
   const saving = useRef(new Set<string>())
-  const [search, setSearch] = useState('')
 
   useEffect(() => {
+    if (appliedSearch.current.country === country && appliedSearch.current.search === search) return
     const timer = window.setTimeout(() => {
+      appliedSearch.current = { country, search }
       query.current = { country, search: search.trim() }
       table.current?.dt()?.ajax.reload()
     }, 300)
@@ -105,6 +109,7 @@ export default function PreviousBalancePage({
     </div>
     <div className="course-table-wrap course-table-wrap--candidates" onPointerDown={resizeColumns}>
       <DataTable ref={table} className="display course-table" options={{
+        ...rememberTable(`previous-balances:${country}`),
         serverSide: true, processing: true, pageLength: 20, lengthChange: false,
         searching: false, ordering: false, autoWidth: false, rowId: 'enrollment_key',
         layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' },

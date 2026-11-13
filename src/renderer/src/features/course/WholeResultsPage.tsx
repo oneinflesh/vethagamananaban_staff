@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { useNotifications } from '../notifications/Notifications'
 import FullScreenLoader from '../shell/FullScreenLoader'
 import { DataTable, Column } from './dataTable'
+import { useRememberedState } from '../table/tableMemory'
 import { getCandidateFilterOptions, getRegistrationOptions } from './courseApi'
 import {
   getWholeResults,
@@ -23,11 +24,11 @@ export default function WholeResultsPage({
   const notify = useNotifications()
   const [courseKey, setCourseKey] = useState('')
   const [data, setData] = useState<WholeResultsPageData | null>(null)
-  const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
-  const [query, setQuery] = useState('')
-  const [state, setState] = useState('')
-  const [district, setDistrict] = useState('')
+  const [page, setPage] = useRememberedState(`whole-results:${country}:page`, 1)
+  const [search, setSearch] = useRememberedState(`whole-results:${country}:search`, '')
+  const [query, setQuery] = useRememberedState(`whole-results:${country}:query`, '')
+  const [state, setState] = useRememberedState(`whole-results:${country}:state`, '')
+  const [district, setDistrict] = useRememberedState(`whole-results:${country}:district`, '')
   const [states, setStates] = useState<string[]>([])
   const [districts, setDistricts] = useState<string[]>([])
   const savingCells = useRef(new Set<string>())
@@ -41,12 +42,13 @@ export default function WholeResultsPage({
   const [retry, setRetry] = useState(0)
 
   useEffect(() => {
+    if (query === search.trim()) return
     const timer = window.setTimeout(() => {
       setPage(1)
       setQuery(search.trim())
     }, 300)
     return () => window.clearTimeout(timer)
-  }, [search])
+  }, [search, query, setPage, setQuery])
 
   useEffect(() => {
     let active = true

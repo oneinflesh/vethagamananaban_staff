@@ -1,6 +1,7 @@
 import type { MouseEvent, RefObject } from 'react'
 import type { DataTableRef } from 'datatables.net-react'
 import { DataTable, Column } from '../course/dataTable'
+import { rememberTable } from '../table/tableMemory'
 import { resizeColumns } from '../course/resizeColumns'
 import type { ShipmentPage, ShipmentRow } from './shippingApi'
 
@@ -14,11 +15,13 @@ function displayDate(value: string | null): string {
 
 export default function ShippingTable({
   loadPage,
+  country,
   table,
   onContextMenu,
   onItemsClick
 }: {
   loadPage: (page: number, ordering: string) => Promise<ShipmentPage>
+  country: string
   table: RefObject<DataTableRef | null>
   onContextMenu: (event: MouseEvent<HTMLDivElement>) => void
   onItemsClick: (event: MouseEvent<HTMLDivElement>) => void
@@ -34,6 +37,7 @@ export default function ShippingTable({
         ref={table}
         className="display shipping-table"
         options={{
+          ...rememberTable(`shipping:${country}`),
           pageLength: 20,
           serverSide: true,
           processing: true,

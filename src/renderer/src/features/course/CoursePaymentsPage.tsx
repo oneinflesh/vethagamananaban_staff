@@ -3,6 +3,7 @@ import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
 import { useNotifications } from '../notifications/Notifications'
 import { DataTable, Column } from './dataTable'
+import { rememberTable, useRememberedState } from '../table/tableMemory'
 import { candidateAction, getPaymentBalances, type PaymentBalance } from './courseApi'
 import { resizeColumns } from './resizeColumns'
 import PaymentHistoryDialog from './PaymentHistoryDialog'
@@ -24,15 +25,18 @@ export default function CoursePaymentsPage({
   const notify = useNotifications()
   const table = useRef<DataTableRef>(null)
   const rows = useRef<PaymentBalance[]>([])
-  const query = useRef({ country, search: '' })
+  const [search, setSearch] = useRememberedState(`course-payments:${country}:search`, '')
+  const query = useRef({ country, search: search.trim() })
+  const appliedSearch = useRef({ country, search })
   const saving = useRef(new Set<string>())
   const preparing = useRef(new Set<string>())
-  const [search, setSearch] = useState('')
   const [menu, setMenu] = useState<{ key: string; x: number; y: number } | null>(null)
   const [historyKey, setHistoryKey] = useState<string | null>(null)
 
   useEffect(() => {
+    if (appliedSearch.current.country === country && appliedSearch.current.search === search) return
     const timer = window.setTimeout(() => {
+      appliedSearch.current = { country, search }
       query.current = { country, search: search.trim() }
       table.current?.dt()?.ajax.reload()
     }, 300)
@@ -143,6 +147,7 @@ export default function CoursePaymentsPage({
           ref={table}
           className="display course-table"
           options={{
+            ...rememberTable(`course-payments:${country}`),
             serverSide: true,
             processing: true,
             pageLength: 20,

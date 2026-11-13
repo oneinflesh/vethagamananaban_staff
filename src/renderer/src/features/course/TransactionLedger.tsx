@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useNotifications } from '../notifications/Notifications'
 import { DataTable, Column } from './dataTable'
+import { useRememberedState } from '../table/tableMemory'
 import { candidateAction, getPaymentHistory, type PaymentHistoryEntry, type PaymentHistoryPage } from './courseApi'
 
 export default function TransactionLedger({
@@ -16,7 +17,7 @@ export default function TransactionLedger({
   onRestored?: () => void
 }): React.JSX.Element {
   const notify = useNotifications()
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useRememberedState(`transactions:${candidateKey}:page`, 1)
   const [data, setData] = useState<PaymentHistoryPage | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)

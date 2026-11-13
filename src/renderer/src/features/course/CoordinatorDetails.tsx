@@ -16,6 +16,7 @@ import {
   type CoordinatorMember
 } from './courseApi'
 import { DataTable, Column } from './dataTable'
+import { rememberTable, useRememberedState } from '../table/tableMemory'
 import { resizeColumns } from './resizeColumns'
 import { printCoordinatorLabels } from './coordinatorLabels'
 import CoordinatorBookHistoryDialog from './CoordinatorBookHistoryDialog'
@@ -41,14 +42,14 @@ export default function CoordinatorDetails({
   const [selectedStatuses, setSelectedStatuses] = useState<
     Map<string, CoordinatorMember['status']>
   >(new Map())
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useRememberedState(`coordinator-members:${coordinatorKey}:search`, '')
   const [menu, setMenu] = useState<{ x: number; y: number; person: CoordinatorMember } | null>(null)
   const [sentBooksPerson, setSentBooksPerson] = useState<CoordinatorMember | null>(null)
   const table = useRef<DataTableRef>(null)
   const tableWrap = useRef<HTMLDivElement>(null)
-  const tableReady = useRef(false)
   const selectedKeysRef = useRef(selectedKeys)
   const query = useRef({ coordinatorKey, search, restoreOpen })
+  const lastQuery = useRef(JSON.stringify(query.current))
   useLayoutEffect(() => {
     query.current = { coordinatorKey, search, restoreOpen }
   }, [coordinatorKey, search, restoreOpen])
@@ -74,10 +75,9 @@ export default function CoordinatorDetails({
     }
   }, [coordinatorKey, finish])
   useEffect(() => {
-    if (!tableReady.current) {
-      tableReady.current = true
-      return
-    }
+    const current = JSON.stringify(query.current)
+    if (lastQuery.current === current) return
+    lastQuery.current = current
     const timer = window.setTimeout(() => table.current?.dt()?.ajax.reload(), search ? 300 : 0)
     return () => window.clearTimeout(timer)
   }, [coordinatorKey, search, restoreOpen])
@@ -538,6 +538,7 @@ export default function CoordinatorDetails({
           ref={table}
           className="display course-table"
           options={{
+            ...rememberTable(`coordinator-members:${coordinatorKey}`),
             pageLength: 20,
             serverSide: true,
             processing: true,

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import FullScreenLoader from '../shell/FullScreenLoader'
 import { useNotifications } from '../notifications/Notifications'
+import { useRememberedState } from '../table/tableMemory'
 import {
   getCoordinatorCandidateOptions,
   updateCoordinatorMembers,
@@ -21,9 +22,9 @@ export default function CoordinatorPeoplePage({
 }): React.JSX.Element {
   const [candidates, setCandidates] = useState<CoordinatorCandidateOption[]>([])
   const [count, setCount] = useState(0)
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useRememberedState(`coordinator-people:${coordinator.coordinator_key}:page`, 1)
   const [changes, setChanges] = useState<Map<string, boolean>>(() => new Map())
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useRememberedState(`coordinator-people:${coordinator.coordinator_key}:search`, '')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)

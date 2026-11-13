@@ -6,6 +6,7 @@ import FullScreenLoader from '../shell/FullScreenLoader'
 import { useNotifications } from '../notifications/Notifications'
 import { useSmoothLoading } from '../shell/useSmoothLoading'
 import MonthlyDispatchTable, { type DispatchRow, type DispatchView } from './MonthlyDispatchTable'
+import { useRememberedState } from '../table/tableMemory'
 import {
   candidateAction,
   getInitialDispatch,
@@ -36,7 +37,7 @@ export default function MonthlyDispatchPage({
   onCandidate: (key: string) => void
 }): React.JSX.Element {
   const [options, setOptions] = useState<RegistrationOptions | null>(null)
-  const [examKey, setExamKey] = useState('')
+  const [examKey, setExamKey] = useRememberedState(`monthly-dispatch:${country}:exam`, '')
   const [summary, setSummary] = useState<MonthlyPage['summary'] | null>(null)
   const [rows, setRows] = useState<DispatchRow[]>([])
   const [unpaid, setUnpaid] = useState<MonthlyStudent[]>([])
@@ -45,11 +46,11 @@ export default function MonthlyDispatchPage({
     states: [],
     districts: []
   })
-  const [view, setView] = useState<DispatchView>('dispatch')
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('PROCESSING')
-  const [stateFilter, setStateFilter] = useState('')
-  const [districtFilter, setDistrictFilter] = useState('')
+  const [view, setView] = useRememberedState<DispatchView>(`monthly-dispatch:${country}:view`, 'dispatch')
+  const [search, setSearch] = useRememberedState(`monthly-dispatch:${country}:search`, '')
+  const [statusFilter, setStatusFilter] = useRememberedState(`monthly-dispatch:${country}:status`, 'PROCESSING')
+  const [stateFilter, setStateFilter] = useRememberedState(`monthly-dispatch:${country}:state`, '')
+  const [districtFilter, setDistrictFilter] = useRememberedState(`monthly-dispatch:${country}:district`, '')
   const [retry, setRetry] = useState(0)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -64,7 +65,6 @@ export default function MonthlyDispatchPage({
   const [tracking, setTracking] = useState('')
   const [savingTrackingKey, setSavingTrackingKey] = useState<string | null>(null)
   const table = useRef<DataTableRef>(null)
-  const tableReady = useRef(false)
   const requestSequence = useRef(0)
   const notify = useNotifications()
   const { loading, leaving, start, finish } = useSmoothLoading()
@@ -80,9 +80,8 @@ export default function MonthlyDispatchPage({
           finish()
           return
         }
-        setExamKey(
-          result.exams.find((item) => item.is_current)?.exam_key ?? result.exams[0]?.exam_key ?? ''
-        )
+        if (!examKey || !result.exams.some((item) => item.exam_key === examKey))
+          setExamKey(result.exams.find((item) => item.is_current)?.exam_key ?? result.exams[0]?.exam_key ?? '')
       })
       .catch((cause) => {
         if (active) {
@@ -104,6 +103,7 @@ export default function MonthlyDispatchPage({
     stateFilter,
     districtFilter
   })
+  const lastQuery = useRef(JSON.stringify({ examKey, country, view, search, statusFilter, stateFilter, districtFilter }))
   useLayoutEffect(() => {
     query.current = { examKey, country, view, search, statusFilter, stateFilter, districtFilter }
   }, [examKey, country, view, search, statusFilter, stateFilter, districtFilter])
@@ -136,10 +136,9 @@ export default function MonthlyDispatchPage({
     }
   }
   useEffect(() => {
-    if (!tableReady.current) {
-      tableReady.current = true
-      return
-    }
+    const current = JSON.stringify(query.current)
+    if (lastQuery.current === current) return
+    lastQuery.current = current
     const timer = window.setTimeout(() => table.current?.dt()?.ajax.reload(), search ? 300 : 0)
     return () => window.clearTimeout(timer)
   }, [examKey, country, search, statusFilter, stateFilter, districtFilter])
@@ -426,6 +425,7 @@ export default function MonthlyDispatchPage({
       {error && <div className="course-error">{error}</div>}
       {examKey && (
         <MonthlyDispatchTable
+          country={country}
           loadPage={loadPage}
           table={table}
           view={view}

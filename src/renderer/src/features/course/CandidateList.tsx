@@ -27,6 +27,7 @@ import type { CourseSection } from './CoursePage'
 import { exportAddressCsv, printAddressLabels, type PaperSize } from './addressLabels'
 import { splitOfflineLabels } from './offlineLabelGroups'
 import { statusLabel } from './tableFilters'
+import { rememberTable, useRememberedState } from '../table/tableMemory'
 
 const names: Record<CourseSection, string> = {
   all: 'All candidates',
@@ -61,10 +62,10 @@ export default function CandidateList({
   const [filterOptions, setFilterOptions] = useState<CandidateFilterOptions>(emptyOptions)
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [stateFilter, setStateFilter] = useState('')
-  const [districtFilter, setDistrictFilter] = useState('')
+  const [search, setSearch] = useRememberedState(`candidates:${country}:${section}:search`, '')
+  const [statusFilter, setStatusFilter] = useRememberedState(`candidates:${country}:${section}:status`, '')
+  const [stateFilter, setStateFilter] = useRememberedState(`candidates:${country}:${section}:state`, '')
+  const [districtFilter, setDistrictFilter] = useRememberedState(`candidates:${country}:${section}:district`, '')
   const [paper, setPaper] = useState<PaperSize>(section === 'newOffline' ? 'A4' : 'A3')
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
   const [visibleKeys, setVisibleKeys] = useState<string[]>([])
@@ -75,7 +76,6 @@ export default function CandidateList({
   const table = useRef<DataTableRef>(null)
   const tableWrap = useRef<HTMLDivElement>(null)
   const selectedRows = useRef(new Map<string, Candidate>())
-  const tableReady = useRef(false)
   const { loading, leaving, finish } = useSmoothLoading()
   const notify = useNotifications()
   useEffect(() => {
@@ -112,6 +112,7 @@ export default function CandidateList({
     stateFilter,
     districtFilter
   })
+  const lastQuery = useRef(JSON.stringify({ country, mode, status, newOffline, search, statusFilter, stateFilter, districtFilter }))
   useLayoutEffect(() => {
     query.current = {
       country,
@@ -140,10 +141,9 @@ export default function CandidateList({
   }, [country, mode, status, stateFilter])
 
   useEffect(() => {
-    if (!tableReady.current) {
-      tableReady.current = true
-      return
-    }
+    const current = JSON.stringify(query.current)
+    if (lastQuery.current === current) return
+    lastQuery.current = current
     const timer = window.setTimeout(() => table.current?.dt()?.ajax.reload(), search ? 300 : 0)
     return () => window.clearTimeout(timer)
   }, [search, statusFilter, stateFilter, districtFilter, country, mode, status, newOffline])
@@ -493,6 +493,7 @@ export default function CandidateList({
           ref={table}
           className="display course-table"
           options={{
+            ...rememberTable(`candidates:${country}:${section}`),
             pageLength: 20,
             serverSide: true,
             processing: true,

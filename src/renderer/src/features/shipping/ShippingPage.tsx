@@ -15,6 +15,7 @@ import {
   type ShipmentRow
 } from './shippingApi'
 import ShippingTable from './ShippingTable'
+import { useRememberedState } from '../table/tableMemory'
 import './shipping.css'
 
 type SourceFilter = 'all' | 'course' | 'store'
@@ -23,7 +24,6 @@ export default function ShippingPage(): React.JSX.Element {
   const { country } = useCountry()
   const notify = useNotifications()
   const table = useRef<DataTableRef>(null)
-  const filterReady = useRef(false)
   const requestSequence = useRef(0)
   const { loading, leaving, finish } = useSmoothLoading()
   const [rows, setRows] = useState<ShipmentRow[]>([])
@@ -35,14 +35,14 @@ export default function ShippingPage(): React.JSX.Element {
   })
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
-  const [source, setSource] = useState<SourceFilter>('all')
-  const [state, setState] = useState('')
-  const [district, setDistrict] = useState('')
-  const [book, setBook] = useState('')
-  const [status, setStatus] = useState('PARCELLED')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [search, setSearch] = useState('')
+  const [source, setSource] = useRememberedState<SourceFilter>(`shipping:${country}:source`, 'all')
+  const [state, setState] = useRememberedState(`shipping:${country}:state`, '')
+  const [district, setDistrict] = useRememberedState(`shipping:${country}:district`, '')
+  const [book, setBook] = useRememberedState(`shipping:${country}:book`, '')
+  const [status, setStatus] = useRememberedState(`shipping:${country}:status`, 'PARCELLED')
+  const [dateFrom, setDateFrom] = useRememberedState(`shipping:${country}:from`, '')
+  const [dateTo, setDateTo] = useRememberedState(`shipping:${country}:to`, '')
+  const [search, setSearch] = useRememberedState(`shipping:${country}:search`, '')
   const [menu, setMenu] = useState<{ x: number; y: number; row: ShipmentRow } | null>(null)
   const [editing, setEditing] = useState<ShipmentRow | null>(null)
   const [showingItems, setShowingItems] = useState<ShipmentRow | null>(null)
@@ -63,6 +63,7 @@ export default function ShippingPage(): React.JSX.Element {
       ordering: '-shipped_at'
     }
   })
+  const lastQuery = useRef(JSON.stringify({ country, filters: { source, state, district, book, status, dateFrom, dateTo, search, ordering: '-shipped_at' } }))
   useLayoutEffect(() => {
     query.current = {
       country,
@@ -102,10 +103,9 @@ export default function ShippingPage(): React.JSX.Element {
   }
 
   useEffect(() => {
-    if (!filterReady.current) {
-      filterReady.current = true
-      return
-    }
+    const current = JSON.stringify(query.current)
+    if (lastQuery.current === current) return
+    lastQuery.current = current
     const timer = window.setTimeout(() => table.current?.dt()?.ajax.reload(), search ? 300 : 0)
     return () => window.clearTimeout(timer)
   }, [country, source, state, district, book, status, dateFrom, dateTo, search])
@@ -267,6 +267,7 @@ export default function ShippingPage(): React.JSX.Element {
       </div>
       {error && <p className="shipping-error">{error}</p>}
       <ShippingTable
+        country={country}
         loadPage={loadPage}
         table={table}
         onContextMenu={openMenu}

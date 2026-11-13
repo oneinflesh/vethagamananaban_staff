@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useNotifications } from '../notifications/Notifications'
 import { DataTable, Column } from './dataTable'
+import { rememberTable } from '../table/tableMemory'
 import {
   candidateAction,
   getCandidates,
@@ -245,6 +246,7 @@ export default function ManualBookDispatchPage({
         <DataTable key={`${coordinator.coordinator_key}:${search}:${[...selectedMembers].sort().join(',')}`}
           data={members.filter((member) => `${member.bbs_number} ${member.name}`.toLowerCase().includes(search.toLowerCase()))}
           className="display course-table" options={{
+            ...rememberTable(`send-books-members:${coordinator.coordinator_key}`),
             pageLength: 500, rowId: 'enrollment_key', lengthChange: false, searching: false, autoWidth: true,
             scrollX: true, scrollY: 'var(--dispatch-table-height, 320px)', scrollCollapse: false,
             order: [[1, 'asc']],
@@ -288,6 +290,7 @@ export default function ManualBookDispatchPage({
         <ManualBookSendContext.Provider value={{ selectedCount: selectedBooks.size, selectedSequences, sendingCandidate, sentCandidates,
           onSend: (candidate) => { void sendToCandidate(candidate) } }}>
         <DataTable ref={recipientTable} key={`${recipientType}:${country}:${search}`} className="display course-table" options={{
+          ...rememberTable(`send-books:${country}:${recipientType}`),
           serverSide: true, processing: true, pageLength: 500, displayStart: getManualDispatchHistory(country).starts[recipientType],
           rowId: recipientType === 'individual' ? 'enrollment_key' : 'coordinator_key', lengthChange: false,
           searching: false, autoWidth: true, order: [[0, 'asc']],

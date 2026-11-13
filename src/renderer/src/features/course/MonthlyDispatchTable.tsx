@@ -2,6 +2,7 @@ import { type MouseEvent, type RefObject } from 'react'
 import type { DataTableRef } from 'datatables.net-react'
 import { Button } from '@/components/ui/button'
 import { DataTable, Column } from './dataTable'
+import { rememberTable } from '../table/tableMemory'
 import { resizeColumns } from './resizeColumns'
 import type { MonthlyAllocation, MonthlyPage, MonthlyStudent } from './courseApi'
 
@@ -18,6 +19,7 @@ export default function MonthlyDispatchTable({
   loadPage,
   table,
   view,
+  country,
   savingTrackingKey,
   onParcel,
   onTrackingSave,
@@ -28,6 +30,7 @@ export default function MonthlyDispatchTable({
   loadPage: (page: number) => Promise<MonthlyPage>
   table: RefObject<DataTableRef | null>
   view: DispatchView
+  country: string
   savingTrackingKey: string | null
   onParcel: (row: DispatchRow) => void
   onTrackingSave: (row: DispatchRow, value: string) => Promise<boolean>
@@ -63,6 +66,7 @@ export default function MonthlyDispatchTable({
           ref={table}
           className="display course-table"
           options={{
+            ...rememberTable(`monthly-dispatch:${country}:${view}`),
             pageLength: 20,
             serverSide: true,
             processing: true,
@@ -133,6 +137,7 @@ export default function MonthlyDispatchTable({
           ref={table}
           className="display course-table"
           options={{
+            ...rememberTable(`monthly-dispatch:${country}:${view}`),
             pageLength: 20,
             serverSide: true,
             processing: true,

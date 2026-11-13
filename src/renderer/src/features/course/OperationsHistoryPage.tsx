@@ -9,6 +9,7 @@ import {
   type OperationsHistoryDetails
 } from './operationsApi'
 import './operationsHistory.css'
+import { useRememberedState } from '../table/tableMemory'
 
 export default function OperationsHistoryPage({
   country,
@@ -18,10 +19,10 @@ export default function OperationsHistoryPage({
   onBack: () => void
 }): React.JSX.Element {
   const notify = useNotifications()
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useRememberedState(`operations-history:${country}:page`, 1)
   const [history, setHistory] = useState<OperationsHistory | null>(null)
-  const [selectedKey, setSelectedKey] = useState('')
-  const [detailsPage, setDetailsPage] = useState(1)
+  const [selectedKey, setSelectedKey] = useRememberedState(`operations-history:${country}:selected`, '')
+  const [detailsPage, setDetailsPage] = useRememberedState(`operations-history:${country}:details-page`, 1)
   const [details, setDetails] = useState<OperationsHistoryDetails | null>(null)
 
   useEffect(() => {
