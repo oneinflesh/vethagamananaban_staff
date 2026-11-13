@@ -268,7 +268,7 @@ export default function CoursePage(): React.JSX.Element {
   if (manualBookDispatch)
     return <>
       <div className={candidateKey ? 'course-list-host course-list-host--hidden' : 'course-list-host'}>
-        <ManualBookDispatchPage country={country} onBack={() => setManualBookDispatch(false)}
+        <ManualBookDispatchPage key={country} country={country} onBack={() => setManualBookDispatch(false)}
           onCoordinator={setCoordinatorKey}
           onCandidate={(key) => { setCandidateTab('details'); setCandidateKey(key) }} />
       </div>

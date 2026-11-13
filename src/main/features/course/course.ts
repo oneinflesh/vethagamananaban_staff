@@ -6,12 +6,12 @@ export function getCandidates(
   mode: string,
   status: string,
   search: string,
-  filters: { state?: string; district?: string; initialDispatch?: boolean; individualOnly?: boolean; includeProgress?: boolean; ordering?: string } = {}
+  filters: { state?: string; district?: string; initialDispatch?: boolean; individualOnly?: boolean; includeProgress?: boolean; ordering?: string; pageSize?: number } = {}
 ): Promise<unknown> {
   const params = new URLSearchParams({
     country,
     page: String(page),
-    page_size: '20',
+    page_size: String(filters.pageSize ?? 20),
     scope: 'course',
     view: filters.includeProgress ? 'dispatch' : 'compact'
   })
@@ -136,10 +136,11 @@ export function getCoordinatorPage(
     state?: string
     district?: string
     ordering?: string
+    pageSize?: number
   }
 ): Promise<unknown> {
-  const params = new URLSearchParams({ country, page: String(page), page_size: '20' })
-  for (const [name, value] of Object.entries(filters)) if (value) params.set(name, value)
+  const params = new URLSearchParams({ country, page: String(page), page_size: String(filters.pageSize ?? 20) })
+  for (const [name, value] of Object.entries(filters)) if (name !== 'pageSize' && value) params.set(name, String(value))
   return authorizedGet(`staff/course-coordinators/?${params}`)
 }
 export function getCoordinatorFilterOptions(country: string, state: string): Promise<unknown> {

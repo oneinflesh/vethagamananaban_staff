@@ -1,15 +1,13 @@
 import { useRef } from 'react'
 import { useNotifications } from '../notifications/Notifications'
-import { candidateAction } from './courseApi'
+import { candidateAction, type Candidate } from './courseApi'
 
 export default function ManualBookPaymentInput({
   enrollmentKey,
-  bbsNumber,
-  onSaved
+  bbsNumber
 }: {
   enrollmentKey: string
   bbsNumber: string
-  onSaved: () => void
 }): React.JSX.Element {
   const notify = useNotifications()
   const saving = useRef(false)
@@ -25,13 +23,21 @@ export default function ManualBookPaymentInput({
     saving.current = true
     input.disabled = true
     try {
-      await candidateAction('manual-purchase', enrollmentKey, {
+      const updated = (await candidateAction('manual-purchase', enrollmentKey, {
         amount: Number(amount).toFixed(2),
         payment_method: 'CASH'
-      })
+      })) as Candidate
       input.value = ''
+      const balance = Number(updated.wallet_balance) - Number(updated.credit_balance)
+      const balanceCell = input.closest('tr')?.querySelector<HTMLElement>('[data-dispatch-balance]')
+      if (balanceCell) {
+        balanceCell.textContent = `${balance < 0 ? '−' : ''}₹${Math.abs(balance).toFixed(2)}`
+        balanceCell.className =
+          balance < 0 ? 'course-balance--negative' : 'course-balance--positive'
+      }
+      const paidCell = input.closest('tr')?.querySelector<HTMLElement>('[data-dispatch-paid]')
+      if (paidCell) paidCell.textContent = String(updated.books_paid)
       notify.success(`Payment recorded for ${bbsNumber}`)
-      onSaved()
     } catch (error) {
       notify.error(error instanceof Error ? error.message : 'Could not record payment')
     } finally {
@@ -45,6 +51,7 @@ export default function ManualBookPaymentInput({
       className="course-quick-payment course-manual-dispatch-payment"
       type="text"
       inputMode="decimal"
+      data-course-cash-payment
       placeholder="₹ Amount"
       aria-label={`Cash payment for ${bbsNumber}`}
       onBlur={(event) => {
@@ -52,6 +59,19 @@ export default function ManualBookPaymentInput({
       }}
       onKeyDown={(event) => {
         if (event.key === 'Enter') event.currentTarget.blur()
+        if (event.key === 'Tab') {
+          const inputs = Array.from(
+            event.currentTarget
+              .closest('.course-manual-dispatch-table')
+              ?.querySelectorAll<HTMLInputElement>('input[data-course-cash-payment]') ?? []
+          )
+          const currentIndex = inputs.indexOf(event.currentTarget)
+          const next = inputs[currentIndex + (event.shiftKey ? -1 : 1)]
+          if (next) {
+            event.preventDefault()
+            next.focus()
+          }
+        }
       }}
     />
   )

@@ -6,6 +6,7 @@ export type CoordinatorLink = {
 }
 export type Candidate = {
   enrollment_key: string
+  unavailable_book_sequences?: number[]
   bbs_identifier: string
   full_name: string
   email: string
@@ -108,6 +109,7 @@ export const getPaymentBalances = (country: string, page: number, search: string
 export const getPaymentHistory = (key: string, page: number): Promise<PaymentHistoryPage> =>
   window.office.coursePaymentHistory(key, page)
 export type CandidateFilters = {
+  pageSize?: number
   individualOnly?: boolean
   includeProgress?: boolean
   state?: string
@@ -194,6 +196,7 @@ export type OtherBookOptions = {
   funded_book_prices: Record<string, string>
   manual_books: {
     exam_key: string
+    already_sent: boolean
     sequence: number
     exam_title: string
     book_name: string
@@ -281,6 +284,7 @@ export type Coordinator = {
   photo_url: string
 }
 export type CoordinatorFilters = {
+  pageSize?: number
   search?: string
   status?: string
   state?: string

@@ -3,6 +3,7 @@ import type { Candidate } from './courseApi'
 
 type ManualBookSendState = {
   selectedCount: number
+  selectedSequences: Set<number>
   sendingCandidate: string | null
   sentCandidates: Set<string>
   onSend: (candidate: Candidate) => void
