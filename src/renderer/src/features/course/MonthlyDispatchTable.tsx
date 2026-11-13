@@ -42,7 +42,7 @@ export default function MonthlyDispatchTable({
     request: { start?: number; length?: number; draw?: number },
     callback: (response: unknown) => void
   ): void => {
-    void loadPage(Math.floor((request.start ?? 0) / (request.length || 20)) + 1)
+    void loadPage(Math.floor((request.start ?? 0) / (request.length || 500)) + 1)
       .then((page) =>
         callback({
           draw: request.draw,
@@ -66,8 +66,8 @@ export default function MonthlyDispatchTable({
           ref={table}
           className="display course-table"
           options={{
-            ...rememberTable(`monthly-dispatch:${country}:${view}`),
-            pageLength: 20,
+            ...rememberTable(`monthly-dispatch:500:${country}:${view}`),
+            pageLength: 500,
             serverSide: true,
             processing: true,
             ajax,
@@ -137,8 +137,8 @@ export default function MonthlyDispatchTable({
           ref={table}
           className="display course-table"
           options={{
-            ...rememberTable(`monthly-dispatch:${country}:${view}`),
-            pageLength: 20,
+            ...rememberTable(`monthly-dispatch:500:${country}:${view}`),
+            pageLength: 500,
             serverSide: true,
             processing: true,
             ajax,

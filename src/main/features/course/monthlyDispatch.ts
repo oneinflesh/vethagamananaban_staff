@@ -12,7 +12,7 @@ export function getMonthlyPage(
     district: string
   }
 ): Promise<unknown> {
-  const params = new URLSearchParams({ country, page: String(page), page_size: '20', ...filters })
+  const params = new URLSearchParams({ country, page: String(page), page_size: '500', ...filters })
   return authorizedGet(`staff/course-exams/${encodeURIComponent(examKey)}/dispatch-page/?${params}`)
 }
 
