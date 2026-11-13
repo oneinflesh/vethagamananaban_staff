@@ -27,9 +27,10 @@ export function rememberTable(key: string): Pick<Config, 'stateSave' | 'stateDur
     stateLoadCallback: () => {
       try {
         const saved = sessionStorage.getItem(storageKey)
-        return saved ? JSON.parse(saved) as StateLoad : undefined
+        // DataTables waits indefinitely when this callback returns undefined.
+        return saved ? JSON.parse(saved) as StateLoad : {}
       } catch {
-        return undefined
+        return {}
       }
     }
   }
