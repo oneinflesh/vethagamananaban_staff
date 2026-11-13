@@ -16,7 +16,6 @@ import {
   type CoordinatorWalletMember,
   type ExamInfo
 } from './courseApi'
-import CandidateActionPanel from './CandidateActionPanel'
 import useDispatchTableHeight from './useDispatchTableHeight'
 import CoordinatorBookPicker from './CoordinatorBookPicker'
 import ManualBookSendButton from './ManualBookSendButton'
@@ -39,7 +38,6 @@ export default function ManualBookDispatchPage({
   const [search, setSearch] = useState(() => getManualDispatchHistory(country).search)
   const [members, setMembers] = useState<CoordinatorWalletMember[]>([])
   const [coordinator, setCoordinator] = useState<Coordinator | null>(null)
-  const [paymentCandidate, setPaymentCandidate] = useState<Candidate | null>(null)
   const [loading, setLoading] = useState(false)
   const [books, setBooks] = useState<ExamInfo[]>([])
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set())
@@ -282,8 +280,6 @@ export default function ManualBookDispatchPage({
           <Column title="Options" data="enrollment_key">{(_value, _type, row: CoordinatorWalletMember) =>
             <span className="course-manual-dispatch-actions">
               <Button variant="outline" onClick={() => onCandidate(row.enrollment_key)}>View candidate</Button>
-              <Button variant="outline" onClick={() => setPaymentCandidate({ enrollment_key: row.enrollment_key,
-                bbs_identifier: row.bbs_number, full_name: row.name, mode: row.mode } as Candidate)}>Record payment</Button>
             </span>}</Column>
         </DataTable>
       </div>
@@ -347,7 +343,6 @@ export default function ManualBookDispatchPage({
             , <Column key="options" title="Options" data="enrollment_key">{(_value, _type, row: Candidate) =>
               <span className="course-manual-dispatch-actions">
                 <Button variant="outline" onClick={() => onCandidate(row.enrollment_key)}>View candidate</Button>
-                <Button variant="outline" onClick={() => setPaymentCandidate(row)}>Record payment</Button>
                 <ManualBookSendButton candidate={row} />
               </span>}</Column>
           ] : [
@@ -384,12 +379,5 @@ export default function ManualBookDispatchPage({
           void resendSelectedBooks(key, bbs)
         }}>Resend selected books (charge again)</button>
     </div>}
-    {paymentCandidate && <CandidateActionPanel action="payment" candidate={paymentCandidate}
-      onClose={() => setPaymentCandidate(null)}
-      onChanged={() => {
-        setPaymentCandidate(null)
-        if (coordinator) setMemberRefresh((value) => value + 1)
-        else recipientTable.current?.dt()?.ajax.reload(undefined, false)
-      }} />}
   </section>
 }
