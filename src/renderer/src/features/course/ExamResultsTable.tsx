@@ -19,6 +19,7 @@ export default function ExamResultsTable({
   }[]
   onUpdated: () => Promise<void>
 }): React.JSX.Element {
+  const displayStatus = (status: string): string => status === 'SHIPPED' ? 'Sent' : status
   const [editing, setEditing] = useState<string | null>(null)
   const [score, setScore] = useState('')
   const [saving, setSaving] = useState(false)
@@ -55,7 +56,7 @@ export default function ExamResultsTable({
           <Column title="Exam" data="exam_number" />
           <Column title="Book / exam" data="exam_title" />
           <Column title="Mode" data="mode" />
-          <Column title="Status" data="status" />
+          <Column title="Status" data="status">{(value: string) => displayStatus(value)}</Column>
           <Column title="Marks" data="score" options={{ defaultContent: '—' }} />
         </DataTable>
       </div>
@@ -69,7 +70,7 @@ export default function ExamResultsTable({
           >
             <Column title="Exam" data="exam_number" />
             <Column title="Book" data="exam_title" />
-            <Column title="Status" data="status" />
+            <Column title="Status" data="status">{(value: string) => displayStatus(value)}</Column>
             <Column title="Marks" data="score" options={{ defaultContent: '—' }} />
             <Column title="Action" data="allocation_key" options={{ orderable: false }}>
               {(_value, _type, row: (typeof allocations)[number]) => (
