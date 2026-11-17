@@ -15,7 +15,7 @@ export default function StoreStockEditor({ book, onSaved }: { book: StoreBook; o
   const notify = useNotifications()
   const [categories, setCategories] = useState<StoreCategory[]>([])
   const [draft, setDraft] = useState({
-    vn_code: book.vn_code, name: book.name, category: book.category,
+    vn_code: book.vn_code, name: book.name, language: book.language, category: book.category,
     description: book.description, isbn: book.isbn, price: book.price,
     discount_price: book.discount_price ?? '', weight_grams: String(book.weight_grams),
     stock: String(book.stock), low_stock_threshold: String(book.low_stock_threshold),
@@ -70,7 +70,7 @@ export default function StoreStockEditor({ book, onSaved }: { book: StoreBook; o
     setBusy(true)
     try {
       await updateStoreBook(book.vn_code, {
-        vn_code: code, name: draft.name.trim(), category: draft.category,
+        vn_code: code, name: draft.name.trim(), language: draft.language.trim(), category: draft.category,
         description: draft.description.trim(), isbn: draft.isbn.trim(), price,
         discount_price: discount, weight_grams: weight, low_stock_threshold: threshold,
         is_active: draft.is_active, is_trending: draft.is_trending, is_new_arrival: draft.is_new_arrival
@@ -96,6 +96,7 @@ export default function StoreStockEditor({ book, onSaved }: { book: StoreBook; o
             {!categories.some((item) => item.slug === draft.category) && <option value={draft.category}>{draft.category}</option>}
             {categories.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}
           </select></label>
+          <label>Language<input value={draft.language} maxLength={80} onChange={(event) => setField('language', event.target.value)} /></label>
           <label className="store-stock-wide">Book name<input value={draft.name} onChange={(event) => setField('name', event.target.value)} /></label>
           <label className="store-stock-wide">Description<textarea rows={3} value={draft.description} onChange={(event) => setField('description', event.target.value)} /></label>
           <label>ISBN<input value={draft.isbn} onChange={(event) => setField('isbn', event.target.value)} /></label>

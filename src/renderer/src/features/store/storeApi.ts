@@ -26,6 +26,7 @@ export type StoreParcelPage = {
 export type StoreBook = {
   vn_code: string
   name: string
+  language: string
   category: string
   description: string
   isbn: string
