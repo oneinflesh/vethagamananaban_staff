@@ -63,6 +63,7 @@
 .course-manual-dispatch-search { max-width: 260px; }
 .course-manual-dispatch-actions { display: flex; gap: 6px; white-space: nowrap; }
 .course-manual-dispatch-actions button { padding: 4px 6px; font-size: 10px; }
+.course-manual-dispatch-table--individual .course-manual-dispatch-actions button:last-child { min-width: 82px; }
 .course-manual-dispatch-actions .course-manual-unsend-button { background: #b42318; color: #fff; border-color: #b42318; }
 .course-manual-dispatch-actions .course-manual-unsend-button:hover { background: #912018; border-color: #912018; }
 .course-manual-dispatch-payment { box-sizing: border-box; width: 100%; max-width: 95px; }

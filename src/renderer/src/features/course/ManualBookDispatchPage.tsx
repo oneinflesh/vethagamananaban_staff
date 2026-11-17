@@ -82,6 +82,23 @@ export default function ManualBookDispatchPage({
     })
   }
 
+  function refreshRecipientsInPlace(): void {
+    const table = recipientTable.current?.dt()
+    if (!table) return
+    const body = table.table().container().querySelector<HTMLElement>('.dt-scroll-body')
+    const scrollTop = body?.scrollTop ?? 0
+    const scrollLeft = body?.scrollLeft ?? 0
+    table.ajax.reload(() => {
+      window.requestAnimationFrame(() => {
+        const refreshedBody = table.table().container().querySelector<HTMLElement>('.dt-scroll-body')
+        if (refreshedBody) {
+          refreshedBody.scrollTop = scrollTop
+          refreshedBody.scrollLeft = scrollLeft
+        }
+      })
+    }, false)
+  }
+
   function selectCoordinatorPeople(row: Coordinator): void {
     const scrollBody = recipientTable.current?.dt()?.table().container().querySelector<HTMLElement>('.dt-scroll-body')
     getManualDispatchHistory(country).coordinatorScrollTop = scrollBody?.scrollTop ?? 0
@@ -217,7 +234,7 @@ export default function ManualBookDispatchPage({
         setUndoBatches(next)
         setSentCandidates((current) => new Set(current).add(row.enrollment_key))
       }
-      recipientTable.current?.dt()?.ajax.reload(undefined, false)
+      refreshRecipientsInPlace()
     } catch (error) {
       notify.error(error instanceof Error ? error.message : 'Could not send books')
     } finally {
@@ -243,7 +260,7 @@ export default function ManualBookDispatchPage({
         return updated
       })
       notify.success(`Books unsent for ${row.bbs_identifier}`)
-      recipientTable.current?.dt()?.ajax.reload(undefined, false)
+      refreshRecipientsInPlace()
     } catch (error) {
       notify.error(error instanceof Error ? error.message : 'Could not unsend books')
     } finally {
@@ -262,7 +279,7 @@ export default function ManualBookDispatchPage({
       }) as unknown[]
       notify.success(`${allocations.length} book${allocations.length === 1 ? '' : 's'} resent to ${bbs}`)
       if (coordinator) setMemberRefresh((value) => value + 1)
-      else recipientTable.current?.dt()?.ajax.reload(undefined, false)
+      else refreshRecipientsInPlace()
     } catch (error) {
       notify.error(error instanceof Error ? error.message : 'Could not resend books')
     } finally {
