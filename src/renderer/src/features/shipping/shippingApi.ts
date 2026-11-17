@@ -18,6 +18,7 @@ export type ShipmentRow = {
   includes_id_card: boolean
   can_mark_received: boolean
   order_key: string | null
+  order_keys?: string[]
   members: {
     enrollment_key: string
     bbs_number: string

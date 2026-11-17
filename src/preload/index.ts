@@ -50,6 +50,13 @@ const api = {
   ) => ipcRenderer.invoke('course:book-edition', id, title, description, cover),
   shippingList: (country: string, page: number, filters: unknown) =>
     ipcRenderer.invoke('shipping:list', country, page, filters),
+  storeParcels: (country: string, page: number, filters: unknown) =>
+    ipcRenderer.invoke('store:parcels', country, page, filters),
+  storeTransition: (keys: string[], status: string, tracking: string) =>
+    ipcRenderer.invoke('store:transition', keys, status, tracking),
+  storeStock: (page: number, search: string) => ipcRenderer.invoke('store:stock', page, search),
+  storeAdjustStock: (code: string, stock: number, note: string) =>
+    ipcRenderer.invoke('store:adjust-stock', code, stock, note),
   shippingTracking: (row: unknown, trackingNumber: string) =>
     ipcRenderer.invoke('shipping:tracking', row, trackingNumber),
   shippingOpenTracking: (trackingNumber: string) =>

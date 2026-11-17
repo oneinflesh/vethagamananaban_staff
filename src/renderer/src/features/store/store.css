@@ -1,0 +1,31 @@
+.page.store-page { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: hidden; }
+.store-toolbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; flex: none; }
+.store-toolbar h1 { margin: 0; font-size: 22px; white-space: nowrap; }
+.store-tabs, .store-filters { display: flex; align-items: center; gap: 7px; }
+.store-filters { margin-left: auto; flex-wrap: wrap; }
+.store-filters label { display: flex; align-items: center; gap: 5px; font-size: 12px; white-space: nowrap; }
+.store-filters select, .store-filters input, .store-stock-toolbar input, .store-dialog input { min-height: 34px; padding: 5px 8px; border: 1px solid #dccdc0; border-radius: 6px; background: #fff; }
+.store-filters select { max-width: 135px; }
+.store-filters input { width: 185px; }
+.store-table-wrap, .store-stock { min-height: 0; flex: 1; border: 1px solid #ead8c8; border-radius: 10px; background: #fff; overflow: auto; }
+.store-table-wrap table.dataTable { width: 100% !important; }
+.store-table-wrap th, .store-table-wrap td { white-space: nowrap; }
+.store-table-wrap td:nth-child(5) { max-width: 270px; overflow: hidden; text-overflow: ellipsis; }
+.store-action { padding: 6px 10px; border: 1px solid #9d582b; border-radius: 6px; color: #8c441b; background: #fff7f0; cursor: pointer; }
+.store-action:hover { background: #f7e5d4; }
+.store-error { margin: 0; color: #a42318; }
+.store-dialog-backdrop { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; background: #21160e75; }
+.store-dialog { width: min(520px, calc(100vw - 32px)); max-height: min(80vh, 700px); display: flex; flex-direction: column; gap: 12px; padding: 22px; overflow: auto; border-radius: 12px; background: #fff; box-shadow: 0 15px 45px #0003; }
+.store-dialog h2, .store-dialog p { margin: 0; }
+.store-dialog ul { margin: 0; padding-left: 22px; }
+.store-dialog label { display: flex; flex-direction: column; gap: 5px; }
+.store-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.store-stock { display: flex; flex-direction: column; }
+.store-stock-toolbar, .store-stock-pagination { display: flex; align-items: center; gap: 8px; padding: 8px 10px; }
+.store-stock-toolbar input { min-width: 220px; }
+.store-stock-scroll { flex: 1; overflow: auto; }
+.store-stock table { width: 100%; border-collapse: collapse; }
+.store-stock th, .store-stock td { padding: 9px 12px; border-bottom: 1px solid #eee0d3; text-align: left; }
+.store-stock th { position: sticky; top: 0; background: #fff3e9; }
+.store-stock-pagination { justify-content: flex-end; border-top: 1px solid #ead8c8; }
+.store-stock-pagination span { margin-right: auto; }

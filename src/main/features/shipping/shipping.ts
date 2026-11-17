@@ -32,6 +32,7 @@ export type ShipmentRow = {
   includes_id_card: boolean
   can_mark_received: boolean
   order_key: string | null
+  order_keys?: string[]
   members: {
     enrollment_key: string
     bbs_number: string
@@ -75,6 +76,22 @@ export async function updateShipmentTracking(
   trackingNumber: string
 ): Promise<void> {
   if (row.source === 'store') {
+    if (row.status === 'PARCELLED' && row.order_keys?.length) {
+      await authorizedRequest('staff/orders/dispatch-batch/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_keys: row.order_keys, status: 'SHIPPED', tracking_number: trackingNumber })
+      })
+      return
+    }
+    if (row.status === 'SHIPPED' && row.order_keys?.length && row.order_keys.length > 1) {
+      await authorizedRequest('staff/orders/tracking-batch/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_keys: row.order_keys, tracking_number: trackingNumber })
+      })
+      return
+    }
     await authorizedRequest(`staff/orders/${encodeURIComponent(row.order_key!)}/`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },

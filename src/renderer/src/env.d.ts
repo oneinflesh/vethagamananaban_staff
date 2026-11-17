@@ -66,6 +66,10 @@ interface Window {
       page: number,
       filters: import('./features/shipping/shippingApi').ShipmentFilters
     ): Promise<import('./features/shipping/shippingApi').ShipmentPage>
+    storeParcels(country: string, page: number, filters: Record<string, string>): Promise<import('./features/store/storeApi').StoreParcelPage>
+    storeTransition(keys: string[], status: string, tracking: string): Promise<unknown>
+    storeStock(page: number, search: string): Promise<import('./features/store/storeApi').StoreStockPage>
+    storeAdjustStock(code: string, stock: number, note: string): Promise<unknown>
     shippingTracking(
       row: import('./features/shipping/shippingApi').ShipmentRow,
       trackingNumber: string

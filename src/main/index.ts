@@ -23,6 +23,7 @@ import {
   updateShipmentTracking,
   markCoursePaperReceived
 } from './features/shipping/shipping'
+import { getStoreParcels, transitionStoreParcel, getStoreStock, adjustStoreStock } from './features/store/store'
 import {
   getCandidates,
   getPaymentBalances,
@@ -158,6 +159,16 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('shipping:list', (_event, country, page, filters) =>
     getShipmentPage(country, page, filters)
+  )
+  ipcMain.handle('store:parcels', (_event, country, page, filters) =>
+    getStoreParcels(country, page, filters)
+  )
+  ipcMain.handle('store:transition', (_event, keys, status, tracking) =>
+    transitionStoreParcel(keys, status, tracking)
+  )
+  ipcMain.handle('store:stock', (_event, page, search) => getStoreStock(page, search))
+  ipcMain.handle('store:adjust-stock', (_event, code, stock, note) =>
+    adjustStoreStock(code, stock, note)
   )
   ipcMain.handle('shipping:tracking', (_event, row, trackingNumber) =>
     updateShipmentTracking(row, trackingNumber)
