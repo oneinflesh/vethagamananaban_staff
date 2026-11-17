@@ -235,10 +235,21 @@ export default function ManualBookDispatchPage({
     try {
       const allocations = await candidateAction('manual-book-dispatch', row.enrollment_key, {
         exam_keys: [...selectedBooks], tracking_number: '', allow_credit: true
-      }) as { allocation_key: string; exam_number: number }[]
+      }) as { allocation_key: string; exam_number: number; course_price: string }[]
       const count = allocations.length
       notify.success(count ? `${count} book${count === 1 ? '' : 's'} parcelled for ${row.bbs_identifier}` : 'Selected books are already sent or in dispatch')
       if (count) {
+        const charged = allocations.reduce((total, item) => total + Number(item.course_price), 0)
+        if (Number.isFinite(charged) && Number.isFinite(Number(row.signed_balance))) {
+          row.signed_balance = String(Number(row.signed_balance) - charged)
+          const balanceCell = recipientTable.current?.dt()?.row((_index, data: Candidate) =>
+            data.enrollment_key === row.enrollment_key).node()?.querySelector<HTMLElement>('[data-dispatch-balance]')
+          if (balanceCell) {
+            const balance = Number(row.signed_balance)
+            balanceCell.textContent = signedAmount(balance)
+            balanceCell.className = balance < 0 ? 'course-balance--negative' : 'course-balance--positive'
+          }
+        }
         row.parcelled_book_sequences = [
           ...new Set([...(row.parcelled_book_sequences ?? []), ...allocations.map((item) => item.exam_number)])
         ]
@@ -387,7 +398,8 @@ export default function ManualBookDispatchPage({
           <Column title="Sent" data="books_sent" />
           <Column title="Paid" data="books_paid">{(value) => <span data-dispatch-paid>{String(value)}</span>}</Column>
           <Column title="Cash payment" data="enrollment_key">{(_value, _type, row: CoordinatorWalletMember) =>
-            <ManualBookPaymentInput enrollmentKey={row.enrollment_key} bbsNumber={row.bbs_number} />}</Column>
+            <ManualBookPaymentInput enrollmentKey={row.enrollment_key} bbsNumber={row.bbs_number}
+              onSaved={(updated) => { row.wallet_balance = updated.wallet_balance; row.credit_balance = updated.credit_balance }} />}</Column>
           <Column title="Options" data="enrollment_key">{(_value, _type, row: CoordinatorWalletMember) =>
             <span className="course-manual-dispatch-actions">
               <Button variant="outline" onClick={() => onCandidate(row.enrollment_key)}>View candidate</Button>
@@ -473,7 +485,12 @@ export default function ManualBookDispatchPage({
             , <Column key="district" title="District" data="district" />
             , <Column key="state" title="State" data="state" />
             , <Column key="cash-payment" title="Cash payment" data="enrollment_key">{(_value, _type, row: Candidate) =>
-              <ManualBookPaymentInput enrollmentKey={row.enrollment_key} bbsNumber={row.bbs_identifier} />}</Column>
+              <ManualBookPaymentInput enrollmentKey={row.enrollment_key} bbsNumber={row.bbs_identifier}
+                onSaved={(updated) => {
+                  row.wallet_balance = updated.wallet_balance
+                  row.credit_balance = updated.credit_balance
+                  row.signed_balance = String(Number(updated.wallet_balance) - Number(updated.credit_balance))
+                }} />}</Column>
             , <Column key="options" title="Options" data="enrollment_key">{(_value, _type, row: Candidate) =>
               <span className="course-manual-dispatch-actions">
                 <Button variant="outline" onClick={() => onCandidate(row.enrollment_key)}>View candidate</Button>

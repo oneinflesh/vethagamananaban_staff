@@ -5,10 +5,12 @@ import { formatSignedAmount } from './paymentBalance'
 
 export default function ManualBookPaymentInput({
   enrollmentKey,
-  bbsNumber
+  bbsNumber,
+  onSaved
 }: {
   enrollmentKey: string
   bbsNumber: string
+  onSaved?: (candidate: Candidate) => void
 }): React.JSX.Element {
   const notify = useNotifications()
   const saving = useRef(false)
@@ -38,6 +40,7 @@ export default function ManualBookPaymentInput({
       }
       const paidCell = input.closest('tr')?.querySelector<HTMLElement>('[data-dispatch-paid]')
       if (paidCell) paidCell.textContent = String(updated.books_paid)
+      onSaved?.(updated)
       notify.success(`Payment recorded for ${bbsNumber}`)
     } catch (error) {
       notify.error(error instanceof Error ? error.message : 'Could not record payment')
