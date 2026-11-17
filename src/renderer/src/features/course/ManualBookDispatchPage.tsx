@@ -82,21 +82,32 @@ export default function ManualBookDispatchPage({
     })
   }
 
-  function refreshRecipientsInPlace(): void {
-    const table = recipientTable.current?.dt()
-    if (!table) return
-    const body = table.table().container().querySelector<HTMLElement>('.dt-scroll-body')
-    const scrollTop = body?.scrollTop ?? 0
-    const scrollLeft = body?.scrollLeft ?? 0
-    table.ajax.reload(() => {
-      window.requestAnimationFrame(() => {
-        const refreshedBody = table.table().container().querySelector<HTMLElement>('.dt-scroll-body')
-        if (refreshedBody) {
-          refreshedBody.scrollTop = scrollTop
-          refreshedBody.scrollLeft = scrollLeft
-        }
+  async function updateRecipientInPlace(key: string): Promise<void> {
+    try {
+      const row = recipientTable.current?.dt()?.row((_index, data: Candidate) => data.enrollment_key === key)
+      if (!row?.any()) return
+      const current = row.data() as Candidate
+      const result = await getCandidates(country, 1, 'OFFLINE', 'ACTIVE', current.bbs_identifier, {
+        individualOnly: true, includeProgress: true, pageSize: 20
       })
-    }, false)
+      const candidate = result.results.find((item) => item.enrollment_key === key)
+      if (!candidate) return
+      Object.assign(current, candidate)
+      const element = row.node() as HTMLElement | null
+      if (!element) return
+      const balance = element.querySelector<HTMLElement>('[data-dispatch-balance]')
+      if (balance) {
+        const amount = Number(candidate.wallet_balance) - Number(candidate.credit_balance)
+        balance.textContent = signedAmount(amount)
+        balance.className = amount < 0 ? 'course-balance--negative' : 'course-balance--positive'
+      }
+      const sent = element.querySelector<HTMLElement>('td:nth-child(5)')
+      if (sent) sent.textContent = String(candidate.books_sent)
+      const paid = element.querySelector<HTMLElement>('[data-dispatch-paid]')
+      if (paid) paid.textContent = String(candidate.books_paid)
+    } catch {
+      // The dispatch succeeded; fresh totals will load on the next table visit.
+    }
   }
 
   function selectCoordinatorPeople(row: Coordinator): void {
@@ -234,7 +245,7 @@ export default function ManualBookDispatchPage({
         setUndoBatches(next)
         setSentCandidates((current) => new Set(current).add(row.enrollment_key))
       }
-      refreshRecipientsInPlace()
+      void updateRecipientInPlace(row.enrollment_key)
     } catch (error) {
       notify.error(error instanceof Error ? error.message : 'Could not send books')
     } finally {
@@ -260,7 +271,7 @@ export default function ManualBookDispatchPage({
         return updated
       })
       notify.success(`Books unsent for ${row.bbs_identifier}`)
-      refreshRecipientsInPlace()
+      void updateRecipientInPlace(row.enrollment_key)
     } catch (error) {
       notify.error(error instanceof Error ? error.message : 'Could not unsend books')
     } finally {
@@ -279,7 +290,7 @@ export default function ManualBookDispatchPage({
       }) as unknown[]
       notify.success(`${allocations.length} book${allocations.length === 1 ? '' : 's'} resent to ${bbs}`)
       if (coordinator) setMemberRefresh((value) => value + 1)
-      else refreshRecipientsInPlace()
+      else void updateRecipientInPlace(key)
     } catch (error) {
       notify.error(error instanceof Error ? error.message : 'Could not resend books')
     } finally {
