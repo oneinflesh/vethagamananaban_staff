@@ -107,6 +107,7 @@ export default function StorePage(): React.JSX.Element {
         aria-label="Books and quantities"
         onClick={(event) => event.stopPropagation()}>
         <h2>Books · {details.recipient}</h2>
+        <p>{details.order_numbers.length} {details.order_numbers.length === 1 ? 'order' : 'orders'}</p>
         <ol>{summarizeParcelBooks(details).map((item) => <li key={item.name}>{item.name} × {item.quantity}</li>)}</ol>
         <div className="store-dialog-actions"><Button onClick={() => setDetails(null)}>Close</Button></div>
       </div>
