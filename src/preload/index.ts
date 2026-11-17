@@ -136,6 +136,8 @@ const api = {
   courseCoordinatorMembers: (key: string) => ipcRenderer.invoke('course:coordinator-members', key),
   courseCoordinatorWalletMembers: (key: string) => ipcRenderer.invoke('course:coordinator-wallet-members', key),
   courseCoordinatorWalletDistribution: (key: string, data: unknown) => ipcRenderer.invoke('course:coordinator-wallet-distribution', key, data),
+  courseCoordinatorParcelBooks: (key: string, data: unknown) => ipcRenderer.invoke('course:coordinator-parcel-books', key, data),
+  courseCoordinatorUnsendBooks: (key: string, data: unknown) => ipcRenderer.invoke('course:coordinator-unsend-books', key, data),
   courseCoordinatorMemberPage: (key: string, page: number, search: string, restoreOnly: boolean) =>
     ipcRenderer.invoke('course:coordinator-member-page', key, page, search, restoreOnly),
   courseCoordinatorCandidateOptions: (key: string, search: string, page: number) =>

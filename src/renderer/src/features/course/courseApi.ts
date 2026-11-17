@@ -504,6 +504,10 @@ export const getCoordinatorMembers = (key: string): Promise<CoordinatorMember[]>
   window.office.courseCoordinatorMembers(key)
 export const getCoordinatorWalletMembers = (key: string): Promise<CoordinatorWalletMember[]> =>
   window.office.courseCoordinatorWalletMembers(key)
+export const parcelCoordinatorBooks = (key: string, data: unknown): Promise<{ recipients: number; books: number }> =>
+  window.office.courseCoordinatorParcelBooks(key, data)
+export const unsendCoordinatorBooks = (key: string, data: unknown): Promise<{ recipients: number; books: number }> =>
+  window.office.courseCoordinatorUnsendBooks(key, data)
 export const distributeCoordinatorWallet = (key: string, data: unknown): Promise<CoordinatorWalletResult> =>
   window.office.courseCoordinatorWalletDistribution(key, data)
 export const getCoordinatorMemberPage = (

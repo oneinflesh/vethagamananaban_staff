@@ -9,7 +9,8 @@ import {
   getCandidates,
   getCoordinatorPage,
   getCoordinatorWalletMembers,
-  getOtherBookOptions,
+  parcelCoordinatorBooks,
+  unsendCoordinatorBooks,
   getRegistrationOptions,
   type Candidate,
   type Coordinator,
@@ -183,52 +184,14 @@ export default function ManualBookDispatchPage({
     if (!coordinator || !selectedBooks.size || selectedSequences.size !== selectedBooks.size || !selectedMembers.size || sending) return
     setSending(true)
     try {
-      const keys = [...selectedMembers]
-      const examKeys = [...selectedBooks]
-      const options = await Promise.all(keys.map((key) => getOtherBookOptions(key)))
-      const stockByBook = new Map<number, { required: number; stock: number }>()
-      const ineligible = keys.filter((_, index) => {
-        const chosen = examKeys.map((examKey) => options[index].manual_books.find((item) => item.exam_key === examKey))
-          .filter((book) => !book?.already_sent)
-        const invalid = chosen.some((book) => !book || !book.active || book.price === null || book.stock < 1)
-        for (const book of chosen) {
-          if (book?.book_id == null) continue
-          const current = stockByBook.get(book.book_id) ?? { required: 0, stock: book.stock }
-          current.required += 1
-          current.stock = Math.min(current.stock, book.stock)
-          stockByBook.set(book.book_id, current)
-        }
-        const total = chosen.reduce((sum, book) => sum + Number(book?.price ?? 0), 0)
-        return invalid || (chosen.length > 0 && !options[index].manual_address) || !Number.isFinite(total)
+      const result = await parcelCoordinatorBooks(coordinator.coordinator_key, {
+        enrollment_keys: [...selectedMembers], exam_keys: [...selectedBooks]
       })
-      if (ineligible.length) {
-        notify.error(`${ineligible.length} selected people cannot receive these books. No books were sent.`)
-        return
-      }
-      if ([...stockByBook.values()].some(({ required, stock }) => required > stock)) {
-        notify.error('Not enough stock for every selected person. No books were sent.')
-        return
-      }
-      let sent = 0
-      let booksSent = 0
-      const parcelBatch = crypto.randomUUID()
-      for (const key of keys) {
-        try {
-          const allocations = await candidateAction('manual-book-dispatch', key, {
-            exam_keys: examKeys, tracking_number: '', allow_credit: true, parcel_batch: parcelBatch
-          }) as unknown[]
-          booksSent += allocations.length
-          sent += 1
-        } catch (error) {
-          notify.error(`${sent} sent; ${keys.length - sent} not sent. ${error instanceof Error ? error.message : 'Dispatch failed'}`)
-          setSelectedMembers(new Set(keys.slice(sent)))
-          if (sent) setMemberRefresh((value) => value + 1)
-          return
-        }
-      }
-      notify.success(booksSent ? `${booksSent} books parcelled under C-${coordinator.number}` : 'Selected books are already sent or in dispatch')
+      notify.success(result.books ? `${result.books} books parcelled for ${result.recipients} people under C-${coordinator.number}` : 'Selected books are already sent or in dispatch')
       setSelectedMembers(new Set())
       setMemberRefresh((value) => value + 1)
+    } catch (error) {
+      notify.error(error instanceof Error ? error.message : 'Could not parcel books')
     } finally {
       setSending(false)
     }
@@ -237,26 +200,15 @@ export default function ManualBookDispatchPage({
   async function unsendFromCoordinator(): Promise<void> {
     if (!coordinator || !undoableMembers.length || sending) return
     setSending(true)
-    let people = 0
-    let booksUndone = 0
     try {
-      for (const member of undoableMembers) {
-        const examKeys = books.filter((book) => selectedBooks.has(book.exam_key) &&
-          (member.parcelled_book_sequences ?? []).includes(book.sequence)).map((book) => book.exam_key)
-        try {
-          const result = await candidateAction('manual-book-unsend', member.enrollment_key, {
-            all_parcelled: true, exam_keys: examKeys
-          }) as { unsent: number }
-          booksUndone += result.unsent
-          people += 1
-        } catch (error) {
-          notify.error(`${people} people updated; ${undoableMembers.length - people} not updated. ${error instanceof Error ? error.message : 'Could not unsend books'}`)
-          return
-        }
-      }
-      notify.success(`${booksUndone} books unsent for ${people} people`)
+      const result = await unsendCoordinatorBooks(coordinator.coordinator_key, {
+        enrollment_keys: undoableMembers.map((member) => member.enrollment_key), exam_keys: [...selectedBooks]
+      })
+      notify.success(`${result.books} books unsent for ${result.recipients} people`)
+      setMemberRefresh((value) => value + 1)
+    } catch (error) {
+      notify.error(error instanceof Error ? error.message : 'Could not unsend books')
     } finally {
-      if (people) setMemberRefresh((value) => value + 1)
       setSending(false)
     }
   }

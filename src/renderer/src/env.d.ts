@@ -190,6 +190,8 @@ interface Window {
     ): Promise<import('./features/course/courseApi').CoordinatorMember[]>
     courseCoordinatorWalletMembers(key: string): Promise<import('./features/course/courseApi').CoordinatorWalletMember[]>
     courseCoordinatorWalletDistribution(key: string, data: unknown): Promise<import('./features/course/courseApi').CoordinatorWalletResult>
+    courseCoordinatorParcelBooks(key: string, data: unknown): Promise<{ recipients: number; books: number }>
+    courseCoordinatorUnsendBooks(key: string, data: unknown): Promise<{ recipients: number; books: number }>
     courseCoordinatorMemberPage(
       key: string,
       page: number,

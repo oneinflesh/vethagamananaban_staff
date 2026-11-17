@@ -52,7 +52,8 @@ function apiErrorMessage(data: unknown, status: number): string {
 }
 
 async function request<T>(path: string, init: RequestInit): Promise<T> {
-  const timeout = path.startsWith('staff/course-operations/') ? 120000 : 15000
+  const timeout = path.startsWith('staff/course-operations/') ||
+    /staff\/course-coordinators\/[^/]+\/(parcel-books|unsend-books)\//.test(path) ? 120000 : 15000
   const method = (init.method || 'GET').toUpperCase()
   const readOnly = method === 'GET' || (method === 'POST' && [
     'staff/course-operations/template/',
