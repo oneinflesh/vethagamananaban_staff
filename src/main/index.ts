@@ -23,7 +23,7 @@ import {
   updateShipmentTracking,
   markCoursePaperReceived
 } from './features/shipping/shipping'
-import { getStoreParcels, transitionStoreParcel, getStoreStock, adjustStoreStock } from './features/store/store'
+import { getStoreParcels, transitionStoreParcel, getStoreStock, adjustStoreStock, getShippingZoneRates, updateShippingZoneRate, getStoreCategories } from './features/store/store'
 import {
   getCandidates,
   getPaymentBalances,
@@ -170,6 +170,9 @@ app.whenReady().then(() => {
   ipcMain.handle('store:adjust-stock', (_event, code, stock, note) =>
     adjustStoreStock(code, stock, note)
   )
+  ipcMain.handle('store:shipping-rates', (_event, country) => getShippingZoneRates(country))
+  ipcMain.handle('store:shipping-rate-update', (_event, rate) => updateShippingZoneRate(rate))
+  ipcMain.handle('store:categories', () => getStoreCategories())
   ipcMain.handle('shipping:tracking', (_event, row, trackingNumber) =>
     updateShipmentTracking(row, trackingNumber)
   )

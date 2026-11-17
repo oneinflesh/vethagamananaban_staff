@@ -12,10 +12,18 @@ export function transitionStoreParcel(orderKeys: string[], status: string, track
   })
 }
 
-export async function getStoreStock(page: number, search: string): Promise<unknown> {
-  const params = new URLSearchParams({ page: String(page), page_size: '20' })
+export async function getStoreStock(_page: number, search: string): Promise<unknown> {
+  const params = new URLSearchParams({ page: '1', page_size: '500' })
   if (search) params.set('search', search)
-  return authorizedGet(`staff/books/?${params}`)
+  const first = await authorizedGet(`staff/books/?${params}`) as { count: number; results: unknown[] }
+  const results = [...first.results]
+  for (let page = 2; results.length < first.count; page += 1) {
+    params.set('page', String(page))
+    const next = await authorizedGet(`staff/books/?${params}`) as { results: unknown[] }
+    if (!next.results.length) break
+    results.push(...next.results)
+  }
+  return { count: first.count, results }
 }
 
 export function adjustStoreStock(code: string, stock: number, note: string): Promise<unknown> {
@@ -23,4 +31,19 @@ export function adjustStoreStock(code: string, stock: number, note: string): Pro
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ new_stock: stock, reason: 'ADMIN_ADJUSTMENT', note })
   })
+}
+
+export function getShippingZoneRates(country: string): Promise<unknown> {
+  return authorizedGet(`staff/orders/shipping-zone-rates/?country=${encodeURIComponent(country)}`)
+}
+
+export function updateShippingZoneRate(rate: unknown): Promise<unknown> {
+  return authorizedRequest('staff/orders/shipping-zone-rates/', {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(rate)
+  })
+}
+
+export function getStoreCategories(): Promise<unknown> {
+  return authorizedGet('staff/categories/')
 }

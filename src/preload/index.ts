@@ -57,6 +57,9 @@ const api = {
   storeStock: (page: number, search: string) => ipcRenderer.invoke('store:stock', page, search),
   storeAdjustStock: (code: string, stock: number, note: string) =>
     ipcRenderer.invoke('store:adjust-stock', code, stock, note),
+  storeShippingRates: (country: string) => ipcRenderer.invoke('store:shipping-rates', country),
+  storeShippingRateUpdate: (rate: unknown) => ipcRenderer.invoke('store:shipping-rate-update', rate),
+  storeCategories: () => ipcRenderer.invoke('store:categories'),
   shippingTracking: (row: unknown, trackingNumber: string) =>
     ipcRenderer.invoke('shipping:tracking', row, trackingNumber),
   shippingOpenTracking: (trackingNumber: string) =>

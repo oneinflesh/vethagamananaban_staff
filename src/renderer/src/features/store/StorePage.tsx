@@ -7,6 +7,7 @@ import { useRememberedState } from '../table/tableMemory'
 import { getStoreParcels, transitionStoreParcel, type StoreParcel, type StoreParcelPage } from './storeApi'
 import StoreParcelTable from './StoreParcelTable'
 import StoreStockPage from './StoreStockPage'
+import StoreShippingPage from './StoreShippingPage'
 import { summarizeParcelBooks } from './storeBookSummary'
 import './store.css'
 
@@ -16,7 +17,7 @@ export default function StorePage(): React.JSX.Element {
   const { country } = useCountry()
   const notify = useNotifications()
   const table = useRef<DataTableRef>(null)
-  const [tab, setTab] = useRememberedState<'orders' | 'stock'>('store:tab', 'orders')
+  const [tab, setTab] = useRememberedState<'orders' | 'stock' | 'shipping'>('store:tab', 'orders')
   const [status, setStatus] = useRememberedState(`store:${country}:status`, 'PROCESSING')
   const [state, setState] = useRememberedState(`store:${country}:state`, '')
   const [district, setDistrict] = useRememberedState(`store:${country}:district`, '')
@@ -78,6 +79,7 @@ export default function StorePage(): React.JSX.Element {
       <div className="store-tabs">
         <Button variant={tab === 'orders' ? 'default' : 'outline'} onClick={() => setTab('orders')}>Orders</Button>
         <Button variant={tab === 'stock' ? 'default' : 'outline'} onClick={() => setTab('stock')}>Stock</Button>
+        <Button variant={tab === 'shipping' ? 'default' : 'outline'} onClick={() => setTab('shipping')}>Shipping</Button>
       </div>
       {tab === 'orders' && <div className="store-filters">
         <label>Status <select value={status} onChange={(event) => setStatus(event.target.value)}>
@@ -101,7 +103,7 @@ export default function StorePage(): React.JSX.Element {
       {error && <p role="alert" className="store-error">{error}</p>}
       <StoreParcelTable key={country} country={country} table={table} loadPage={loadPage} onSelect={setSelected}
         onDetails={setDetails} />
-    </> : <StoreStockPage />}
+    </> : tab === 'stock' ? <StoreStockPage country={country} /> : <StoreShippingPage country={country} />}
     {details && <div className="store-dialog-backdrop" onClick={() => setDetails(null)}>
       <div className="store-dialog store-dialog--list" role="dialog" aria-modal="true"
         aria-label="Books and quantities"

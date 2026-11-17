@@ -26,12 +26,38 @@
 .store-dialog--list li { padding: 5px 0; overflow-wrap: anywhere; }
 .store-dialog label { display: flex; flex-direction: column; gap: 5px; }
 .store-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
-.store-stock { display: flex; flex-direction: column; }
-.store-stock-toolbar, .store-stock-pagination { display: flex; align-items: center; gap: 8px; padding: 8px 10px; }
-.store-stock-toolbar input { min-width: 220px; }
-.store-stock-scroll { flex: 1; overflow: auto; }
-.store-stock table { width: 100%; border-collapse: collapse; }
-.store-stock th, .store-stock td { padding: 9px 12px; border-bottom: 1px solid #eee0d3; text-align: left; }
-.store-stock th { position: sticky; top: 0; background: #fff3e9; }
-.store-stock-pagination { justify-content: flex-end; border-top: 1px solid #ead8c8; }
-.store-stock-pagination span { margin-right: auto; }
+.store-shipping { min-height: 0; flex: 1; overflow: auto; border: 1px solid #ead8c8; border-radius: 10px; background: #fff; }
+.store-shipping-heading { display: flex; align-items: center; gap: 16px; padding: 16px 20px; }
+.store-shipping-heading h2 { margin: 0; font-size: 18px; }
+.store-shipping-heading span { color: #8c6a55; }
+.store-shipping-grid { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(120px, 180px) minmax(120px, 180px); align-items: center; gap: 16px; padding: 9px 20px; border-top: 1px solid #f0e3d8; }
+.store-shipping-grid--head { background: #fff4ea; }
+.store-shipping-input { display: flex; align-items: center; gap: 6px; }
+.store-shipping-input input { width: 100%; min-width: 0; padding: 8px; border: 1px solid #dbc7b7; border-radius: 6px; }
+.store-stock-layout { min-height: 0; flex: 1; display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 12px; }
+.store-stock-sidebar, .store-stock-editor { min-height: 0; overflow: auto; border: 1px solid #ead8c8; border-radius: 10px; background: #fff; }
+.store-stock-sidebar { display: flex; flex-direction: column; }
+.store-stock-sidebar-heading { display: flex; align-items: center; justify-content: space-between; padding: 10px; }
+.store-stock-sidebar > input { margin: 0 10px 10px; padding: 8px; border: 1px solid #dbc7b7; border-radius: 6px; }
+.store-stock-book-list { min-height: 0; overflow: auto; }
+.store-stock-book-list button { width: 100%; display: grid; grid-template-columns: 55px minmax(0, 1fr); align-items: center; gap: 6px; padding: 11px 9px; border: 0; border-top: 1px solid #f0e3d8; background: #fff; text-align: left; cursor: pointer; }
+.store-stock-book-list button:hover, .store-stock-book-list button.is-selected { background: #fff0e4; }
+.store-stock-book-list button span { color: #a55722; font-weight: 700; }
+.store-stock-book-list button strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.store-stock-book-list button small { grid-column: 2; color: #846c5c; }
+.store-stock-loading, .store-stock-empty { padding: 16px; }
+.store-stock-editor-heading { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid #ead8c8; }
+.store-stock-editor-heading h2 { margin: 0; font-size: 18px; }
+.store-stock-editor-heading span { color: #9f5d31; }
+.store-stock-editor-content { display: grid; grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr); align-items: start; gap: 14px; padding: 14px; }
+.store-stock-panel { min-width: 0; padding: 16px; border: 1px solid #ead8c8; border-radius: 10px; }
+.store-stock-panel h3 { margin: 0 0 14px; }
+.store-stock-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.store-stock-fields label, .store-stock-cover label, .store-stock-reason { display: grid; gap: 5px; color: #82441f; font-size: 12px; }
+.store-stock-fields input, .store-stock-fields select, .store-stock-fields textarea, .store-stock-reason input { width: 100%; min-width: 0; padding: 8px; border: 1px solid #dbc7b7; border-radius: 6px; color: #29221d; font: inherit; }
+.store-stock-wide { grid-column: 1 / -1; }
+.store-stock-flags { display: flex; flex-wrap: wrap; gap: 14px; margin: 15px 0; }
+.store-stock-flags label { display: flex; align-items: center; gap: 5px; }
+.store-stock-cover img { width: 100%; max-height: 250px; object-fit: contain; margin-bottom: 14px; }
+.store-stock-no-cover { padding: 60px 10px; text-align: center; background: #faf4ed; }
+@media (max-width: 950px) { .store-stock-editor-content { grid-template-columns: 1fr; } }
