@@ -38,6 +38,7 @@ export default function ManualBookDispatchPage({
 }): React.JSX.Element {
   const [recipientType, setRecipientType] = useState<'individual' | 'coordinator'>(() => getManualDispatchHistory(country).recipientType)
   const [search, setSearch] = useState(() => getManualDispatchHistory(country).search)
+  const [memberSearch, setMemberSearch] = useState('')
   const [members, setMembers] = useState<CoordinatorWalletMember[]>([])
   const [coordinator, setCoordinator] = useState<Coordinator | null>(null)
   const [loading, setLoading] = useState(false)
@@ -56,8 +57,8 @@ export default function ManualBookDispatchPage({
   const pageRef = useDispatchTableHeight(`${recipientType}:${coordinator?.coordinator_key ?? ''}`)
   const selectedSequences = useMemo(() => new Set(books.filter((book) => selectedBooks.has(book.exam_key)).map((book) => book.sequence)), [books, selectedBooks])
   const visibleMembers = useMemo(() => members.filter((member) =>
-    `${member.bbs_number} ${member.name}`.toLowerCase().includes(search.toLowerCase())
-  ), [members, search])
+    `${member.bbs_number} ${member.name}`.toLowerCase().includes(memberSearch.toLowerCase())
+  ), [members, memberSearch])
   const allVisibleSelected = visibleMembers.length > 0 && visibleMembers.every((member) => selectedMembers.has(member.enrollment_key))
 
   function toggleMember(key: string): void {
@@ -113,6 +114,7 @@ export default function ManualBookDispatchPage({
     getManualDispatchHistory(country).coordinatorScrollTop = scrollBody?.scrollTop ?? 0
     setLoading(true)
     setSelectedMembers(new Set())
+    setMemberSearch('')
     setCoordinator(row)
   }
 
@@ -127,6 +129,10 @@ export default function ManualBookDispatchPage({
   }
 
   function changeSearch(value: string): void {
+    if (coordinator) {
+      setMemberSearch(value)
+      return
+    }
     const saved = getManualDispatchHistory(country)
     saved.search = value
     saved.starts[recipientType] = 0
@@ -317,7 +323,7 @@ export default function ManualBookDispatchPage({
           onClick={() => changeRecipientType('coordinator')}>Coordinator</button>
       </div>
       <Input className="course-manual-dispatch-search" aria-label="Search recipients"
-        placeholder={coordinator ? 'Search members' : 'Search name or number'} value={search}
+        placeholder={coordinator ? 'Search members' : 'Search name or number'} value={coordinator ? memberSearch : search}
         onChange={(event) => changeSearch(event.target.value)} />
     </div>
     {coordinator ? <>
@@ -334,7 +340,7 @@ export default function ManualBookDispatchPage({
       </div>
       <div className="course-table-wrap course-table-wrap--candidates course-manual-dispatch-table course-manual-dispatch-table--members" onContextMenu={openResendMenu}>
         <ManualBookMemberSelectionContext.Provider value={{ selected: selectedMembers, disabled: sending, toggle: toggleMember }}>
-        <DataTable key={`${coordinator.coordinator_key}:${search}`}
+        <DataTable key={`${coordinator.coordinator_key}:${memberSearch}`}
           data={visibleMembers}
           className="display course-table" options={{
             pageLength: 500, rowId: 'enrollment_key', lengthChange: false, searching: false, autoWidth: false,
