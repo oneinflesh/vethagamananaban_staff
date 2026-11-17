@@ -13,6 +13,8 @@
 .store-table-wrap th, .store-table-wrap td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .store-more { min-width: 29px; padding: 1px 8px; border: 1px solid #d5bca7; border-radius: 5px; background: #fff8f1; color: #8c441b; font-size: 17px; line-height: 1.2; cursor: pointer; }
 .store-more:hover { background: #f5e3d3; }
+.store-book-name { display: block; width: 100%; min-width: 0; padding: 0; border: 0; background: none; color: #8c441b; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.store-book-name:hover { text-decoration: underline; }
 .store-action { padding: 6px 10px; border: 1px solid #9d582b; border-radius: 6px; color: #8c441b; background: #fff7f0; cursor: pointer; }
 .store-action:hover { background: #f7e5d4; }
 .store-error { margin: 0; color: #a42318; }

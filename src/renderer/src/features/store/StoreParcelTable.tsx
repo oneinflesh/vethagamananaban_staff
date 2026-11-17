@@ -47,7 +47,13 @@ export default function StoreParcelTable({ country, table, loadPage, onSelect, o
         const books = summarizeParcelBooks(row)
         return books.length > 1
           ? <button className="store-more" onClick={() => onDetails(row, 'books')} aria-label={`View ${books.length} books for ${row.recipient}`}>…</button>
-          : books.length ? `${books[0].name} × ${books[0].quantity}` : '—'
+          : books.length
+            ? <button className="store-book-name" onClick={() => onDetails(row, 'books')}
+              title={`${books[0].name} × ${books[0].quantity}`}
+              aria-label={`View ${books[0].name}, quantity ${books[0].quantity}`}>
+              {books[0].name} × {books[0].quantity}
+            </button>
+            : '—'
       }}</Column>
       <Column title="District" data="district" />
       <Column title="State" data="state" />
