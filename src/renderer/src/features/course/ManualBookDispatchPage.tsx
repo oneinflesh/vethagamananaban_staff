@@ -103,8 +103,23 @@ export default function ManualBookDispatchPage({
         balance.textContent = signedAmount(amount)
         balance.className = amount < 0 ? 'course-balance--negative' : 'course-balance--positive'
       }
-      const sent = element.querySelector<HTMLElement>('td:nth-child(5)')
+      const sent = element.querySelector<HTMLElement>('td:nth-child(6)')
       if (sent) sent.textContent = String(candidate.books_sent)
+      const lastBook = element.querySelector<HTMLElement>('[data-last-book]')
+      if (lastBook) {
+        lastBook.replaceChildren()
+        if (candidate.last_book_sent) {
+          const title = document.createElement('span')
+          title.textContent = candidate.last_book_sent.title
+          const date = document.createElement('small')
+          date.textContent = new Date(candidate.last_book_sent.sent_at).toLocaleDateString('en-IN')
+          lastBook.title = candidate.last_book_sent.title
+          lastBook.append(title, date)
+        } else {
+          lastBook.textContent = '—'
+          lastBook.removeAttribute('title')
+        }
+      }
       const paid = element.querySelector<HTMLElement>('[data-dispatch-paid]')
       if (paid) paid.textContent = String(candidate.books_paid)
     } catch {
@@ -384,14 +399,15 @@ export default function ManualBookDispatchPage({
           scrollY: 'var(--dispatch-table-height, 400px)', scrollCollapse: false,
           columnDefs: recipientType === 'individual' ? [
             { targets: 0, width: '7%' },
-            { targets: 1, width: '16%' },
+            { targets: 1, width: '14%' },
             { targets: 2, width: '8%' },
-            { targets: [3, 4, 5], width: '5%' },
-            { targets: 6, width: '12%' },
-            { targets: 7, width: '10%' },
-            { targets: 8, width: '10%' },
-            { targets: 9, width: '22%' },
-            { targets: [2, 3, 4, 5, 8, 9], orderable: false, defaultContent: '—' }
+            { targets: 3, width: '12%' },
+            { targets: [4, 5, 6], width: '5%' },
+            { targets: 7, width: '9%' },
+            { targets: 8, width: '8%' },
+            { targets: 9, width: '8%' },
+            { targets: 10, width: '19%' },
+            { targets: [2, 3, 4, 5, 6, 9, 10], orderable: false, defaultContent: '—' }
           ] : [
             { targets: 0, width: '7%' },
             { targets: 1, width: '22%' },
@@ -411,7 +427,7 @@ export default function ManualBookDispatchPage({
             const column = request.order?.[0]?.column ?? 0
             const direction = request.order?.[0]?.dir === 'desc' ? '-' : ''
             const fields = recipientType === 'individual'
-              ? ['bbs_number', 'full_name', '', '', '', '', 'district', 'state']
+              ? ['bbs_number', 'full_name', '', '', '', '', '', 'district', 'state']
               : ['number', 'name', 'active_member_count', 'district', 'state']
             const ordering = `${direction}${fields[column] || fields[0]}`
             const result = recipientType === 'individual'
@@ -436,6 +452,13 @@ export default function ManualBookDispatchPage({
               const amount = Number(value ?? 0)
               return <span data-dispatch-balance className={amount < 0 ? 'course-balance--negative' : 'course-balance--positive'}>{signedAmount(amount)}</span>
             }}</Column>
+            , <Column key="last-book" title="Last book sent" data="last_book_sent">{(_value, _type, row: Candidate) =>
+              <span className="course-last-book-cell" data-last-book title={row.last_book_sent?.title ?? undefined}>
+                {row.last_book_sent ? <>
+                  <span>{row.last_book_sent.title}</span>
+                  <small>{new Date(row.last_book_sent.sent_at).toLocaleDateString('en-IN')}</small>
+                </> : '—'}
+              </span>}</Column>
             , <Column key="exams" title="Exams" data="exams_attended" />
             , <Column key="sent" title="Sent" data="books_sent" />
             , <Column key="paid" title="Paid" data="books_paid">{(value) => <span data-dispatch-paid>{String(value)}</span>}</Column>

@@ -83,6 +83,9 @@
 .course-manual-dispatch-table .dt-scroll-head th,
 .course-manual-dispatch-table .dt-scroll-body td { box-sizing: border-box; padding: 7px 6px; }
 .course-manual-dispatch-table .dt-scroll-body td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.course-last-book-cell { display: block; min-width: 0; }
+.course-last-book-cell > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.course-last-book-cell small { display: block; color: #876d5d; font-size: 10px; }
 .course-manual-dispatch-table--individual table.dataTable th:nth-child(2),
 .course-manual-dispatch-table--individual table.dataTable td:nth-child(2),
 .course-manual-dispatch-table--members table.dataTable th:nth-child(3),

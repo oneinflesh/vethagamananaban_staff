@@ -47,6 +47,7 @@ export type Candidate = {
   exams_attended: number
   books_sent: number
   signed_balance?: string
+  last_book_sent?: { title: string; sent_at: string } | null
   first_exam: { number: number; name: string; scheduled_month: string | null } | null
   exam_papers_in_arrears: number
   books_paid: number
