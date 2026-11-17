@@ -99,7 +99,7 @@ export default function ManualBookDispatchPage({
       if (!element) return
       const balance = element.querySelector<HTMLElement>('[data-dispatch-balance]')
       if (balance) {
-        const amount = Number(candidate.wallet_balance) - Number(candidate.credit_balance)
+        const amount = Number(candidate.signed_balance)
         balance.textContent = signedAmount(amount)
         balance.className = amount < 0 ? 'course-balance--negative' : 'course-balance--positive'
       }
@@ -457,7 +457,7 @@ export default function ManualBookDispatchPage({
               <button className="course-link" onClick={() => onCandidate(row.enrollment_key)}>{row.bbs_identifier}</button>}</Column>
             , <Column key="name" title="Name" data="full_name" />
             , <Column key="balance" title="Balance" data="signed_balance">{(value) => {
-              const amount = Number(value ?? 0)
+              const amount = Number(value)
               return <span data-dispatch-balance className={amount < 0 ? 'course-balance--negative' : 'course-balance--positive'}>{signedAmount(amount)}</span>
             }}</Column>
             , <Column key="last-book" title="Last book sent" data="last_book_sent">{(_value, _type, row: Candidate) =>

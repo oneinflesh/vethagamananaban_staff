@@ -17,6 +17,9 @@ export default function ManualBookSendButton({
   const canUnsend = !!state?.selectedSequences.size && [...state.selectedSequences].some((sequence) =>
     candidate.parcelled_book_sequences?.includes(sequence)
   )
+  const allShipped = alreadySent && [...state!.selectedSequences].every((sequence) =>
+    candidate.shipped_book_sequences?.includes(sequence)
+  )
 
   return (
     <Button
@@ -34,7 +37,7 @@ export default function ManualBookSendButton({
         ? 'Preparing…'
         : canUnsend ? 'Unsend books'
         : alreadySent
-          ? 'Sent'
+          ? allShipped ? 'Shipped' : 'Already recorded'
           : 'Send books'}
     </Button>
   )
