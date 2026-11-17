@@ -61,6 +61,7 @@ export default function SendReleasedBooksPage({
       .reduce((sum, price) => sum + Number(price), 0)
   const remainingBalance = Number(balance) - selectedCost
   const canFund =
+    Number.isFinite(selectedCost) && Number.isFinite(remainingBalance) &&
     legacyBooks.length <= (options?.funded_prices.length ?? 0) && remainingBalance >= 0
 
   async function ship(): Promise<void> {
@@ -93,8 +94,7 @@ export default function SendReleasedBooksPage({
         <span>{candidate.bbs_identifier}</span>
       </div>
       <div className="course-wallet-balance">
-        Wallet balance: ₹{balance} · Selected books: ₹{selectedCost.toFixed(2)} · After shipping: ₹
-        {remainingBalance.toFixed(2)}
+        Wallet balance: ₹{balance} · Selected books: {Number.isFinite(selectedCost) ? `₹${selectedCost.toFixed(2)}` : '—'} · After shipping: {Number.isFinite(remainingBalance) ? `₹${remainingBalance.toFixed(2)}` : '—'}
       </div>
       <div className="course-list-actions">
         <label className="course-list-filter">

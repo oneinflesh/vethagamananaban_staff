@@ -4,6 +4,7 @@ import { useNotifications } from '../notifications/Notifications'
 import { DataTable, Column } from './dataTable'
 import { useRememberedState } from '../table/tableMemory'
 import { candidateAction, getPaymentHistory, type PaymentHistoryEntry, type PaymentHistoryPage } from './courseApi'
+import { formatSignedAmount } from './paymentBalance'
 
 export default function TransactionLedger({
   candidateKey,
@@ -81,10 +82,10 @@ export default function TransactionLedger({
             </span>
           )}</Column>
           <Column title="Amount" data="amount">{(_value, _type, row: PaymentHistoryEntry) =>
-            `${Number(row.amount) < 0 ? '−' : '+'}₹${Math.abs(Number(row.amount)).toFixed(2)}`
+            formatSignedAmount(Number(row.amount), true)
           }</Column>
           <Column title="Balance" data="balance">{(_value, _type, row: PaymentHistoryEntry) =>
-            `${Number(row.balance) < 0 ? '−' : ''}₹${Math.abs(Number(row.balance)).toFixed(2)}`
+            formatSignedAmount(Number(row.balance))
           }</Column>
         </DataTable>}
         {loading && <p>Loading transactions…</p>}

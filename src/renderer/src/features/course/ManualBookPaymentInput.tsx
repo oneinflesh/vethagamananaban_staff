@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { useNotifications } from '../notifications/Notifications'
 import { candidateAction, type Candidate } from './courseApi'
+import { formatSignedAmount } from './paymentBalance'
 
 export default function ManualBookPaymentInput({
   enrollmentKey,
@@ -31,7 +32,7 @@ export default function ManualBookPaymentInput({
       const balance = Number(updated.wallet_balance) - Number(updated.credit_balance)
       const balanceCell = input.closest('tr')?.querySelector<HTMLElement>('[data-dispatch-balance]')
       if (balanceCell) {
-        balanceCell.textContent = `${balance < 0 ? '−' : ''}₹${Math.abs(balance).toFixed(2)}`
+        balanceCell.textContent = formatSignedAmount(balance)
         balanceCell.className =
           balance < 0 ? 'course-balance--negative' : 'course-balance--positive'
       }
