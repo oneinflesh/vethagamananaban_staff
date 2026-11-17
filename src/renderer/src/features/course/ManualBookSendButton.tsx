@@ -15,7 +15,7 @@ export default function ManualBookSendButton({
       candidate.unavailable_book_sequences?.includes(sequence)
     )
   const canUnsend = !!state?.selectedSequences.size && [...state.selectedSequences].some((sequence) =>
-    candidate.parcelled_manual_book_sequences?.includes(sequence)
+    candidate.parcelled_book_sequences?.includes(sequence)
   )
 
   return (

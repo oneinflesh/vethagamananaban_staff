@@ -7,7 +7,7 @@ export type CoordinatorLink = {
 export type Candidate = {
   enrollment_key: string
   unavailable_book_sequences?: number[]
-  parcelled_manual_book_sequences?: number[]
+  parcelled_book_sequences?: number[]
   bbs_identifier: string
   full_name: string
   email: string

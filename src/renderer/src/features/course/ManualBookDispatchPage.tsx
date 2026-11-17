@@ -237,8 +237,8 @@ export default function ManualBookDispatchPage({
       const count = allocations.length
       notify.success(count ? `${count} book${count === 1 ? '' : 's'} parcelled for ${row.bbs_identifier}` : 'Selected books are already sent or in dispatch')
       if (count) {
-        row.parcelled_manual_book_sequences = [
-          ...new Set([...(row.parcelled_manual_book_sequences ?? []), ...allocations.map((item) => item.exam_number)])
+        row.parcelled_book_sequences = [
+          ...new Set([...(row.parcelled_book_sequences ?? []), ...allocations.map((item) => item.exam_number)])
         ]
         row.unavailable_book_sequences = [
           ...new Set([...(row.unavailable_book_sequences ?? []), ...allocations.map((item) => item.exam_number)])
@@ -261,7 +261,10 @@ export default function ManualBookDispatchPage({
       const result = await candidateAction('manual-book-unsend', row.enrollment_key, {
         all_parcelled: true, exam_keys: [...selectedBooks]
       }) as { unsent: number }
-      row.parcelled_manual_book_sequences = (row.parcelled_manual_book_sequences ?? []).filter(
+      row.parcelled_book_sequences = (row.parcelled_book_sequences ?? []).filter(
+        (sequence) => !selectedSequences.has(sequence)
+      )
+      row.unavailable_book_sequences = (row.unavailable_book_sequences ?? []).filter(
         (sequence) => !selectedSequences.has(sequence)
       )
       notify.success(`${result.unsent} book${result.unsent === 1 ? '' : 's'} unsent for ${row.bbs_identifier}`)
