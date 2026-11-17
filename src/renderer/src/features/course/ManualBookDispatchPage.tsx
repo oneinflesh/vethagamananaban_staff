@@ -60,6 +60,8 @@ export default function ManualBookDispatchPage({
     `${member.bbs_number} ${member.name}`.toLowerCase().includes(memberSearch.toLowerCase())
   ), [members, memberSearch])
   const allVisibleSelected = visibleMembers.length > 0 && visibleMembers.every((member) => selectedMembers.has(member.enrollment_key))
+  const undoableMembers = members.filter((member) => selectedMembers.has(member.enrollment_key) &&
+    (member.parcelled_book_sequences ?? []).some((sequence) => selectedSequences.has(sequence)))
 
   function toggleMember(key: string): void {
     setSelectedMembers((current) => {
@@ -232,6 +234,33 @@ export default function ManualBookDispatchPage({
     }
   }
 
+  async function unsendFromCoordinator(): Promise<void> {
+    if (!coordinator || !undoableMembers.length || sending) return
+    setSending(true)
+    let people = 0
+    let booksUndone = 0
+    try {
+      for (const member of undoableMembers) {
+        const examKeys = books.filter((book) => selectedBooks.has(book.exam_key) &&
+          (member.parcelled_book_sequences ?? []).includes(book.sequence)).map((book) => book.exam_key)
+        try {
+          const result = await candidateAction('manual-book-unsend', member.enrollment_key, {
+            all_parcelled: true, exam_keys: examKeys
+          }) as { unsent: number }
+          booksUndone += result.unsent
+          people += 1
+        } catch (error) {
+          notify.error(`${people} people updated; ${undoableMembers.length - people} not updated. ${error instanceof Error ? error.message : 'Could not unsend books'}`)
+          return
+        }
+      }
+      notify.success(`${booksUndone} books unsent for ${people} people`)
+    } finally {
+      if (people) setMemberRefresh((value) => value + 1)
+      setSending(false)
+    }
+  }
+
   async function sendToCandidate(row: Candidate): Promise<void> {
     if (!selectedBooks.size || selectedSequences.size !== selectedBooks.size || sendingCandidateRef.current) return
     sendingCandidateRef.current = true
@@ -337,10 +366,14 @@ export default function ManualBookDispatchPage({
         </Button>
         <Button disabled={!selectedBooks.size || selectedSequences.size !== selectedBooks.size || !selectedMembers.size || sending}
           onClick={() => void sendToCoordinator()}>{sending ? 'Preparing…' : `Parcel ${selectedBooks.size} books for ${selectedMembers.size} people`}</Button>
+        <Button variant="outline" disabled={!undoableMembers.length || sending}
+          onClick={() => void unsendFromCoordinator()}>
+          Unsend books for {undoableMembers.length} people
+        </Button>
       </div>
       <div className="course-table-wrap course-table-wrap--candidates course-manual-dispatch-table course-manual-dispatch-table--members" onContextMenu={openResendMenu}>
         <ManualBookMemberSelectionContext.Provider value={{ selected: selectedMembers, disabled: sending, toggle: toggleMember }}>
-        <DataTable key={`${coordinator.coordinator_key}:${memberSearch}`}
+        <DataTable key={`${coordinator.coordinator_key}:${memberSearch}:${[...selectedSequences].sort((a, b) => a - b).join(',')}`}
           data={visibleMembers}
           className="display course-table" options={{
             pageLength: 500, rowId: 'enrollment_key', lengthChange: false, searching: false, autoWidth: false,
@@ -364,7 +397,11 @@ export default function ManualBookDispatchPage({
             <ManualBookMemberCheckbox memberKey={row.enrollment_key} bbsNumber={row.bbs_number} />}</Column>
           <Column title="BBS no." data="bbs_number">{(value, type) =>
             type === 'sort' || type === 'type' ? Number(String(value).replace(/\D/g, '')) : String(value)}</Column>
-          <Column title="Name" data="name" />
+          <Column title="Name" data="name">{(value: string, type: string, row: CoordinatorWalletMember) => {
+            if (type === 'sort' || type === 'type') return value
+            const sentCount = (row.unavailable_book_sequences ?? []).filter((sequence) => selectedSequences.has(sequence)).length
+            return <span>{value}{sentCount > 0 && <small className="course-member-sent-indicator">{selectedSequences.size === 1 ? 'Already sent' : `${sentCount} already sent`}</small>}</span>
+          }}</Column>
           <Column title="Balance" data="wallet_balance">{(_value, type, row: CoordinatorWalletMember) => {
             const amount = Number(row.wallet_balance) - Number(row.credit_balance)
             if (type === 'sort' || type === 'type') return amount

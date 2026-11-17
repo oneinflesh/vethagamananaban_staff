@@ -33,6 +33,7 @@
 }
 .course-manual-dispatch-controls input { max-width: 300px; }
 .course-manual-dispatch-controls select { margin-left: 8px; padding: 8px; border: 1px solid #d9c8b9; border-radius: 6px; background: white; }
+.course-member-sent-indicator { margin-left: 7px; color: #a44926; font-size: 11px; font-weight: 650; white-space: nowrap; }
 .course-dialog.course-coordinator-book-picker { width: min(980px, calc(100vw - 40px)); height: min(720px, calc(100vh - 64px)); max-height: none; display: flex; flex-direction: column; gap: 0; padding: 0; overflow: hidden; border: 1px solid #e9d8ca; }
 .course-coordinator-book-picker__header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 24px 16px; border-bottom: 1px solid #f0e2d7; }
 .course-coordinator-book-picker__header h2 { margin: 0 0 3px; font-size: 21px; color: #34261e; }

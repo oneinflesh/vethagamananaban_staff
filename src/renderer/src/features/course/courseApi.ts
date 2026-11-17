@@ -304,6 +304,8 @@ export type CoordinatorMember = {
 }
 export type CoordinatorWalletMember = {
   enrollment_key: string
+  unavailable_book_sequences: number[]
+  parcelled_book_sequences: number[]
   bbs_number: string
   name: string
   district: string
