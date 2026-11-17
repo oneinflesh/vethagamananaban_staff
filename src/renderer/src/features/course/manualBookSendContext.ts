@@ -5,7 +5,6 @@ type ManualBookSendState = {
   selectedCount: number
   selectedSequences: Set<number>
   sendingCandidate: string | null
-  sentCandidates: Set<string>
   onSend: (candidate: Candidate) => void
   onUnsend: (candidate: Candidate) => void
 }

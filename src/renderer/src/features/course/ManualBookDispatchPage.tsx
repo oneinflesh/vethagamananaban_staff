@@ -44,7 +44,6 @@ export default function ManualBookDispatchPage({
   const [books, setBooks] = useState<ExamInfo[]>([])
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set())
   const [selectedBooks, setSelectedBooks] = useState<Set<string>>(() => new Set(getManualDispatchHistory(country).selectedBooks))
-  const [sentCandidates, setSentCandidates] = useState<Set<string>>(new Set())
   const [choosingBooks, setChoosingBooks] = useState(false)
   const [sending, setSending] = useState(false)
   const [sendingCandidate, setSendingCandidate] = useState<string | null>(null)
@@ -228,17 +227,22 @@ export default function ManualBookDispatchPage({
   }
 
   async function sendToCandidate(row: Candidate): Promise<void> {
-    if (!selectedBooks.size || selectedSequences.size !== selectedBooks.size || sendingCandidateRef.current || sentCandidates.has(row.enrollment_key)) return
+    if (!selectedBooks.size || selectedSequences.size !== selectedBooks.size || sendingCandidateRef.current) return
     sendingCandidateRef.current = true
     setSendingCandidate(row.enrollment_key)
     try {
       const allocations = await candidateAction('manual-book-dispatch', row.enrollment_key, {
         exam_keys: [...selectedBooks], tracking_number: '', allow_credit: true
-      }) as { allocation_key: string }[]
+      }) as { allocation_key: string; exam_number: number }[]
       const count = allocations.length
       notify.success(count ? `${count} book${count === 1 ? '' : 's'} parcelled for ${row.bbs_identifier}` : 'Selected books are already sent or in dispatch')
       if (count) {
-        setSentCandidates((current) => new Set(current).add(row.enrollment_key))
+        row.parcelled_manual_book_sequences = [
+          ...new Set([...(row.parcelled_manual_book_sequences ?? []), ...allocations.map((item) => item.exam_number)])
+        ]
+        row.unavailable_book_sequences = [
+          ...new Set([...(row.unavailable_book_sequences ?? []), ...allocations.map((item) => item.exam_number)])
+        ]
       }
       void updateRecipientInPlace(row.enrollment_key)
     } catch (error) {
@@ -250,17 +254,16 @@ export default function ManualBookDispatchPage({
   }
 
   async function unsendCandidate(row: Candidate): Promise<void> {
-    if (sendingCandidateRef.current) return
+    if (!selectedBooks.size || sendingCandidateRef.current) return
     sendingCandidateRef.current = true
     setSendingCandidate(row.enrollment_key)
     try {
-      const result = await candidateAction('manual-book-unsend', row.enrollment_key, { all_parcelled: true }) as { unsent: number }
-      setSentCandidates((current) => {
-        const updated = new Set(current)
-        updated.delete(row.enrollment_key)
-        return updated
-      })
-      row.parcelled_manual_book_count = 0
+      const result = await candidateAction('manual-book-unsend', row.enrollment_key, {
+        all_parcelled: true, exam_keys: [...selectedBooks]
+      }) as { unsent: number }
+      row.parcelled_manual_book_sequences = (row.parcelled_manual_book_sequences ?? []).filter(
+        (sequence) => !selectedSequences.has(sequence)
+      )
       notify.success(`${result.unsent} book${result.unsent === 1 ? '' : 's'} unsent for ${row.bbs_identifier}`)
       void updateRecipientInPlace(row.enrollment_key)
     } catch (error) {
@@ -372,7 +375,7 @@ export default function ManualBookDispatchPage({
       </div>
     </> : <>
       <div className={`course-table-wrap course-table-wrap--candidates course-manual-dispatch-table course-manual-dispatch-table--${recipientType === 'individual' ? 'individual' : 'coordinators'}`} onContextMenu={openResendMenu}>
-        <ManualBookSendContext.Provider value={{ selectedCount: selectedBooks.size, selectedSequences, sendingCandidate, sentCandidates,
+        <ManualBookSendContext.Provider value={{ selectedCount: selectedBooks.size, selectedSequences, sendingCandidate,
           onSend: (candidate) => { void sendToCandidate(candidate) },
           onUnsend: (candidate) => { void unsendCandidate(candidate) } }}>
         <DataTable ref={recipientTable} key={`${recipientType}:${country}:${search}`} className="display course-table" options={{

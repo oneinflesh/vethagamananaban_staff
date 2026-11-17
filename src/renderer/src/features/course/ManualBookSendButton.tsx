@@ -14,7 +14,9 @@ export default function ManualBookSendButton({
     [...state.selectedSequences].every((sequence) =>
       candidate.unavailable_book_sequences?.includes(sequence)
     )
-  const canUnsend = !!candidate.parcelled_manual_book_count || !!state?.sentCandidates.has(candidate.enrollment_key)
+  const canUnsend = !!state?.selectedSequences.size && [...state.selectedSequences].some((sequence) =>
+    candidate.parcelled_manual_book_sequences?.includes(sequence)
+  )
 
   return (
     <Button
@@ -22,8 +24,7 @@ export default function ManualBookSendButton({
         !!state?.sendingCandidate || (!canUnsend && (
           !state?.selectedCount ||
           state.selectedSequences.size !== state.selectedCount ||
-          alreadySent ||
-          state.sentCandidates.has(candidate.enrollment_key)
+          alreadySent
         ))
       }
       className={canUnsend ? 'course-manual-unsend-button' : undefined}
@@ -32,7 +33,7 @@ export default function ManualBookSendButton({
       {state?.sendingCandidate === candidate.enrollment_key
         ? 'Preparing…'
         : canUnsend ? 'Unsend books'
-        : alreadySent || state?.sentCandidates.has(candidate.enrollment_key)
+        : alreadySent
           ? 'Sent'
           : 'Send books'}
     </Button>
