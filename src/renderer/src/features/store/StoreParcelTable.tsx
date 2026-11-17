@@ -4,17 +4,26 @@ import { DataTable, Column } from '../course/dataTable'
 import { rememberTable } from '../table/tableMemory'
 import { resizeColumns } from '../course/resizeColumns'
 import type { StoreParcel, StoreParcelPage } from './storeApi'
+import { summarizeParcelBooks } from './storeBookSummary'
 
-export default function StoreParcelTable({ country, table, loadPage, onSelect }: {
+export default function StoreParcelTable({ country, table, loadPage, onSelect, onDetails }: {
   country: string
   table: RefObject<DataTableRef | null>
   loadPage: (page: number, ordering: string) => Promise<StoreParcelPage>
   onSelect: (parcel: StoreParcel) => void
+  onDetails: (parcel: StoreParcel, kind: 'orders' | 'books') => void
 }): React.JSX.Element {
   return <div className="store-table-wrap" onPointerDown={resizeColumns}>
     <DataTable ref={table} className="display store-table" options={{
       ...rememberTable(`store:${country}`), serverSide: true, processing: true,
       pageLength: 20, lengthChange: false, searching: false, autoWidth: false,
+      columnDefs: [
+        { targets: 0, width: '8%' }, { targets: 1, width: '9%' },
+        { targets: 2, width: '15%' }, { targets: 3, width: '8%' },
+        { targets: 4, width: '11%' }, { targets: 5, width: '11%' },
+        { targets: 6, width: '10%' }, { targets: 7, width: '8%' },
+        { targets: 8, width: '9%' }, { targets: 9, width: '11%' }
+      ],
       rowId: 'key', order: [[0, 'desc']],
       layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' },
       ajax: (request, callback) => {
@@ -30,9 +39,16 @@ export default function StoreParcelTable({ country, table, loadPage, onSelect }:
       <Column title="Placed" data="created_at">{(value) => new Date(String(value)).toLocaleDateString('en-GB')}</Column>
       <Column title="VN number" data="vn_number" />
       <Column title="Name" data="recipient" />
-      <Column title="Orders" data="order_numbers" options={{ orderable: false }}>{(value) => (value as string[]).join(', ')}</Column>
-      <Column title="Books" data="items" options={{ orderable: false }}>{(_value, _type, row: StoreParcel) =>
-        row.items.map((item) => `${item.name} × ${item.quantity}`).join(', ')}</Column>
+      <Column title="Orders" data="order_numbers" options={{ orderable: false }}>{(_value, _type, row: StoreParcel) =>
+        row.order_numbers.length > 1
+          ? <button className="store-more" onClick={() => onDetails(row, 'orders')} aria-label={`View ${row.order_numbers.length} orders for ${row.recipient}`}>…</button>
+          : row.order_numbers[0] || '—'}</Column>
+      <Column title="Books" data="items" options={{ orderable: false }}>{(_value, _type, row: StoreParcel) => {
+        const books = summarizeParcelBooks(row)
+        return books.length > 1
+          ? <button className="store-more" onClick={() => onDetails(row, 'books')} aria-label={`View ${books.length} books for ${row.recipient}`}>…</button>
+          : books.length ? `${books[0].name} × ${books[0].quantity}` : '—'
+      }}</Column>
       <Column title="District" data="district" />
       <Column title="State" data="state" />
       <Column title="Total" data="total">{(value) => `₹${value}`}</Column>
