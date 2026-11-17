@@ -26,8 +26,8 @@ export function getCandidates(
   return authorizedGet(`staff/course-enrollments/?${params}`)
 }
 
-export function getPaymentBalances(country: string, page: number, search: string): Promise<unknown> {
-  const params = new URLSearchParams({ country, page: String(page) })
+export function getPaymentBalances(country: string, page: number, search: string, pageSize = 20): Promise<unknown> {
+  const params = new URLSearchParams({ country, page: String(page), page_size: String(pageSize) })
   if (search) params.set('search', search)
   return authorizedGet(`staff/course-enrollments/payment-balances/?${params}`)
 }

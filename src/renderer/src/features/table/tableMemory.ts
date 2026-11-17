@@ -12,7 +12,7 @@ function readStoredValue<T>(storageKey: string, initial: T): T {
   }
 }
 
-export function rememberTable(key: string): Pick<Config, 'stateSave' | 'stateDuration' | 'stateSaveCallback' | 'stateLoadCallback'> {
+export function rememberTable(key: string, pageLength?: number): Pick<Config, 'stateSave' | 'stateDuration' | 'stateSaveCallback' | 'stateLoadCallback'> {
   const storageKey = `${prefix}${key}`
   return {
     stateSave: true,
@@ -28,7 +28,12 @@ export function rememberTable(key: string): Pick<Config, 'stateSave' | 'stateDur
       try {
         const saved = sessionStorage.getItem(storageKey)
         // DataTables waits indefinitely when this callback returns undefined.
-        return saved ? JSON.parse(saved) as StateLoad : {}
+        const state = saved ? JSON.parse(saved) as StateLoad : {}
+        if (pageLength) {
+          state.start = Math.floor((state.start ?? 0) / pageLength) * pageLength
+          state.length = pageLength
+        }
+        return state
       } catch {
         return {}
       }

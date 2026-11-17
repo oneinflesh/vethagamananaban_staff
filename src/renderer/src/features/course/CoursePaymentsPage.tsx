@@ -147,10 +147,10 @@ export default function CoursePaymentsPage({
           ref={table}
           className="display course-table"
           options={{
-            ...rememberTable(`course-payments:${country}`),
+            ...rememberTable(`course-payments:${country}`, 500),
             serverSide: true,
             processing: true,
-            pageLength: 20,
+            pageLength: 500,
             lengthChange: false,
             searching: false,
             ordering: false,
@@ -162,8 +162,8 @@ export default function CoursePaymentsPage({
             },
             layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' },
             ajax: (request, callback) => {
-              const page = Math.floor((request.start ?? 0) / (request.length || 20)) + 1
-              void getPaymentBalances(query.current.country, page, query.current.search)
+              const page = Math.floor((request.start ?? 0) / (request.length || 500)) + 1
+              void getPaymentBalances(query.current.country, page, query.current.search, request.length || 500)
                 .then((result) => {
                   rows.current = result.results
                   callback({ draw: request.draw, recordsTotal: result.count, recordsFiltered: result.count, data: result.results })

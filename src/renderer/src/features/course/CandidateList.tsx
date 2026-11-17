@@ -493,8 +493,8 @@ export default function CandidateList({
           ref={table}
           className="display course-table"
           options={{
-            ...rememberTable(`candidates:${country}:${section}`),
-            pageLength: 20,
+            ...rememberTable(`candidates:${country}:${section}`, 500),
+            pageLength: 500,
             serverSide: true,
             processing: true,
             ajax: (request, callback) => {
@@ -521,7 +521,7 @@ export default function CandidateList({
                   : ''
               void getCandidates(
                 current.country,
-                Math.floor((request.start ?? 0) / (request.length || 20)) + 1,
+                Math.floor((request.start ?? 0) / (request.length || 500)) + 1,
                 current.mode,
                 current.statusFilter || current.status,
                 current.search,
@@ -529,7 +529,8 @@ export default function CandidateList({
                   state: current.stateFilter,
                   district: current.districtFilter,
                   initialDispatch: current.newOffline,
-                  ordering
+                  ordering,
+                  pageSize: request.length || 500
                 }
               )
                 .then((response) => {

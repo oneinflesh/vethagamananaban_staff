@@ -107,8 +107,8 @@ export type PaymentHistoryPage = {
   page_size: number
   results: PaymentHistoryEntry[]
 }
-export const getPaymentBalances = (country: string, page: number, search: string): Promise<PaymentBalancePage> =>
-  window.office.coursePaymentBalances(country, page, search)
+export const getPaymentBalances = (country: string, page: number, search: string, pageSize = 20): Promise<PaymentBalancePage> =>
+  window.office.coursePaymentBalances(country, page, search, pageSize)
 export const getPaymentHistory = (key: string, page: number): Promise<PaymentHistoryPage> =>
   window.office.coursePaymentHistory(key, page)
 export type CandidateFilters = {

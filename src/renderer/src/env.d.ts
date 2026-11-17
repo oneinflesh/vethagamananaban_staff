@@ -34,7 +34,8 @@ interface Window {
     coursePaymentBalances(
       country: string,
       page: number,
-      search: string
+      search: string,
+      pageSize: number
     ): Promise<import('./features/course/courseApi').PaymentBalancePage>
     coursePaymentHistory(
       key: string,

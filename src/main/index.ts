@@ -138,8 +138,8 @@ app.whenReady().then(() => {
   ipcMain.handle('course:candidates', (_event, country, page, mode, status, search, filters) =>
     getCandidates(country, page, mode, status, search, filters)
   )
-  ipcMain.handle('course:payment-balances', (_event, country, page, search) =>
-    getPaymentBalances(country, page, search)
+  ipcMain.handle('course:payment-balances', (_event, country, page, search, pageSize) =>
+    getPaymentBalances(country, page, search, pageSize)
   )
   ipcMain.handle('course:payment-history', (_event, key, page) =>
     getPaymentHistory(key, page)

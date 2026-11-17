@@ -185,8 +185,8 @@ export default function CoordinatorList({
           ref={table}
           className="display course-table"
           options={{
-            ...rememberTable(`coordinators:${country}`),
-            pageLength: 20,
+            ...rememberTable(`coordinators:${country}`, 500),
+            pageLength: 500,
             serverSide: true,
             processing: true,
             ajax: (request, callback) => {
@@ -210,13 +210,14 @@ export default function CoordinatorList({
               const sequence = ++requestSequence.current
               void getCoordinatorPage(
                 current.country,
-                Math.floor((request.start ?? 0) / (request.length || 20)) + 1,
+                Math.floor((request.start ?? 0) / (request.length || 500)) + 1,
                 {
                   search: current.search,
                   status: current.statusFilter,
                   state: current.stateFilter,
                   district: current.districtFilter,
-                  ordering
+                  ordering,
+                  pageSize: request.length || 500
                 }
               )
                 .then((page) => {
