@@ -24,7 +24,7 @@ export default function StorePage(): React.JSX.Element {
   const [search, setSearch] = useRememberedState(`store:${country}:search`, '')
   const [filters, setFilters] = useState(emptyFilters)
   const [selected, setSelected] = useState<StoreParcel | null>(null)
-  const [details, setDetails] = useState<{ parcel: StoreParcel; kind: 'orders' | 'books' } | null>(null)
+  const [details, setDetails] = useState<StoreParcel | null>(null)
   const [tracking, setTracking] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -100,16 +100,14 @@ export default function StorePage(): React.JSX.Element {
     {tab === 'orders' ? <>
       {error && <p role="alert" className="store-error">{error}</p>}
       <StoreParcelTable key={country} country={country} table={table} loadPage={loadPage} onSelect={setSelected}
-        onDetails={(parcel, kind) => setDetails({ parcel, kind })} />
+        onDetails={setDetails} />
     </> : <StoreStockPage />}
     {details && <div className="store-dialog-backdrop" onClick={() => setDetails(null)}>
       <div className="store-dialog store-dialog--list" role="dialog" aria-modal="true"
-        aria-label={details.kind === 'orders' ? 'Order numbers' : 'Books and quantities'}
+        aria-label="Books and quantities"
         onClick={(event) => event.stopPropagation()}>
-        <h2>{details.kind === 'orders' ? 'Orders' : 'Books'} · {details.parcel.recipient}</h2>
-        <ol>{details.kind === 'orders'
-          ? details.parcel.order_numbers.map((number) => <li key={number}>{number}</li>)
-          : summarizeParcelBooks(details.parcel).map((item) => <li key={item.name}>{item.name} × {item.quantity}</li>)}</ol>
+        <h2>Books · {details.recipient}</h2>
+        <ol>{summarizeParcelBooks(details).map((item) => <li key={item.name}>{item.name} × {item.quantity}</li>)}</ol>
         <div className="store-dialog-actions"><Button onClick={() => setDetails(null)}>Close</Button></div>
       </div>
     </div>}
