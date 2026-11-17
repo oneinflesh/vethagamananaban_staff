@@ -347,16 +347,17 @@ export default function ManualBookDispatchPage({
             scrollY: 'var(--dispatch-table-height, 320px)', scrollCollapse: false,
             order: [[1, 'asc']],
             columnDefs: [
-              { targets: 0, orderable: false, width: '5%' },
-              { targets: 1, width: '8%' },
-              { targets: 2, width: '19%' },
-              { targets: 3, width: '9%' },
-              { targets: 4, width: '14%' },
-              { targets: 5, width: '6%' },
+              { targets: 0, orderable: false, width: '4%' },
+              { targets: 1, width: '7%' },
+              { targets: 2, width: '17%' },
+              { targets: 3, width: '8%' },
+              { targets: 4, width: '13%' },
+              { targets: 5, width: '9%' },
               { targets: 6, width: '5%' },
               { targets: 7, width: '5%' },
-              { targets: 8, orderable: false, width: '11%' },
-              { targets: 9, orderable: false, width: '18%' }
+              { targets: 8, width: '5%' },
+              { targets: 9, orderable: false, width: '10%' },
+              { targets: 10, orderable: false, width: '17%' }
             ],
             layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' }
           }}>
@@ -374,6 +375,13 @@ export default function ManualBookDispatchPage({
             if (type === 'sort' || type === 'type') return amount
             return <span data-dispatch-balance className={amount < 0 ? 'course-balance--negative' : 'course-balance--positive'}>{signedAmount(amount)}</span>
           }}</Column>
+          <Column title="Last book sent" data="enrollment_key">{(_value, _type, row: CoordinatorWalletMember) =>
+            <span className="course-last-book-cell" title={row.last_book_sent?.title ?? undefined}>
+              {row.last_book_sent ? <>
+                <span>{row.last_book_sent.title}</span>
+                <small>{new Date(row.last_book_sent.sent_at).toLocaleDateString('en-IN')}</small>
+              </> : '—'}
+            </span>}</Column>
           <Column title="District" data="district" />
           <Column title="Exams" data="exams_attended" />
           <Column title="Sent" data="books_sent" />

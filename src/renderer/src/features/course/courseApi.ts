@@ -305,6 +305,7 @@ export type CoordinatorMember = {
 }
 export type CoordinatorWalletMember = {
   enrollment_key: string
+  last_book_sent: { title: string; sent_at: string } | null
   unavailable_book_sequences: number[]
   parcelled_book_sequences: number[]
   bbs_number: string
