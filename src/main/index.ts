@@ -166,7 +166,7 @@ app.whenReady().then(() => {
   ipcMain.handle('store:transition', (_event, keys, status, tracking) =>
     transitionStoreParcel(keys, status, tracking)
   )
-  ipcMain.handle('store:stock', (_event, page, search) => getStoreStock(page, search))
+  ipcMain.handle('store:stock', (_event, page, search, country) => getStoreStock(page, search, country))
   ipcMain.handle('store:adjust-stock', (_event, code, stock, note) =>
     adjustStoreStock(code, stock, note)
   )

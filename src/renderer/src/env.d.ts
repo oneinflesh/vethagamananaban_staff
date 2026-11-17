@@ -68,7 +68,7 @@ interface Window {
     ): Promise<import('./features/shipping/shippingApi').ShipmentPage>
     storeParcels(country: string, page: number, filters: Record<string, string>): Promise<import('./features/store/storeApi').StoreParcelPage>
     storeTransition(keys: string[], status: string, tracking: string): Promise<unknown>
-    storeStock(page: number, search: string): Promise<import('./features/store/storeApi').StoreStockPage>
+    storeStock(page: number, search: string, country: string): Promise<import('./features/store/storeApi').StoreStockPage>
     storeAdjustStock(code: string, stock: number, note: string): Promise<unknown>
     storeShippingRates(country: string): Promise<import('./features/store/storeApi').StoreShippingRate[]>
     storeShippingRateUpdate(rate: import('./features/store/storeApi').StoreShippingRate): Promise<import('./features/store/storeApi').StoreShippingRate>

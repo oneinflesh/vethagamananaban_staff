@@ -12,8 +12,8 @@ export function transitionStoreParcel(orderKeys: string[], status: string, track
   })
 }
 
-export async function getStoreStock(_page: number, search: string): Promise<unknown> {
-  const params = new URLSearchParams({ page: '1', page_size: '500' })
+export async function getStoreStock(_page: number, search: string, country: string): Promise<unknown> {
+  const params = new URLSearchParams({ page: '1', page_size: '500', store_country: country })
   if (search) params.set('search', search)
   const first = await authorizedGet(`staff/books/?${params}`) as { count: number; results: unknown[] }
   const results = [...first.results]

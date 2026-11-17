@@ -24,15 +24,20 @@ export default function StoreStockPage({ country }: { country: string }): React.
     let active = true
     const timer = window.setTimeout(() => {
       setLoading(true)
-      void getStoreStock(1, search).then((result) => {
+      void getStoreStock(1, search, country).then((result) => {
         if (!active) return
         setBooks(result.results)
+        setLanguage((current) => {
+          const available = result.results.map(bookLanguage)
+          return !current || available.some((name) => name.toLowerCase() === current.toLowerCase())
+            ? current : available.includes('Tamil') ? 'Tamil' : ''
+        })
         setSelected((current) => result.results.some((book) => book.vn_code === current) ? current : (result.results[0]?.vn_code ?? ''))
       }).catch((error) => { if (active) notify.error(error instanceof Error ? error.message : 'Could not load books') })
         .finally(() => { if (active) setLoading(false) })
     }, search ? 250 : 0)
     return () => { active = false; window.clearTimeout(timer) }
-  }, [search, refresh, notify])
+  }, [country, search, refresh, notify])
 
   const languages = [...new Set(books.map(bookLanguage))].sort((a, b) => a.localeCompare(b))
   const visibleBooks = books.filter((item) => !language || bookLanguage(item).toLowerCase() === language.toLowerCase())

@@ -54,7 +54,7 @@ const api = {
     ipcRenderer.invoke('store:parcels', country, page, filters),
   storeTransition: (keys: string[], status: string, tracking: string) =>
     ipcRenderer.invoke('store:transition', keys, status, tracking),
-  storeStock: (page: number, search: string) => ipcRenderer.invoke('store:stock', page, search),
+  storeStock: (page: number, search: string, country: string) => ipcRenderer.invoke('store:stock', page, search, country),
   storeAdjustStock: (code: string, stock: number, note: string) =>
     ipcRenderer.invoke('store:adjust-stock', code, stock, note),
   storeShippingRates: (country: string) => ipcRenderer.invoke('store:shipping-rates', country),

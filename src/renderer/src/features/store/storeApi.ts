@@ -51,8 +51,8 @@ export const getStoreParcels = (country: string, page: number, filters: Record<s
   window.office.storeParcels(country, page, filters)
 export const transitionStoreParcel = (keys: string[], status: string, tracking = ''): Promise<unknown> =>
   window.office.storeTransition(keys, status, tracking)
-export const getStoreStock = (page: number, search: string): Promise<StoreStockPage> =>
-  window.office.storeStock(page, search)
+export const getStoreStock = (page: number, search: string, country: string): Promise<StoreStockPage> =>
+  window.office.storeStock(page, search, country)
 export const adjustStoreStock = (code: string, stock: number, note: string): Promise<unknown> =>
   window.office.storeAdjustStock(code, stock, note)
 export const getStoreShippingRates = (country: string): Promise<StoreShippingRate[]> =>
