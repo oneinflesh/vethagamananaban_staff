@@ -6,7 +6,6 @@ type ManualBookSendState = {
   selectedSequences: Set<number>
   sendingCandidate: string | null
   sentCandidates: Set<string>
-  undoBatches: Record<string, string[]>
   onSend: (candidate: Candidate) => void
   onUnsend: (candidate: Candidate) => void
 }

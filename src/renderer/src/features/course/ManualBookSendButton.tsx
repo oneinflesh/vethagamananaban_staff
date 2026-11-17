@@ -14,7 +14,7 @@ export default function ManualBookSendButton({
     [...state.selectedSequences].every((sequence) =>
       candidate.unavailable_book_sequences?.includes(sequence)
     )
-  const canUnsend = !!state?.undoBatches[candidate.enrollment_key]?.length
+  const canUnsend = !!candidate.parcelled_manual_book_count || !!state?.sentCandidates.has(candidate.enrollment_key)
 
   return (
     <Button

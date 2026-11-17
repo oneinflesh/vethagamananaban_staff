@@ -45,7 +45,6 @@ export default function ManualBookDispatchPage({
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set())
   const [selectedBooks, setSelectedBooks] = useState<Set<string>>(() => new Set(getManualDispatchHistory(country).selectedBooks))
   const [sentCandidates, setSentCandidates] = useState<Set<string>>(new Set())
-  const [undoBatches, setUndoBatches] = useState<Record<string, string[]>>(() => ({ ...getManualDispatchHistory(country).undoBatches }))
   const [choosingBooks, setChoosingBooks] = useState(false)
   const [sending, setSending] = useState(false)
   const [sendingCandidate, setSendingCandidate] = useState<string | null>(null)
@@ -239,10 +238,6 @@ export default function ManualBookDispatchPage({
       const count = allocations.length
       notify.success(count ? `${count} book${count === 1 ? '' : 's'} parcelled for ${row.bbs_identifier}` : 'Selected books are already sent or in dispatch')
       if (count) {
-        const next = { ...getManualDispatchHistory(country).undoBatches,
-          [row.enrollment_key]: allocations.map((item) => item.allocation_key) }
-        getManualDispatchHistory(country).undoBatches = next
-        setUndoBatches(next)
         setSentCandidates((current) => new Set(current).add(row.enrollment_key))
       }
       void updateRecipientInPlace(row.enrollment_key)
@@ -255,22 +250,18 @@ export default function ManualBookDispatchPage({
   }
 
   async function unsendCandidate(row: Candidate): Promise<void> {
-    const keys = undoBatches[row.enrollment_key]
-    if (!keys?.length || sendingCandidateRef.current) return
+    if (sendingCandidateRef.current) return
     sendingCandidateRef.current = true
     setSendingCandidate(row.enrollment_key)
     try {
-      await candidateAction('manual-book-unsend', row.enrollment_key, { allocation_keys: keys })
-      const next = { ...getManualDispatchHistory(country).undoBatches }
-      delete next[row.enrollment_key]
-      getManualDispatchHistory(country).undoBatches = next
-      setUndoBatches(next)
+      const result = await candidateAction('manual-book-unsend', row.enrollment_key, { all_parcelled: true }) as { unsent: number }
       setSentCandidates((current) => {
         const updated = new Set(current)
         updated.delete(row.enrollment_key)
         return updated
       })
-      notify.success(`Books unsent for ${row.bbs_identifier}`)
+      row.parcelled_manual_book_count = 0
+      notify.success(`${result.unsent} book${result.unsent === 1 ? '' : 's'} unsent for ${row.bbs_identifier}`)
       void updateRecipientInPlace(row.enrollment_key)
     } catch (error) {
       notify.error(error instanceof Error ? error.message : 'Could not unsend books')
@@ -381,7 +372,7 @@ export default function ManualBookDispatchPage({
       </div>
     </> : <>
       <div className={`course-table-wrap course-table-wrap--candidates course-manual-dispatch-table course-manual-dispatch-table--${recipientType === 'individual' ? 'individual' : 'coordinators'}`} onContextMenu={openResendMenu}>
-        <ManualBookSendContext.Provider value={{ selectedCount: selectedBooks.size, selectedSequences, sendingCandidate, sentCandidates, undoBatches,
+        <ManualBookSendContext.Provider value={{ selectedCount: selectedBooks.size, selectedSequences, sendingCandidate, sentCandidates,
           onSend: (candidate) => { void sendToCandidate(candidate) },
           onUnsend: (candidate) => { void unsendCandidate(candidate) } }}>
         <DataTable ref={recipientTable} key={`${recipientType}:${country}:${search}`} className="display course-table" options={{
@@ -477,7 +468,6 @@ export default function ManualBookDispatchPage({
       onChange={(next) => {
         getManualDispatchHistory(country).selectedBooks = [...next]
         setSelectedBooks(next)
-        setSentCandidates(new Set())
       }}
       onClose={() => setChoosingBooks(false)} />}
     {resendMenu && <div className="course-context-menu course-context-menu--actions"
