@@ -141,6 +141,7 @@ interface Window {
         | 'initial-dispatch'
         | 'other-book-dispatch'
         | 'manual-book-dispatch'
+        | 'manual-book-unsend'
         | 'set-password'
         | 'update-status'
         | 'manual-purchase'

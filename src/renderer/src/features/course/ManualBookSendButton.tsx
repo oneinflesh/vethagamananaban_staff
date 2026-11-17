@@ -14,20 +14,24 @@ export default function ManualBookSendButton({
     [...state.selectedSequences].every((sequence) =>
       candidate.unavailable_book_sequences?.includes(sequence)
     )
+  const canUnsend = !!state?.undoBatches[candidate.enrollment_key]?.length
 
   return (
     <Button
       disabled={
-        !state?.selectedCount ||
-        state.selectedSequences.size !== state.selectedCount ||
-        !!state.sendingCandidate ||
-        alreadySent ||
-        state.sentCandidates.has(candidate.enrollment_key)
+        !!state?.sendingCandidate || (!canUnsend && (
+          !state?.selectedCount ||
+          state.selectedSequences.size !== state.selectedCount ||
+          alreadySent ||
+          state.sentCandidates.has(candidate.enrollment_key)
+        ))
       }
-      onClick={() => state?.onSend(candidate)}
+      className={canUnsend ? 'course-manual-unsend-button' : undefined}
+      onClick={() => canUnsend ? state?.onUnsend(candidate) : state?.onSend(candidate)}
     >
       {state?.sendingCandidate === candidate.enrollment_key
         ? 'Preparing…'
+        : canUnsend ? 'Unsend books'
         : alreadySent || state?.sentCandidates.has(candidate.enrollment_key)
           ? 'Sent'
           : 'Send books'}

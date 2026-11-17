@@ -45,6 +45,7 @@ export default function ManualBookDispatchPage({
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set())
   const [selectedBooks, setSelectedBooks] = useState<Set<string>>(() => new Set(getManualDispatchHistory(country).selectedBooks))
   const [sentCandidates, setSentCandidates] = useState<Set<string>>(new Set())
+  const [undoBatches, setUndoBatches] = useState<Record<string, string[]>>(() => ({ ...getManualDispatchHistory(country).undoBatches }))
   const [choosingBooks, setChoosingBooks] = useState(false)
   const [sending, setSending] = useState(false)
   const [sendingCandidate, setSendingCandidate] = useState<string | null>(null)
@@ -206,13 +207,45 @@ export default function ManualBookDispatchPage({
     try {
       const allocations = await candidateAction('manual-book-dispatch', row.enrollment_key, {
         exam_keys: [...selectedBooks], tracking_number: '', allow_credit: true
-      }) as unknown[]
+      }) as { allocation_key: string }[]
       const count = allocations.length
       notify.success(count ? `${count} book${count === 1 ? '' : 's'} parcelled for ${row.bbs_identifier}` : 'Selected books are already sent or in dispatch')
-      setSentCandidates((current) => new Set(current).add(row.enrollment_key))
+      if (count) {
+        const next = { ...getManualDispatchHistory(country).undoBatches,
+          [row.enrollment_key]: allocations.map((item) => item.allocation_key) }
+        getManualDispatchHistory(country).undoBatches = next
+        setUndoBatches(next)
+        setSentCandidates((current) => new Set(current).add(row.enrollment_key))
+      }
       recipientTable.current?.dt()?.ajax.reload(undefined, false)
     } catch (error) {
       notify.error(error instanceof Error ? error.message : 'Could not send books')
+    } finally {
+      sendingCandidateRef.current = false
+      setSendingCandidate(null)
+    }
+  }
+
+  async function unsendCandidate(row: Candidate): Promise<void> {
+    const keys = undoBatches[row.enrollment_key]
+    if (!keys?.length || sendingCandidateRef.current) return
+    sendingCandidateRef.current = true
+    setSendingCandidate(row.enrollment_key)
+    try {
+      await candidateAction('manual-book-unsend', row.enrollment_key, { allocation_keys: keys })
+      const next = { ...getManualDispatchHistory(country).undoBatches }
+      delete next[row.enrollment_key]
+      getManualDispatchHistory(country).undoBatches = next
+      setUndoBatches(next)
+      setSentCandidates((current) => {
+        const updated = new Set(current)
+        updated.delete(row.enrollment_key)
+        return updated
+      })
+      notify.success(`Books unsent for ${row.bbs_identifier}`)
+      recipientTable.current?.dt()?.ajax.reload(undefined, false)
+    } catch (error) {
+      notify.error(error instanceof Error ? error.message : 'Could not unsend books')
     } finally {
       sendingCandidateRef.current = false
       setSendingCandidate(null)
@@ -320,8 +353,9 @@ export default function ManualBookDispatchPage({
       </div>
     </> : <>
       <div className={`course-table-wrap course-table-wrap--candidates course-manual-dispatch-table course-manual-dispatch-table--${recipientType === 'individual' ? 'individual' : 'coordinators'}`} onContextMenu={openResendMenu}>
-        <ManualBookSendContext.Provider value={{ selectedCount: selectedBooks.size, selectedSequences, sendingCandidate, sentCandidates,
-          onSend: (candidate) => { void sendToCandidate(candidate) } }}>
+        <ManualBookSendContext.Provider value={{ selectedCount: selectedBooks.size, selectedSequences, sendingCandidate, sentCandidates, undoBatches,
+          onSend: (candidate) => { void sendToCandidate(candidate) },
+          onUnsend: (candidate) => { void unsendCandidate(candidate) } }}>
         <DataTable ref={recipientTable} key={`${recipientType}:${country}:${search}`} className="display course-table" options={{
           serverSide: true, processing: true, pageLength: 500, displayStart: getManualDispatchHistory(country).starts[recipientType],
           rowId: recipientType === 'individual' ? 'enrollment_key' : 'coordinator_key', lengthChange: false,
