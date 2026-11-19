@@ -141,10 +141,12 @@ export default function CandidateActionPanel({
             New password
             <Input
               type="password"
+              minLength={8}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoFocus
             />
+            <span>At least 8 characters. Avoid common, numbers-only, or name-based passwords.</span>
           </label>
         )}
         {action === 'discontinue' && <p>Discontinue this candidate? They can be restored later.</p>}
