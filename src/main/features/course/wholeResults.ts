@@ -12,7 +12,7 @@ export function getWholeResults(
     course: courseKey,
     country,
     page: String(page),
-    page_size: '20'
+    page_size: '500'
   })
   if (search) params.set('search', search)
   if (state) params.set('state', state)

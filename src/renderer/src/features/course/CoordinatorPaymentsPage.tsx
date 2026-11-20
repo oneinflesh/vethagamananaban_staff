@@ -194,13 +194,13 @@ export default function CoordinatorPaymentsPage({ country, onBack, onCandidate, 
     </div>
     <div className="course-table-wrap course-table-wrap--candidates" onPointerDown={resizeColumns}>
       <DataTable ref={coordinatorTable} className="display course-table" options={{
-        ...rememberTable(`coordinator-payments:${country}`),
-        serverSide: true, processing: true, pageLength: 20, lengthChange: false, searching: false,
+        ...rememberTable(`coordinator-payments:${country}`, 500),
+        serverSide: true, processing: true, pageLength: 500, lengthChange: false, searching: false,
         ordering: false, autoWidth: false,
         layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' },
         ajax: (request, callback) => {
-          void getCoordinatorPage(country, Math.floor((request.start ?? 0) / (request.length || 20)) + 1,
-            { search, status: 'ACTIVE' })
+          void getCoordinatorPage(country, Math.floor((request.start ?? 0) / (request.length || 500)) + 1,
+            { search, status: 'ACTIVE', pageSize: request.length || 500 })
             .then((page) => callback({ draw: request.draw, recordsTotal: page.count,
               recordsFiltered: page.count, data: page.results }))
             .catch((error) => {
@@ -251,8 +251,8 @@ export default function CoordinatorPaymentsPage({ country, onBack, onCandidate, 
       <div className="course-table-wrap course-table-wrap--candidates" onPointerDown={resizeColumns}>
         <DataTable ref={memberTable} key={`${coordinator?.coordinator_key}:${[...selected].sort().join(',')}:${memberSearch}`}
           data={visibleMembers} className="display course-table" options={{
-          ...rememberTable(`coordinator-payment-members:${coordinator?.coordinator_key}`),
-          pageLength: 20, displayStart: memberStart, lengthChange: false, searching: false, ordering: false, autoWidth: false,
+          ...rememberTable(`coordinator-payment-members:${coordinator?.coordinator_key}`, 500),
+          pageLength: 500, displayStart: memberStart, lengthChange: false, searching: false, ordering: false, autoWidth: false,
           layout: { topStart: null, topEnd: null, bottomStart: 'info', bottomEnd: 'paging' }
         }}>
           <Column title="Select" data="enrollment_key">{(_value, _type, row: CoordinatorWalletMember) =>
